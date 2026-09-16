@@ -1,0 +1,11 @@
+{
+  "source_repository": "siyunhao2025-beep/math-modeling-to-sci-skill",
+  "source_commit": "3d044caf26d602ba08eddc93397b3923397b82bc",
+  "source_files_verified": 23,
+  "unchanged_source_files_present": 21,
+  "standalone_replacements": [
+    "README.md",
+    ".gitignore"
+  ],
+  "scope": "byte_integrity_and_migration_only_not_research_validation"
+}

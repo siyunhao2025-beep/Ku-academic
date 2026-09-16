@@ -1,0 +1,57 @@
+{
+  "version": 1,
+  "checked_at": "2026-09-16",
+  "status": "registered_pinned_not_host_installed",
+  "sources": [
+    {
+      "id": "cangjie",
+      "repository": "kangarooking/cangjie-skill",
+      "commit": "3adf9e61eec96edf34055432942f2952cfd7cfd9",
+      "declared_license": "MIT",
+      "entrypoint": "SKILL.md",
+      "status": "pinned_source_not_installed",
+      "review_scope": "repository metadata and selected entrypoints; not full dependency or security audit",
+      "source_url": "https://github.com/kangarooking/cangjie-skill"
+    },
+    {
+      "id": "claude-scholar",
+      "repository": "Galaxy-Dawn/claude-scholar",
+      "commit": "6ed46dac03191c7a734f49ed48b41195012098ff",
+      "declared_license": "MIT",
+      "entrypoint": "agents/paper-miner.md",
+      "status": "pinned_source_not_installed",
+      "review_scope": "repository metadata and selected entrypoints; not full dependency or security audit",
+      "source_url": "https://github.com/Galaxy-Dawn/claude-scholar"
+    },
+    {
+      "id": "supervisor",
+      "repository": "HKUSTDial/Supervisor-Skills",
+      "commit": "207bc6f7a1aa107e544099c2c7cc86816fba9628",
+      "declared_license": "CC-BY-NC-SA-4.0",
+      "entrypoint": "skills/paper-polish/SKILL.md",
+      "status": "pinned_source_not_installed",
+      "review_scope": "repository metadata and selected entrypoints; not full dependency or security audit",
+      "source_url": "https://github.com/HKUSTDial/Supervisor-Skills"
+    },
+    {
+      "id": "scientific-agent-skills",
+      "repository": "K-Dense-AI/scientific-agent-skills",
+      "commit": "330c8e764435a731eff571e3efdda70b363d0792",
+      "declared_license": "MIT; per-skill licenses may differ",
+      "entrypoint": "skills/scientific-visualization/SKILL.md",
+      "status": "pinned_source_not_installed",
+      "review_scope": "repository metadata and selected entrypoints; not full dependency or security audit",
+      "source_url": "https://github.com/K-Dense-AI/scientific-agent-skills"
+    },
+    {
+      "id": "skill-seekers",
+      "repository": "yusufkaraaslan/Skill_Seekers",
+      "commit": "0709580b19ab9333110760b020977aa3b84470f8",
+      "declared_license": "MIT",
+      "entrypoint": "skills/skill-seekers/SKILL.md",
+      "status": "pinned_source_not_installed",
+      "review_scope": "repository metadata and selected entrypoints; not full dependency or security audit",
+      "source_url": "https://github.com/yusufkaraaslan/Skill_Seekers"
+    }
+  ]
+}
