@@ -1,0 +1,35 @@
+{
+  "repository": "siyunhao2025-beep/math-modeling-to-sci-skill",
+  "commit": "3d044caf26d602ba08eddc93397b3923397b82bc",
+  "subdirectory": "research-mother",
+  "original_package_sha256": "006db6744ac0a608ee1cb6bb5145bb368822a1cccacce7baf170ff11c23415cc",
+  "preserve_destination": [
+    "README.md",
+    ".gitignore"
+  ],
+  "files": {
+    ".gitignore": "feac9a40a487cb99867192d080d5092af318f653d246b3eb28d63a73f8f9120f",
+    "LICENSE": "7fba3ca767cef835c54322153df0db12c1773930a74dc1f378357d11e2e53766",
+    "README.md": "5eff911635308ec147ec31ab5854fd56c193812d22b8de80026df8ee2dd2bc99",
+    "SKILL.md": "9956e66b22d003343a009c8445d70bd4e4a91edd20bd9e92bf2db0adaa567346",
+    "config/upstream.lock.json": "ce0d97dd96c2521b0cf184fd471d94c78baf911749ce9a24b5fd6bb7252216bc",
+    "docs/ACCEPTANCE.md": "0581fc95bcb168d3913865a4ddebc6f5cb8e665cfe1f5f02914ad0d081a89166",
+    "docs/CONTRACTS.md": "f659c3301e5cebc234f9b1a4d0422305c699238a65d166bacca6845611dce4c6",
+    "docs/UPSTREAM.md": "3d4779ec632d40590411dcdcb9e08f9a64bda9346e49d25f7e4721ae0a3e9746",
+    "domains/space-weather-mlt/SKILL.md": "3413a29d8d86cee56da160375f70dba44d99235363bf5835e6f616de9e3c2008",
+    "domains/space-weather-mlt/domain.json": "6e6e442359329bdb2ac399a926bc82afb546648235c27aa0c9031cfb4401b65e",
+    "modules/analysis-methods-figures.md": "5a26b478cdfb30d8fd64a3993b0ba317b3a36f97a62c02fecf1ebe6e2039b53c",
+    "modules/field-distillation.md": "1efb223aefdfb5a56f7d587eefd9f4026633b2bd5dc194e7da5fa48a2be707b9",
+    "modules/journal-distillation.md": "a54bf3ba80d66bce1d5f7fa8fe5edfc7462a6d95e9b825116bc4156de239c6f4",
+    "modules/literature.md": "120ba42c2b7b67f8f7722aa7f634991810c8f1f1a2d7af0a58232a18850a6b69",
+    "modules/supplementation.md": "7b5d4804962da90e9edba703876a2df9d329ed8ebce8c8c2ac8618277806e6cb",
+    "modules/workflow.md": "6a0d15ef64e9dded9069ac6ddc36180b02e195bfdadb0c9dac60f31c33fee5ea",
+    "modules/writing-review.md": "1e43143dd9147e9caac5e1fef5971b5db3e5e26a95dfd8a05d09b1920ca66206",
+    "requirements.txt": "5e7a257789f602fbad6509f74cb2bfc992be5f80298e0ee36f7b83469f98c604",
+    "scripts/corpus.py": "2e7c99aa0693beaac0410402143fd6922cc5f51c29fde3f480c3a3f319aee6ce",
+    "scripts/research.py": "e7b1b509b25c1b1068714ccf933f7766734a369f52a48d4ad891e86fd2bd21fc",
+    "scripts/upstream.py": "af6af985298d6f015060b4586dbed899f564821f9999fc4afed92ae9e01685eb",
+    "tests/test_live_regressions.py": "10acbd4acc2baf3534735418922591065cc1b04f24741bd366b6fee23e3b4eac",
+    "tests/test_research.py": "c6ad8acfb61d464653830e401b184df7bcc845e2ac7f7a8a1369b3714397272c"
+  }
+}

@@ -1,0 +1,23 @@
+# Private research inputs and runtime output
+runs/
+private/
+private-corpus/
+vendor-cache/
+dist/
+.env*
+!.env.example
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.pdf
+*.docx
+*.nc
+*.nc.gz
+*.pkl
+*.mat
+*.zip
+.DS_Store
+Thumbs.db
+bootstrap-report.json
