@@ -5,6 +5,7 @@ import argparse
 import datetime as dt
 import hashlib
 import json
+import os
 from pathlib import Path
 import re
 import sys
@@ -15,7 +16,7 @@ import urllib.request
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "0.1.0"
+VERSION = "0.3.0"
 
 
 def read(path):
@@ -47,7 +48,23 @@ def safe_path(root, relative):
     rel = Path(relative)
     if rel.is_absolute() or not relative or "\\" in str(relative):
         raise ValueError("Use a nonempty relative POSIX path")
-    p = (root / rel).resolve()
+    # Re-resolve every component explicitly. Path.resolve() alone is not enough:
+    # on Windows a component may be a reparse point (symlink or junction) that
+    # resolve() follows without the intermediate component ever being compared
+    # against the workspace root, and os.path.islink() can miss junctions.
+    candidate = root
+    for part in rel.parts:
+        if part in ("", "."):
+            continue
+        if part == "..":
+            raise ValueError("Path escapes workspace")
+        candidate = candidate / part
+        if candidate.exists() or os.path.islink(candidate) or os.path.lexists(candidate):
+            resolved = candidate.resolve()
+            if not resolved.is_relative_to(root):
+                raise ValueError("Path escapes workspace")
+            candidate = resolved
+    p = candidate.resolve()
     if not p.is_relative_to(root):
         raise ValueError("Path escapes workspace")
     return p
@@ -342,7 +359,7 @@ def main(argv=None):
     sub = p.add_subparsers(dest="command", required=True)
     sub.add_parser("doctor")
     init = sub.add_parser("init")
-    init.add_argument("target"); init.add_argument("--domain", default=str(ROOT / "domains/space-weather-mlt/domain.json"))
+    init.add_argument("target"); init.add_argument("--domain", default=str(ROOT / "domains/example-domain/domain.json"))
     init.add_argument("--kind", choices=["original", "review"], default="original")
     s = sub.add_parser("search")
     s.add_argument("--query", required=True); s.add_argument("--since", required=True)

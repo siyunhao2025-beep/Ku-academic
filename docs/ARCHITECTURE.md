@@ -13,7 +13,7 @@
 
 ## 新增领域
 
-复制 domains/space-weather-mlt 到自己的工作目录，修改 domain.json 的 id、scope、search_queries、project_parameters、checks 和 journal_candidates，清空不适用的 learned_capability_cards。同步改写领域 SKILL.md，避免遗留 MLT 指标与假设。
+复制 domains/example-domain 到自己的工作目录，修改 domain.json 的 id、scope、search_queries、project_parameters、checks 和 journal_candidates，清空不适用的 learned_capability_cards。同步改写领域 SKILL.md，避免遗留上一个领域的指标与假设。
 
 ```bash
 python scripts/research.py init runs/new-field --domain private/my-domain/domain.json --kind original

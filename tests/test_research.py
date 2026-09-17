@@ -2,6 +2,7 @@
 import copy
 import io
 import json
+import os
 from pathlib import Path
 import stat
 import sys
@@ -15,6 +16,29 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
 import research as r
 import corpus
 import upstream
+
+
+def _can_create_symlink():
+    """Return True only if this process can really create a usable symlink.
+
+    On Windows a symlink needs SeCreateSymbolicLinkPrivilege (administrator or
+    Developer Mode). Without it os.symlink/Path.symlink_to can return without
+    error while creating nothing, so a test that assumes a symlink exists would
+    pass or fail for the wrong reason. Probe for a real, listable link.
+    """
+    try:
+        with tempfile.TemporaryDirectory() as t:
+            base = Path(t)
+            target = base / 'target'
+            target.mkdir()
+            link = base / 'link'
+            link.symlink_to(target, target_is_directory=True)
+            return link.is_symlink() and link.exists()
+    except (OSError, NotImplementedError):
+        return False
+
+
+HAS_SYMLINK = _can_create_symlink()
 
 
 class CoreTests(unittest.TestCase):
@@ -47,16 +71,24 @@ class CoreTests(unittest.TestCase):
     def test_windows_separator(self):
         with self.assertRaises(ValueError): r.safe_path('/tmp/work', '..\\secret')
 
+    @unittest.skipUnless(HAS_SYMLINK, "platform cannot create usable symlinks")
     def test_symlink_escape(self):
         with tempfile.TemporaryDirectory() as t:
             root = Path(t) / 'root'; root.mkdir()
-            (root / 'outside').symlink_to(Path(t))
+            (root / 'outside').symlink_to(Path(t), target_is_directory=True)
             with self.assertRaises(ValueError): r.safe_path(root, 'outside/secret')
+
+    def test_symlink_escape_when_link_not_creatable(self):
+        """Even without symlink support, traversal out of the root must fail."""
+        with tempfile.TemporaryDirectory() as t:
+            root = Path(t) / 'root'; root.mkdir()
+            with self.assertRaises(ValueError): r.safe_path(root, '../secret')
+            with self.assertRaises(ValueError): r.safe_path(root, 'a/../../secret')
 
     def test_checkpoint_transitive_invalidation(self):
         with tempfile.TemporaryDirectory() as t:
             root = Path(t) / 'p'
-            r.init_project(root, r.ROOT / 'domains/space-weather-mlt/domain.json', 'original')
+            r.init_project(root, r.ROOT / 'domains/example-domain/domain.json', 'original')
             for name in ['inputs/data.csv', 'analysis/result.csv', 'manuscript/result.md']:
                 (root / name).write_text('fixture', encoding='utf8')
             r.checkpoint(root, 'analysis', ['inputs/data.csv'], ['analysis/result.csv'])
@@ -69,9 +101,9 @@ class CoreTests(unittest.TestCase):
 
     def test_init_no_overwrite(self):
         with tempfile.TemporaryDirectory() as t:
-            r.init_project(t, r.ROOT / 'domains/space-weather-mlt/domain.json', 'review')
+            r.init_project(t, r.ROOT / 'domains/example-domain/domain.json', 'review')
             with self.assertRaises(FileExistsError):
-                r.init_project(t, r.ROOT / 'domains/space-weather-mlt/domain.json', 'review')
+                r.init_project(t, r.ROOT / 'domains/example-domain/domain.json', 'review')
 
     def test_overlap(self):
         text = 'This synthetic sentence contains enough distinct words to demonstrate copied span flagging only'
@@ -86,7 +118,7 @@ class CoreTests(unittest.TestCase):
             self.assertNotIn(source['status'], ['installed', 'verified'])
 
     def test_domain_not_event_hardcoded(self):
-        domain = r.read(r.ROOT / 'domains/space-weather-mlt/domain.json')
+        domain = r.read(r.ROOT / 'domains/example-domain/domain.json')
         self.assertTrue(all(x is None for x in domain['project_parameters'].values()))
         self.assertEqual(domain['learned_capability_cards'], [])
 

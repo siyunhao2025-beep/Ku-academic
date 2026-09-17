@@ -13,7 +13,7 @@
 
 ## 2. 下载哪个文件？
 
-打开 [Releases](https://github.com/siyunhao2025-beep/Ku-academic/releases/latest)，在 Assets 中下载 **Ku-academic-v0.1.0-skill.zip**。同时提供 SHA256SUMS.txt，供核验下载文件。此 ZIP 内应只有一个 research-mother 顶层目录，包含 SKILL.md、modules、domains、scripts 和 docs。
+打开 [Releases](https://github.com/siyunhao2025-beep/Cool-Academic/releases/latest)，在 Assets 中下载 **Cool-Academic-v0.3.0-skill.zip**。同时提供 SHA256SUMS.txt，供核验下载文件。此 ZIP 内应只有一个 research-mother 顶层目录，包含 SKILL.md、modules、domains、scripts 和 docs。
 
 GitHub 的 Code → Download ZIP 或 Release 中的 Source code 是完整仓库源码，更适合开发者。它与可上传的 Skill 包不是同一文件，校验值也不同。
 
@@ -26,9 +26,9 @@ GitHub 的 Code → Download ZIP 或 Release 中的 Source code 是完整仓库�
 GitHub 方式可复制：
 
 ```text
-@GitHub 读取 siyunhao2025-beep/Ku-academic 根目录 SKILL.md，
+@GitHub 读取 siyunhao2025-beep/Cool-Academic 根目录 SKILL.md，
 再读取 modules/workflow.md。根据我的任务加载相关模块，不要一次加载全部上游仓库。
-使用 research-mother，加载 space-weather-mlt。
+使用 research-mother，加载 example-domain。
 本次任务：根据附件整理研究问题、证据矩阵和论文框架。
 先报告实际读到的文件和缺失材料，再执行能够完成的步骤。
 ```
@@ -36,7 +36,7 @@ GitHub 方式可复制：
 会话上传方式可复制：
 
 ```text
-解压我上传的 Ku-academic Skill ZIP，读取 research-mother/SKILL.md、
+解压我上传的 Cool-Academic Skill ZIP，读取 research-mother/SKILL.md、
 modules/workflow.md 和当前任务需要的模块，按里面的流程处理我的研究资料。
 这是会话内读取，不要报告为已永久安装。不要执行上游安装脚本。
 ```
@@ -83,7 +83,7 @@ python scripts/research.py init runs/my-review --kind review
 联网检索示例（日期需改为实际窗口）：
 
 ```bash
-python scripts/research.py search --query "geomagnetic storm SABER temperature" --since 2026-08-17 --until 2026-09-16 --pages 2 --rows 50 --out runs/search-20260916
+python scripts/research.py search --query "your key construct your method" --since 2026-08-17 --until 2026-09-16 --pages 2 --rows 50 --out runs/search-20260916
 ```
 
 同一窗口的延迟收录补捞可使用 --mode indexed 并换新输出目录。search.json 中的 records 是待筛选元数据，不是已经读完、确定相关的新论文。status=error 要看错误日志；truncated=true 表示只返回了受限候选。

@@ -12,7 +12,7 @@ def create_demo(target: Path) -> dict:
     target = Path(target)
     if target.exists():
         raise FileExistsError("Demo destination exists; choose a new directory")
-    research.init_project(target, research.ROOT / "domains/space-weather-mlt/domain.json", "original")
+    research.init_project(target, research.ROOT / "domains/example-domain/domain.json", "original")
     (target / "inputs/installation-note.txt").write_text(
         "INSTALLATION DEMO ONLY. No observations, papers or research results are supplied.\n", encoding="utf-8")
     (target / "analysis/installation-plan.txt").write_text(

@@ -1,0 +1,37 @@
+{
+  "id": "example-domain",
+  "version": "0.1.0",
+  "status": "starter_interface_not_corpus_distilled",
+  "scope": "Replace this template with your own field: name the quantity you measure, the conditions you compare under, and what your study claims",
+  "search_queries": [
+    "<your key construct> <your method>",
+    "<your key construct> review",
+    "<your measurement or dataset> <your outcome> <your condition>"
+  ],
+  "project_parameters": {
+    "data_source_version": null,
+    "study_window": null,
+    "baseline_definition": null,
+    "primary_axis_bins": null,
+    "secondary_axis_bins": null,
+    "coordinate_system": null,
+    "time_reference": null,
+    "subsample_definition": null,
+    "quality_flags": null,
+    "smoothing_window": null,
+    "uncertainty_definition": null,
+    "independent_sampling_unit": null
+  },
+  "checks": [
+    "state how each variable is defined, in which unit, and in which coordinate or reference frame",
+    "record data source version, sampling pattern and quality flags before interpreting any value",
+    "separate observation, association and mechanism inference in every claim",
+    "record the baseline definition and its uncertainty; a sample standard deviation is not attribution evidence",
+    "do not hardcode specific dates, thresholds, amplitudes or any personal profile"
+  ],
+  "journal_candidates": [
+    "<target journal>",
+    "<alternative journal>"
+  ],
+  "learned_capability_cards": []
+}

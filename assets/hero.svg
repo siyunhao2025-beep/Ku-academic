@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 300" width="1280" height="300" role="img" aria-label="Cool-Academic — 通用科研母 Skill × 可替换领域包，从 0 到 1">
+  <title>Cool-Academic — 通用科研母 Skill × 可替换领域包</title>
+  <defs>
+    <linearGradient id="kacBg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#150d29"/>
+      <stop offset="55%" stop-color="#221345"/>
+      <stop offset="100%" stop-color="#2e1a57"/>
+    </linearGradient>
+    <radialGradient id="kacGlowA" cx="0.16" cy="0.12" r="0.62">
+      <stop offset="0%" stop-color="#7c5cff" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#7c5cff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="kacGlowB" cx="0.9" cy="0.92" r="0.55">
+      <stop offset="0%" stop-color="#22d3ee" stop-opacity="0.32"/>
+      <stop offset="100%" stop-color="#22d3ee" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="kacAccent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#8b5cff"/>
+      <stop offset="100%" stop-color="#22d3ee"/>
+    </linearGradient>
+    <linearGradient id="kacArrow" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#6b5b95" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#22d3ee"/>
+    </linearGradient>
+    <filter id="kacSoft" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="9" result="kacBlur"/>
+      <feMerge>
+        <feMergeNode in="kacBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="1280" height="300" rx="18" fill="url(#kacBg)"/>
+  <rect width="1280" height="300" rx="18" fill="url(#kacGlowA)"/>
+  <rect width="1280" height="300" rx="18" fill="url(#kacGlowB)"/>
+  <rect x="0.5" y="0.5" width="1279" height="299" rx="18" fill="none" stroke="#8b5cff" stroke-opacity="0.22"/>
+
+  <g font-family="Segoe UI, Microsoft YaHei, PingFang SC, Noto Sans SC, Helvetica Neue, Arial, sans-serif">
+    <text x="72" y="116" font-size="60" font-weight="700" fill="#ffffff" letter-spacing="0.5">Cool-Academic</text>
+    <rect x="74" y="134" width="138" height="6" rx="3" fill="url(#kacAccent)"/>
+
+    <text x="72" y="182" font-size="24" font-weight="600" fill="#cbb9ff">通用科研母 Skill × 可替换领域包</text>
+    <text x="72" y="219" font-size="19" fill="#9aa6c4">从 0 到 1：让研究回到研究，把生活还给你</text>
+    <text x="72" y="256" font-size="16.5" fill="#8592b0">六阶段流程 · 引用两道检 · 图三件套 · 降 AI 自查 · 精简模式</text>
+  </g>
+
+  <g font-family="Segoe UI, Helvetica Neue, Arial, sans-serif">
+    <text x="948" y="176" font-size="82" font-weight="700" fill="#5f4f8c">0</text>
+    <line x1="1018" y1="150" x2="1128" y2="150" stroke="url(#kacArrow)" stroke-width="4" stroke-linecap="round"/>
+    <path d="M1120 140 L1136 150 L1120 160 Z" fill="#22d3ee"/>
+    <text x="1152" y="176" font-size="82" font-weight="700" fill="#ffffff" filter="url(#kacSoft)">1</text>
+    <text x="948" y="212" font-size="15" fill="#7f8bab" letter-spacing="1.5">FROM IDEA TO EVIDENCE</text>
+  </g>
+
+  <g stroke="#8b5cff" stroke-opacity="0.45" stroke-width="1.6" fill="none">
+    <circle cx="948" cy="60" r="4" fill="#8b5cff" fill-opacity="0.7" stroke="none"/>
+    <circle cx="1004" cy="44" r="2.6" fill="#22d3ee" fill-opacity="0.8" stroke="none"/>
+    <circle cx="1224" cy="66" r="3.4" fill="#c9b8ff" fill-opacity="0.7" stroke="none"/>
+    <circle cx="1180" cy="248" r="3" fill="#22d3ee" fill-opacity="0.6" stroke="none"/>
+    <line x1="948" y1="60" x2="1004" y2="44"/>
+    <line x1="1004" y1="44" x2="1224" y2="66"/>
+  </g>
+</svg>

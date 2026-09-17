@@ -8,8 +8,8 @@
 ### 没有 Skills 上传按钮怎么办？
 这是账号、工作区或功能可用性的差异。使用已授权的 GitHub 读取方式，或在支持文件解压读取的会话中上传 ZIP。不要把文件上传误报为永久账号安装。
 
-### 为什么仓库叫 Ku-academic，调用名还是 research-mother？
-Ku-academic 是独立项目名称；research-mother 是保留兼容性的 Skill 标识。安装包顶层目录也叫 research-mother。
+### 为什么仓库叫 Cool-Academic，调用名还是 research-mother？
+Cool-Academic 是独立项目名称；research-mother 是保留兼容性的 Skill 标识。安装包顶层目录也叫 research-mother。
 
 ### 五个上游 Skill 都安装了吗？
 没有这一默认保证。config/upstream.lock.json 登记的是固定来源、版本和入口。scripts/upstream.py 可以隔离下载源码；不会在 GPT 原生安装、执行 hooks 或自动配置密钥。必须分别验收安装和实际调用。

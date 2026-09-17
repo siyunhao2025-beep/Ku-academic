@@ -7,6 +7,14 @@
     "README.md",
     ".gitignore"
   ],
+  "not_carried_forward": {
+    "paths": [
+      "domains/<field-specific-pack>/SKILL.md",
+      "domains/<field-specific-pack>/domain.json"
+    ],
+    "reason": "The legacy package shipped one field-specific domain pack with its own parameters and checks. It is intentionally not carried forward: this repository ships a neutral template (domains/example-domain) instead, so the project does not bind to any single research field. The two legacy files are therefore absent from the hash map below rather than being listed under a renamed path with hashes they never had.",
+    "recorded_entries": 21
+  },
   "files": {
     ".gitignore": "feac9a40a487cb99867192d080d5092af318f653d246b3eb28d63a73f8f9120f",
     "LICENSE": "7fba3ca767cef835c54322153df0db12c1773930a74dc1f378357d11e2e53766",
@@ -16,8 +24,6 @@
     "docs/ACCEPTANCE.md": "0581fc95bcb168d3913865a4ddebc6f5cb8e665cfe1f5f02914ad0d081a89166",
     "docs/CONTRACTS.md": "f659c3301e5cebc234f9b1a4d0422305c699238a65d166bacca6845611dce4c6",
     "docs/UPSTREAM.md": "3d4779ec632d40590411dcdcb9e08f9a64bda9346e49d25f7e4721ae0a3e9746",
-    "domains/space-weather-mlt/SKILL.md": "3413a29d8d86cee56da160375f70dba44d99235363bf5835e6f616de9e3c2008",
-    "domains/space-weather-mlt/domain.json": "6e6e442359329bdb2ac399a926bc82afb546648235c27aa0c9031cfb4401b65e",
     "modules/analysis-methods-figures.md": "5a26b478cdfb30d8fd64a3993b0ba317b3a36f97a62c02fecf1ebe6e2039b53c",
     "modules/field-distillation.md": "1efb223aefdfb5a56f7d587eefd9f4026633b2bd5dc194e7da5fa48a2be707b9",
     "modules/journal-distillation.md": "a54bf3ba80d66bce1d5f7fa8fe5edfc7462a6d95e9b825116bc4156de239c6f4",

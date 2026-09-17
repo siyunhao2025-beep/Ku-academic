@@ -9,7 +9,8 @@ import sys
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
-ASSET = "Ku-academic-v0.1.0-skill.zip"
+VERSION = "0.3.0"
+ASSET = "Cool-Academic-v%s-skill.zip" % VERSION
 
 
 def source_files(root: Path = ROOT) -> list[tuple[str, Path]]:
@@ -47,7 +48,7 @@ def build(output: Path, root: Path = ROOT) -> dict:
     targets[1].write_text(f"{checksum}  {ASSET}\n", encoding="utf-8")
     result = {"asset": ASSET, "sha256": checksum, "files": len(files),
               "bytes": targets[0].stat().st_size, "skill_id": "research-mother",
-              "version": "0.1.0", "scope": "source_and_documentation_only"}
+              "version": VERSION, "scope": "source_and_documentation_only"}
     targets[2].write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return result
 

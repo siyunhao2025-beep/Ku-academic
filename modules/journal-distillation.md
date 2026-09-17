@@ -3,7 +3,7 @@
 不训练模型权重；输出可被后续写作调用的、来源可追踪的期刊档案。
 
 ## 语料
-先明确具体期刊和 article type。JGR: Space Physics 与 JGR: Atmospheres 分开；Research Article 与 Review/Letter 分开。官方作者指南属于规范来源，论文样本属于观察来源，不能混为一谈。
+先明确具体期刊和 article type。同一期刊的不同子刊分开；Research Article 与 Review/Letter 分开。官方作者指南属于规范来源，论文样本属于观察来源，不能混为一谈。
 
 用户授权上传或已核验开放获取的全文可以纳入。付费墙/访问限制不绕过。原始 PDF 与全文文本留在私有工作目录；公开仓库只含工具、规则结构和允许公开的来源索引。
 

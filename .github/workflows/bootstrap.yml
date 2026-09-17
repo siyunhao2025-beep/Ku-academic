@@ -11,7 +11,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   import-and-release:
-    if: github.repository == 'siyunhao2025-beep/Ku-academic' && github.ref == 'refs/heads/main'
+    if: github.repository == 'siyunhao2025-beep/Cool-Academic' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -36,7 +36,7 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add SKILL.md LICENSE requirements.txt modules domains config/upstream.lock.json docs/ACCEPTANCE.md docs/CONTRACTS.md docs/UPSTREAM.md docs/MIGRATION_IMPORT.json scripts/research.py scripts/corpus.py scripts/upstream.py tests/test_research.py tests/test_live_regressions.py
           if ! git diff --cached --quiet; then
-            git commit -m 'feat: import verified Research Mother core into standalone Ku-academic'
+            git commit -m 'feat: import verified Research Mother core into standalone Cool-Academic'
             git push origin HEAD:main
           fi
       - name: Publish first release without overwriting an existing release
@@ -46,8 +46,8 @@ jobs:
           if gh release view v0.1.0 --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             echo 'Existing v0.1.0 release preserved; no assets overwritten.'
           else
-            printf '%s\n' '# Ku-academic v0.1.0' '' '独立科研母 Skill 仓库：七个模块、MLT 领域接口、教程、九种场景提示词和 Windows 离线示例。' '' '下载 Ku-academic-v0.1.0-skill.zip 用于 Skill 上传；Source code 是开发源码。SHA256SUMS.txt 提供校验值。' '' '测试记录见本次 Actions。测试不代表完成 GPT 账号安装、真实期刊语料学习或科研有效性验证。上游源码仍按需独立获取。' > /tmp/release-notes.md
-            gh release create v0.1.0 dist/Ku-academic-v0.1.0-skill.zip dist/SHA256SUMS.txt dist/build.json --repo "$GITHUB_REPOSITORY" --target "$(git rev-parse HEAD)" --title 'Ku-academic v0.1.0 | 科研母 Skill 独立版' --notes-file /tmp/release-notes.md
+            printf '%s\n' '# Cool-Academic v0.1.0' '' '独立科研母 Skill 仓库：七个模块、MLT 领域接口、教程、九种场景提示词和 Windows 离线示例。' '' '下载 Cool-Academic-v0.3.0-skill.zip 用于 Skill 上传；Source code 是开发源码。SHA256SUMS.txt 提供校验值。' '' '测试记录见本次 Actions。测试不代表完成 GPT 账号安装、真实期刊语料学习或科研有效性验证。上游源码仍按需独立获取。' > /tmp/release-notes.md
+            gh release create v0.1.0 dist/Cool-Academic-v0.3.0-skill.zip dist/SHA256SUMS.txt dist/build.json --repo "$GITHUB_REPOSITORY" --target "$(git rev-parse HEAD)" --title 'Cool-Academic v0.1.0 | 科研母 Skill 独立版' --notes-file /tmp/release-notes.md
           fi
       - name: Save test and build evidence
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
