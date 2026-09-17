@@ -284,4 +284,77 @@ python scripts/lean.py report <workspace> --html <workspace>/audit/token-dashboa
 不要把这个数说成账单。它只统计产出物文件。
 ```
 
+## 19. 稿子写完了，让 3–5 位审稿人挑毛病
+
+```text
+使用 research-mother，加载 modules/reviewer-panel.md 和 docs/PHASE_GATES.md。
+我的稿件在：[路径]。请建一个 4 人审稿panel（处理编辑 / 领域专家 / 方法统计 / 怀疑论者）。
+
+每位审稿人独立打七个维度的分（各 0-5，满分 35，通过线 28）：
+论证清晰度、完整性、文献支持、方法清晰度、原创性表达、组织与衔接、期刊契合度。
+
+要求：
+- 每位审稿人至少提 1 条科学类意见，不能只挑格式。
+- 不许把分数平均成一个数。分歧大就明说分歧，由我决定。
+- 严重度用 blocker / major / minor / positive；
+  需要我补数据的意见标 requires_author_data，不要编造数据来"解决"它。
+- 不许给出录用概率，也不许说这是真实审稿意见。
+
+输出 review/panel.json 和 review/review.md。
+```
+
+## 20. 出一份讲解版 Word，讲给我自己听
+
+```text
+使用 research-mother，加载 modules/explainer-docx.md。
+基于我的论文生成一份讲解版 Word，读者是不懂这个方向的人（比如我家人）。
+
+七节固定结构：一句话结论 / 为什么要做 / 你怎么做的 / 得到了什么 /
+这些说明什么 / 有什么限制 / 术语表。
+
+硬要求：
+- 第一节必须同时写出"这项研究没有回答什么"。
+- 所有数字与论文逐项一致，不许凭记忆写。
+- 每个术语用人话解释，不抄教科书定义。
+- 观测 / 与…一致 / 机制推断三级在措辞上分开。
+- 不许出现论文里没有的结论；不许为了好懂删掉限定条件。
+
+生成命令：python scripts/ooxml.py docx <spec.json> <out.docx>
+生成后确认校验报告的 problems 为空。
+```
+
+## 21. 做一张会议海报（先答三个问题）
+
+```text
+使用 research-mother，加载 modules/poster.md。
+
+先不要动手。用 `python scripts/poster.py choices` 打印选项，然后问我三件事：
+1. 海报尺寸（A0 / A1 / A2 / A3 / A4 / 大会竖版 900×1200 / 大会横版 1200×900 / 屏幕 16:9）
+2. 海报语言（中文 / English）
+3. 输出形式（直接输出图片 / 输出为 PPT）
+
+三件都答完再继续，不许替我默认。
+
+我答完之后：生成 spec，渲染，然后把
+尺寸、栏数、填充率、重叠检测结果、残留占位符 都报给我。
+重叠不为 none 就是失败，不要当成功交付。
+送印前提醒我确认中文字体没有被替换成方框。
+```
+
+## 22. 做汇报幻灯片（第三方技能，先看缺失依赖）
+
+```text
+使用 research-mother 处理幻灯片任务。
+先读 skills/ppt/MISSING_DEPENDENCIES.md，把缺什么、哪些步骤跑不了告诉我。
+
+注意该技能需要 lark-cli，并且缺 5 个 Python 工具（xml_lint / xml_inspect /
+iconpark_tool / color_contrast_check / gen_svg_charts）与 2 个 XML 文件
+（schema 定义与图表范例）。技能自己要求的"每页提交前必跑的静态校验"因此跑不了。
+
+在缺失前提下，只做能做的：设计系统选择、版式与叙事规则、文案与结构。
+凡是依赖缺失工具才能做的（lint、图标检索、图表生成），
+明确标为"无法执行"，不要报告为已通过。
+```
+
+
 

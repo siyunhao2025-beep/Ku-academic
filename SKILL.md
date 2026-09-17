@@ -3,7 +3,7 @@ name: research-mother
 description: Orchestrate evidence-grounded research with replaceable domain packs across six explicit phases (topic and paper investigation, literature review, experiment design, computation, figures and manuscript writing, conclusion and revision): literature discovery and reviews, study design, real analysis, research roadmaps and schematic figures, genuine citation provenance and claim-support verification, de-AI writing, methods, manuscript development, contribution-driven supplementation, journal-corpus style learning and scientific editing. Use when a researcher asks to build or run a research workflow, distill a field or journal, write a review or paper from evidence, verify whether references actually exist and actually support the sentence, produce research diagrams, reduce AI traces in academic prose, or improve a manuscript without defensive boilerplate.
 license: MIT
 metadata:
-  version: "0.3.0"
+  version: "0.4.0"
 ---
 # Research Mother / 科研母 Skill
 
@@ -50,6 +50,10 @@ An upstream phase's deliverables are a downstream phase's inputs. Do not start a
 | Verify that references exist and actually support the sentence | modules/evidence-integrity.md | four-state identity verdicts, six-state support status, blockers, 待确认 list |
 | Learn a target journal from PDFs | modules/journal-distillation.md | per-paper cards, train/held-out corpus, evaluated style profile |
 | Get the target journal's newest papers as writing references | modules/journal-sourcing.md | sourcing plan, tracked per-item status, manual-download fallback checklist |
+| Review a finished manuscript with 3-5 reviewers | modules/reviewer-panel.md | independent per-reviewer scores, findings, a non-averaged panel verdict |
+| Produce a Word explainer for a non-expert reader | modules/explainer-docx.md | a real .docx built with stdlib only, numbers matching the paper |
+| Make a poster (asks size, language, output first) | modules/poster.md | print-ready SVG at exact physical size, or a one-slide .pptx |
+| Make slides / edit a PPTX | skills/ppt/SKILL.md | deck built or edited per that skill; read skills/ppt/MISSING_DEPENDENCIES.md first |
 | Supplement an existing manuscript | modules/supplementation.md | substantive patch plan, source support, tracked changes |
 | Describe experiments/methods, plot data | modules/analysis-methods-figures.md | run-linked methods, data-derived figures and provenance |
 | Produce a research roadmap or schematic figure | modules/figures.md | roadmap + schematic + figure manifest with color logic |
@@ -82,6 +86,12 @@ References must genuinely exist and be traceable: title, authors, year, journal/
 `python scripts/sourcing.py plan <search.json> --journal "..." --direction "..." --out <plan.json>` builds a target-journal acquisition plan plus a manual-download fallback checklist.
 `python scripts/sourcing.py record <plan.json> <id> --status fetched|manual_download_required|not_accessible|failed` records the real outcome per paper.
 `python scripts/sourcing.py list <plan.json>` shows what still needs a human.
+`python scripts/review.py panel <manuscript> --out <panel.json> [--reviewers a,b,c]` builds a 3-5 reviewer panel worksheet.
+`python scripts/review.py verdict <panel.json> --report <out.md>` computes the panel verdict; reviewers are never averaged together.
+`python scripts/ooxml.py docx <spec.json> <out.docx>` writes a Word explainer using stdlib only.
+`python scripts/poster.py choices` prints the three mandatory poster questions (size, language, output form).
+`python scripts/poster.py plan --size ... --lang ... --output ... --out <spec.json>` refuses while any of the three is unanswered.
+`python scripts/poster.py render <spec.json> --out <poster.svg|poster.pptx>` renders the poster; overlapping layout exits 2.
 
 ## Completion report
 Distinguish: implemented / tested / source staged / host installed / live validated / waiting for corpus or data.

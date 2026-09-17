@@ -26,6 +26,16 @@ P1 选题与论文调研 → P2 文献综述 → P3 实验设计 → P4 计算�
 
 科研线路图（从数据到结论的路径）、原理示意图（机制或方法）、数据图（真实结果）。规则与检查清单见 `modules/figures.md`。示意图必须标为概念示意；图件必须经人眼审查，不能凭文件存在报告通过。
 
+## 文章写完之后的三件交付
+
+| 交付 | 模块 | 关键约束 |
+|---|---|---|
+| 审稿人评审 | `modules/reviewer-panel.md` | **3–5 位审稿人独立打分，不许取平均**；没提科学问题判为覆盖不足；不给录用概率 |
+| 讲解版 Word | `modules/explainer-docx.md` | 七节固定结构；数字与论文逐项一致；只翻译不发明 |
+| 海报 | `modules/poster.md` | **先问尺寸 / 语言 / 输出形式，答完才动手**；重叠即判失败 |
+
+幻灯片走第三方技能 `skills/ppt/SKILL.md`，**使用前先读 `skills/ppt/MISSING_DEPENDENCIES.md`**（缺 5 个 Python 工具与 2 个 XML 文件，且需要 `lark-cli`）。
+
 ## 每个引用都要过两道检
 
 身份（是否存在、出处是否准确）与支持（是否真的支持这句话）分开判定，判定值与阻断项见 `modules/evidence-integrity.md`。无法核实的显式标 `待确认`，且不得进入论证链。
@@ -43,6 +53,8 @@ manuscript/changes.json：有证据支持的修订。
 audit/citation-provenance.json：引用身份与支持判定、blockers、待确认清单。
 audit/deai-selfcheck.md：交付前自查记录。
 audit/token-ledger.json：产出物 token 台账，每步含口径与方法标签；对话 token 记 not_measurable_from_here。
+review/panel.json：3–5 位审稿人的七维评分、逐条意见、结论与分歧统计。
+poster/spec.json：海报尺寸、语言、输出形式、版式指标与重叠检测结果。
 audit/review.md：真正会影响解释或复现的待处理问题。
 
 继续执行独立、可逆的步骤；信息不足时输出可用成果和明确的阻塞项。不用“全自动”掩盖未执行步骤。投稿、付费、对外共享、访问受限资料都须遵循用户授权和宿主权限。
