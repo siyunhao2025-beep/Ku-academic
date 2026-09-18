@@ -55,16 +55,23 @@ def estimate_tokens(text, encoder=None):
 
 def measure_file(path, encoder=None, root=None):
     path = Path(path)
-    text = path.read_text(encoding="utf-8")
+    raw = path.read_bytes()
     name = str(path)
     if root is not None:
         try:
             name = path.resolve().relative_to(Path(root).resolve()).as_posix()
         except ValueError:
             name = path.as_posix()
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError:
+        # Binary file (image, archive, model weight). It has no token count to
+        # report, and crashing on it would lose the whole measurement.
+        return {"path": name, "bytes": len(raw), "chars": 0, "tokens": 0,
+                "skipped": "not_utf8_text"}
     return {
         "path": name,
-        "bytes": path.stat().st_size,
+        "bytes": len(raw),
         "chars": len(text),
         "tokens": estimate_tokens(text, encoder),
     }
