@@ -272,6 +272,9 @@
     "assets/ga-elements/transfer.svg",
     "assets/ga-elements/users.svg",
     "assets/ga-elements/wind.svg",
-    "assets/ga-elements/world.svg"
+    "assets/ga-elements/world.svg",
+    "assets/promo/promo-figures.png",
+    "assets/promo/promo-guardrails.png",
+    "assets/promo/promo-pipeline.png"
   ]
 }

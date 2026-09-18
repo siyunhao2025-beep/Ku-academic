@@ -60,6 +60,22 @@
 
 ---
 
+## 它长这样
+
+<div align="center">
+
+<img src="assets/promo/promo-pipeline.png" width="100%">
+
+<img src="assets/promo/promo-guardrails.png" width="100%">
+
+<img src="assets/promo/promo-figures.png" width="100%">
+
+<sub>白底等轴测 · 每个图标都是真实素材元件（Tabler, MIT） · 本地合成叠加 · 不是生成模型自由发挥</sub>
+
+</div>
+
+---
+
 ## 这个 Skill 到底做什么（直说，不绕）
 
 **它是一个管住论文写作全流程的东西。** 你交稿，它按固定顺序跑；每一步都留证据，每一个数字都锁住。
