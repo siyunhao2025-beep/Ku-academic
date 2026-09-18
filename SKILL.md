@@ -7,7 +7,9 @@ metadata:
 ---
 # Research Mother / 科研母 Skill
 
-Read `modules/workflow.md` first, then `modules/phases.md` for the six-phase contract.
+**If the user is a beginner or doesn't have a clear topic yet**, read `modules/research-kickoff.md` first before the six-phase pipeline.
+
+Read `modules/workflow.md` first, then `modules/phases.md` for the phase contract.
 Read `modules/lean-mode.md` for the token-economy discipline (default-on, `full` intensity).
 Read only the task-relevant modules next.
 The first domain pack is `domains/example-domain/SKILL.md`; replace it through a project-local domain.json, never through fixed personal or event data.
@@ -27,12 +29,13 @@ The first domain pack is `domains/example-domain/SKILL.md`; replace it through a
 - Lean mode is default-on at `full` intensity: take the laziest route that still works, reuse what the project already has, and never cut anything on the lean-mode do-not-cut list. Saving tokens never justifies weakening a number, a citation check or an evidence-strength word.
 - Report cumulative artifact tokens at the end of every turn from `audit/token-ledger.json`, always labelled with both the accounting basis and the counting method. Conversation tokens are not measurable here; say so rather than substituting an estimate.
 
-## Six-phase contract
-Every research task runs through six phases. Each phase has inputs, execution steps, deliverables and a checklist; see `modules/phases.md`.
+## Phase contract
+Every research task runs through phases. Each phase has inputs, execution steps, deliverables and a checklist; see `modules/phases.md`.
 
 | Phase | 名称 | 产出物 |
 |---|---|---|
-| P1 | 选题与论文调研 | `scope.json`, `glossary.md`, claim-ledger skeleton |
+| P0 | 入门准备与启动检查 | `prep-checklist.md`, `domain-map.md`, `plan.md` |
+| P1 | 选题与论文调研 | `scope.json`, `glossary.md`, `topic-evaluation.json`, claim-ledger skeleton |
 | P2 | 文献综述 | `search-log.json`, `evidence.json`, `gaps.json`, `references.bib` |
 | P3 | 实验设计 | `design.json`, `data-audit.md`, `confounds.json` |
 | P4 | 计算与结果 | `analysis/run-log.json`, `analysis/results/`, `robustness.json` |
@@ -44,6 +47,10 @@ An upstream phase's deliverables are a downstream phase's inputs. Do not start a
 ## Task routing
 | Intent | Load | Expected output |
 |---|---|---|
+| 我是新手/刚入门，不知道怎么开始做研究 | modules/research-kickoff.md + modules/paper-reading-guide.md | P0 准备清单、文献阅读方法、启动三步法 |
+| 我有好几个方向，不知道选哪个 | modules/topic-evaluation.md | 五维打分表、方向选择理由 |
+| 怎么精读一篇论文/怎么真正读懂一篇文献 | modules/paper-reading-guide.md | 三遍阅读法、结构化文献卡片 |
+| 论文写完了怎么打磨/怎么改得更好 | modules/polishing-ladder.md | 四层打磨阶梯、每层检查清单 |
 | Run the whole paper-writing pipeline end to end | modules/paper-orchestrator.md | four stages, five gates, four boxes, an audit trail per paragraph |
 | Distill an advisor's introduction style into a template | modules/intro-distillation.md | paragraph logic breakdown, structural template, prompt; never the advisor's sentences |
 | Block AI self-narration from the manuscript | modules/content-filter.md | pass/reject plus the reason; never deletes study-model sentences |
