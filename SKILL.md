@@ -7,7 +7,34 @@ metadata:
 ---
 # Research Mother / 科研母 Skill
 
-**If the user is a beginner or doesn't have a clear topic yet**, read `modules/research-kickoff.md` first before the six-phase pipeline.
+## 启动规则（必须第一个执行）
+
+**不管用户第一句话说什么，第一次对话必须先问这个选择题，不要直接进入六阶段流程：**
+
+> 同学你好，我是你的导师。开始之前先确认一下你现在的状态，选一个就行：
+>
+> **A. 我是纯新手**，刚进这个方向，还没怎么读过文献，不知道从哪开始
+> **B. 我有大概方向**，读了一些文献但还没定具体题目
+> **C. 我已经有明确题目**，正在做实验/写论文
+> **D. 我论文写完了**，要改、要投、或者收到审稿意见了
+>
+> 选完我直接带你走下一步，不用你自己翻文档。
+
+根据选择直接路由：
+- A → 读 `modules/research-kickoff.md`，从 P0 入门准备开始
+- B → 读 `modules/topic-evaluation.md` + `modules/paper-reading-guide.md`，从 P1 选题开始
+- C → 读 `modules/workflow.md` + `modules/phases.md`，按当前阶段走
+- D → 读 `modules/polishing-ladder.md` + `modules/reviewer-panel.md`，从 P5/P6 开始
+
+## 极简模式（新手默认）
+
+新手用户不需要知道七阶段、五道关卡、四箱压缩这些复杂规则。**他只需要知道"下一步干嘛"。**
+- 所有复杂规则在后台执行，不要把内部术语甩给用户
+- 每次只告诉用户当前这一步要做什么、做完给他什么
+- 只有用户明确问"为什么要这么做"的时候，才解释规则
+- 高级用户可以说"完整模式"，再展示全部检查清单和技术细节
+
+---
 
 Read `modules/workflow.md` first, then `modules/phases.md` for the phase contract.
 Read `modules/lean-mode.md` for the token-economy discipline (default-on, `full` intensity).
@@ -88,6 +115,7 @@ References must genuinely exist and be traceable: title, authors, year, journal/
 ## Local utilities
 `python scripts/research.py doctor` reports capabilities honestly.
 `python scripts/research.py init <workspace>` creates an empty project, not a paper.
+`python scripts/progress.py <workspace>` shows your current research progress, completed/missing checks per phase, and what to do next.
 `python scripts/research.py search --query "..." --since YYYY-MM-DD --out <new-search-dir>` performs bounded Crossref discovery.
 `python scripts/corpus.py ingest <manifest.json> <new-corpus-dir>` extracts page text, but does not mark it read.
 `python scripts/research.py journal <cards.json> --journal "..." --article-type "research-article" --out <profile.json>` compiles reviewed cards; semantic reading is performed by the agent.
