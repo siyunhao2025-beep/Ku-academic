@@ -2,9 +2,11 @@
 
 [返回首页](../README.md) · [阶段总控](../modules/phases.md) · [同类对比来源](PEER_COMPARISON.md)
 
-本文件定义六阶段之间的**通过条件**、**数值阈值**和**产物的数据结构**。
+本文件定义七阶段之间的**通过条件**、**数值阈值**和**产物的数据结构**。
 
 **先说清楚阈值的性质：** 下面所有数字都是**可配置的工程下限**，用来逼人停下来检查，**不是统计充分性保证，也不是任何期刊的规定**。不要用调低阈值的方式把一次试运行标成正式验证。
+
+**闸门由脚本硬执行，不靠模型自觉：** 每个闸门都对应 `scripts/progress.py gate <workspace> <下一阶段>` 的非零退出。未通过时脚本逐条列出缺失项，流程停在当前阶段；不允许凭记忆宣布通过、不允许删改检查项强行通过。
 
 ---
 
@@ -12,11 +14,25 @@
 
 | 闸门 | 位置 | 核心问题 | 不过怎么办 |
 |---|---|---|---|
+| Gate 0 | P0 → P1 | 入门准备做扎实了吗？ | 补精读卡片、领域地图或和导师对齐，不要带着空白进选题 |
 | Gate 1 | P1 → P2 | 问题立得住吗？ | 回 P1 重写问题，不带着模糊问题做检索 |
 | Gate 2 | P2 → P3 | 证据够不够支撑设计？ | 补检索或补全文；不是"差不多就行" |
 | Gate 3 | P3 → P4 | 设计能执行吗？ | 缩范围或换数据，不要缩标准 |
 | Gate 4 | P4 → P5 | 结果站得住吗？ | 补稳健性检查；不要直接开始写 |
 | Gate 5 | P5 → P6 | 稿子能投吗？ | 按未过项返工，不要带病投稿 |
+
+---
+
+## 一·五、Gate 0：入门准备的完整性
+
+| 指标 | 默认下限 | 含义 |
+|---|---|---|
+| 准备清单 `prep-checklist.md` | 全部勾选 | 工具/环境/数据访问/账号逐项落实，不是写了就算 |
+| 领域地图 `domain-map.md` | 实质内容（≥200 字） | 基于 3–5 篇综述梳理，不是空标题 |
+| 精读卡片 | ≥ 2 篇且字段完整 | 用 `reading.py check` 校验；没填卡片只算"下载过" |
+| 研究计划 `plan.md` | 含时间里程碑 | 3 个月计划，能说出第一个小结果什么时候出 |
+
+**Gate 0 不考知识量，只考"有没有带着地图和问题上路"。** 卡片可由 `reading.py card` 生成、`check` 校验、`sync` 同步进 evidence.json。
 
 ---
 
@@ -148,9 +164,10 @@
   "kind": "original",
   "domain": "example-domain",
   "status": "needs_inputs",
-  "stage": "P1",
+  "stage": "P0",
   "created": "2026-09-17T00:00:00Z",
   "gates": {
+    "gate0": {"status": "not_run"},
     "gate1": {"status": "not_run"},
     "gate2": {"status": "not_run"},
     "gate3": {"status": "not_run"},
@@ -160,7 +177,7 @@
 }
 ```
 
-`status` 取值顺序：`needs_inputs → scoped → reviewed → designed → computed → drafted → submitted`
+`status` 取值顺序：`needs_inputs → prepped → scoped → reviewed → designed → computed → drafted → submitted`（`prepped` 为 P0 完成、通过 Gate 0 后的状态）。
 
 ### `scope.json`（P1）
 
@@ -176,6 +193,39 @@
   "domain": "example-domain"
 }
 ```
+
+### `topic-evaluation.json`（P0→P1，由 `scripts/topic_score.py` 生成/计算）
+
+```json
+{
+  "candidates": [
+    {
+      "name": "方向A",
+      "objective_inputs": {
+        "total_hits_10y": 230,
+        "recent3_ratio": 0.42,
+        "high_cited_reviews_mentioning_gap": 4,
+        "high_cited_count": 6,
+        "applications_or_projects": 3,
+        "data_available": "ready",
+        "method_mature": "mature",
+        "first_result_months": 3
+      },
+      "subjective_scores": {
+        "risk": {"score": 4, "reason": "失败也有观测事实可写"},
+        "resource": {"score": 5, "reason": "课题组强项，有人带"}
+      },
+      "scores": {"feasibility": 5.0, "innovation": 3.0, "value": 5.0,
+                 "risk": 4, "resource": 5},
+      "total_score": 4.35
+    }
+  ],
+  "ranked": ["方向A", "方向B"],
+  "recommendation": "..."
+}
+```
+
+客观三维（可行性/创新性/价值）由检索数据计算；风险、资源两维必须本人与导师确认并写理由，缺任一数据脚本拒绝排名。总分 < 3.0 淘汰；多个 ≥ 3.5 时选可行性最高者。创新性打满分还要求 ≥3 篇高被引综述明确提到该缺口，否则按"死路保护"封顶 3 分。
 
 ### `evidence.json`（P2，每条记录）
 
@@ -200,6 +250,8 @@
 `claim_level` ∈ `{observation, association, inference, bibliographic}`
 
 **约束**：`metadata_only` 只能支持 `bibliographic` 层的句子。用 `metadata_only` 支持 `inference` 属于不通过。
+
+**精读卡片联动**：三遍法精读的核心文献由 `scripts/reading.py sync` 写入，带 `is_core_reading: true`、`reading_card`（卡片路径）、`evidence_level: full_text`、`relation_to_my_work`（`SUPPORTS / CONTRADICTS_MY_HYPOTHESIS / CONDITION_MISMATCH / METHOD_REFERENCE`），`claim_level` 由卡片勾选的结论强度（观测事实/统计关联/机制假设）映射。**精读不等于核验**：同步后 `citation_verdict` 仍为 `UNRESOLVED`、`support_status` 为空，必须再跑身份与支持两道核验才能计入 Gate 2。
 
 ### `design.json`（P3）
 

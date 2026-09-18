@@ -1,6 +1,6 @@
 ---
 name: research-mother
-description: Orchestrate evidence-grounded research with replaceable domain packs across six explicit phases (topic and paper investigation, literature review, experiment design, computation, figures and manuscript writing, conclusion and revision): literature discovery and reviews, study design, real analysis, research roadmaps and schematic figures, genuine citation provenance and claim-support verification, de-AI writing, methods, manuscript development, contribution-driven supplementation, journal-corpus style learning and scientific editing. Use when a researcher asks to build or run a research workflow, distill a field or journal, write a review or paper from evidence, verify whether references actually exist and actually support the sentence, produce research diagrams, reduce AI traces in academic prose, or improve a manuscript without defensive boilerplate.
+description: Orchestrate evidence-grounded research with replaceable domain packs across seven explicit phases (onboarding/preparation, topic and paper investigation, literature review, experiment design, computation, figures and manuscript writing, conclusion and revision): literature discovery and reviews, study design, real analysis, research roadmaps and schematic figures, genuine citation provenance and claim-support verification, de-AI writing, methods, manuscript development, contribution-driven supplementation, journal-corpus style learning and scientific editing. Use when a researcher asks to build or run a research workflow, distill a field or journal, write a review or paper from evidence, verify whether references actually exist and actually support the sentence, produce research diagrams, reduce AI traces in academic prose, or improve a manuscript without defensive boilerplate.
 license: MIT
 metadata:
   version: "0.5.0"
@@ -9,7 +9,7 @@ metadata:
 
 ## 启动规则（必须第一个执行）
 
-**不管用户第一句话说什么，第一次对话必须先问这个选择题，不要直接进入六阶段流程：**
+**不管用户第一句话说什么，第一次对话必须先问这个选择题，不要直接进入七阶段流程：**
 
 > 同学你好，我是你的导师。开始之前先确认一下你现在的状态，选一个就行：
 >
@@ -71,6 +71,8 @@ Every research task runs through phases. Each phase has inputs, execution steps,
 
 An upstream phase's deliverables are a downstream phase's inputs. Do not start a phase whose inputs are missing; fix the upstream phase first. Gate thresholds and deliverable schemas are in `docs/PHASE_GATES.md`.
 
+**Hard gates are enforced by the script, not by the model's say-so.** Before leaving a phase, run `python scripts/progress.py gate <workspace> <next-phase>`. A non-zero exit means the phase is not passed: show the user the exact missing items (as multiple-choice options where possible) and stay in the current phase. Never declare a gate passed from memory, never delete or weaken a check to force a pass, and never lower a threshold without recording the change and reason in `audit/review.md`. The same rule applies to topic scoring (`topic_score.py score` refuses to rank on missing data) and reading cards (`reading.py check` refuses incomplete cards).
+
 ## Task routing
 | Intent | Load | Expected output |
 |---|---|---|
@@ -115,9 +117,12 @@ References must genuinely exist and be traceable: title, authors, year, journal/
 ## Local utilities
 `python scripts/research.py doctor` reports capabilities honestly.
 `python scripts/research.py init <workspace>` creates an empty project, not a paper.
-`python scripts/progress.py <workspace>` shows your current research progress, completed/missing checks per phase, and what to do next.
+`python scripts/progress.py <workspace>` shows content-gated progress per phase (it inspects what is inside artifacts, not merely whether files exist) and what to do next.
+`python scripts/progress.py gate <workspace> <P0..P6>` is the hard phase gate: it exits non-zero and lists every unmet upstream item before a later phase may start. Do not bypass it; thresholds mirror docs/PHASE_GATES.md and may be overridden only via domain.json `gates`.
+`python scripts/topic_score.py init <workspace> [--names "A,B"]` creates the five-dimension topic scoring worksheet; `... score <workspace>` computes objective scores from search data, refuses to rank while risk/resource scores (which need the advisor) are missing, then ranks and applies the <3.0 elimination rule.
 `python scripts/research.py search --query "..." --since YYYY-MM-DD --out <new-search-dir>` performs bounded Crossref discovery.
 `python scripts/corpus.py ingest <manifest.json> <new-corpus-dir>` extracts page text, but does not mark it read.
+`python scripts/reading.py card <workspace> --title "..." [--author --year --doi --file]` creates a three-pass close-reading card; `list`/`check` enforce the required fields (a card with empty required fields is "downloaded", not "read"); `sync` writes complete cards into evidence.json as full_text core readings with claim_level mapped from the stated strength, while leaving citation_verdict=UNRESOLVED for the two citation checks.
 `python scripts/research.py journal <cards.json> --journal "..." --article-type "research-article" --out <profile.json>` compiles reviewed cards; semantic reading is performed by the agent.
 `python scripts/research.py check-changes <changes.json> <evidence.json>` checks contracts, not scientific truth.
 `python scripts/research.py checkpoint <workspace> <stage> --inputs ... --outputs ...` records artifacts.
