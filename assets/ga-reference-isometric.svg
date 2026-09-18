@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 460" font-family="Helvetica, Arial, sans-serif">
+  <rect width="800" height="460" fill="#ffffff"/>
+  <text x="400" y="34" text-anchor="middle" font-size="15" fill="#3a4152">Conceptual isometric graphical-abstract scaffold (style anchor)</text>
+
+  <!-- 斜切平台 -->
+  <polygon points="120,200 620,200 700,330 200,330" fill="#eef1f7" stroke="#d7dde8" stroke-width="1.5"/>
+
+  <!-- 块A 输入 (230,250) -->
+  <polygon points="230,227 270,250 230,273 190,250" fill="#cfe8d8"/>
+  <polygon points="190,250 230,273 230,301 190,278" fill="#a9d4b6"/>
+  <polygon points="230,273 270,250 270,278 230,301" fill="#8cc4a0"/>
+  <text x="230" y="208" text-anchor="middle" font-size="12" fill="#2f6e47">Input / Data</text>
+
+  <!-- 块B 方法 (390,225) -->
+  <polygon points="390,202 430,225 390,248 350,225" fill="#d6e6f7"/>
+  <polygon points="350,225 390,248 390,276 350,253" fill="#a8c8ec"/>
+  <polygon points="390,248 430,225 430,253 390,276" fill="#8ab4e0"/>
+  <text x="390" y="183" text-anchor="middle" font-size="12" fill="#2a5f9e">Method</text>
+
+  <!-- 块C 结果 (540,255) -->
+  <polygon points="540,232 580,255 540,278 500,255" fill="#fde6c9"/>
+  <polygon points="500,255 540,278 540,306 500,283" fill="#f4c48a"/>
+  <polygon points="540,278 580,255 580,283 540,306" fill="#eab26f"/>
+  <text x="540" y="213" text-anchor="middle" font-size="12" fill="#9c6420">Result</text>
+
+  <!-- 块D 结论 (640,310) -->
+  <polygon points="640,290 674,310 640,330 606,310" fill="#e7e3f5"/>
+  <polygon points="606,310 640,330 640,354 606,334" fill="#c4bce0"/>
+  <polygon points="640,330 674,310 674,334 640,354" fill="#a99dcf"/>
+  <text x="640" y="372" text-anchor="middle" font-size="12" fill="#5a4f8a">Conclusion</text>
+
+  <!-- 流线箭头 -->
+  <defs>
+    <marker id="g" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#2e9e5b"/></marker>
+    <marker id="b" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#2b7fd4"/></marker>
+    <marker id="o" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#e08a2e"/></marker>
+  </defs>
+  <line x1="275" y1="258" x2="345" y2="240" stroke="#2e9e5b" stroke-width="4" marker-end="url(#g)"/>
+  <line x1="435" y1="238" x2="495" y2="258" stroke="#2b7fd4" stroke-width="4" marker-end="url(#b)"/>
+  <line x1="585" y1="278" x2="600" y2="305" stroke="#e08a2e" stroke-width="4" marker-end="url(#o)"/>
+
+  <!-- Legend -->
+  <g font-size="11" fill="#3a4152">
+    <rect x="560" y="395" width="210" height="52" rx="6" fill="#ffffff" stroke="#d7dde8"/>
+    <rect x="572" y="407" width="12" height="4" fill="#2e9e5b"/><text x="590" y="412">data flow</text>
+    <rect x="572" y="421" width="12" height="4" fill="#2b7fd4"/><text x="590" y="426">information flow</text>
+    <rect x="572" y="435" width="12" height="4" fill="#e08a2e"/><text x="590" y="440">analysis / causal flow</text>
+  </g>
+</svg>

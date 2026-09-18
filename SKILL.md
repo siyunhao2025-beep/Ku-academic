@@ -45,7 +45,7 @@ An upstream phase's deliverables are a downstream phase's inputs. Do not start a
 | Intent | Load | Expected output |
 |---|---|---|
 | Run the whole paper-writing pipeline end to end | modules/paper-orchestrator.md | four stages, five gates, four boxes, an audit trail per paragraph |
-| Distil an advisor's introduction style into a template | modules/intro-distillation.md | paragraph logic breakdown, structural template, prompt; never the advisor's sentences |
+| Distill an advisor's introduction style into a template | modules/intro-distillation.md | paragraph logic breakdown, structural template, prompt; never the advisor's sentences |
 | Block AI self-narration from the manuscript | modules/content-filter.md | pass/reject plus the reason; never deletes study-model sentences |
 | Keep every sentence anchored to the core thesis | modules/topic-anchoring.md | anchor match report, off-topic sentences, how to link them |
 | Check a paragraph hits the bullseye | modules/bullseye-check.md | target alignment, text-figure conflicts, flat data narration |
@@ -64,6 +64,7 @@ An upstream phase's deliverables are a downstream phase's inputs. Do not start a
 | Supplement an existing manuscript | modules/supplementation.md | substantive patch plan, source support, tracked changes |
 | Describe experiments/methods, plot data | modules/analysis-methods-figures.md | run-linked methods, data-derived figures and provenance |
 | Produce a research roadmap or schematic figure | modules/figures.md | roadmap + schematic + figure manifest with color logic |
+| Produce a 2.5D isometric graphical abstract / opening hero figure | modules/figures.md §七 | blueprint → author review → render → four-axis check; conceptual illustration only |
 | Reduce AI traces in academic prose | modules/deai-writing.md + assets/deai-checklist.md | revised prose with an executed evidence-first self-check |
 | Explain the workflow to a non-expert user | assets/plain-language-prompts.md | plain-language guidance, one next action per reply |
 | Save tokens without losing function | modules/lean-mode.md + docs/TOKEN_ACCOUNTING.md | named ledger entries with basis and method labelled |
@@ -105,5 +106,4 @@ References must genuinely exist and be traceable: title, authors, year, journal/
 
 ## Completion report
 Distinguish: implemented / tested / source staged / host installed / live validated / waiting for corpus or data.
-Before reporting completion, cite or link actual files and execution results. Never call a registry entry an installation, a text extraction a reading, a schema pass a scientific validation, or a metadata hit a verified claim.
-The strongest available label is `READY_FOR_HUMAN_SUBMISSION_CHECK`. Never state an acceptance probability and never guarantee acceptance.
+Before reporting completion, cite or link actual files and execution results. Never call a registry entry an installation, a text extraction a reading, a schema pass a scientific validation, or a metadata hit a verified claim. The strongest available label is `READY_FOR_HUMAN_SUBMISSION_CHECK`. Never state an acceptance probability and never guarantee acceptance.
