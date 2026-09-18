@@ -1,4 +1,17 @@
-﻿<div align="center">
+<div align="center">
+
+**改到第 9 版，把 12.5 写成了 21.5，交出去三天才发现。**
+
+这不是你粗心，是一个人扛了一整条流水线。
+
+它替你盯着那些你最不可能盯的地方：数字、引用、跑题的句子、被压丢的定义。
+你只管研究，它负责让最后交出去的那版——**还是对的**。
+
+</div>
+
+---
+
+<div align="center">
 
 <img src="assets/hero-anime.png" alt="Cool-Academic — 通用科研母 Skill × 可替换领域包，从 0 到 1" width="100%">
 
@@ -201,6 +214,8 @@ macOS / Linux：
 
 配色逻辑、色差自检阈值、跨图一致性规则与图注写法见 [图的规则](modules/figures.md)。
 
+**加：一张 2.5D 开篇主视觉图（可选）。** 论文最前面那张"一眼看懂"的 Graphical Abstract——等轴测微缩模型 + 彩色流箭头，把整篇的核心系统画成一个画面。两阶段出图（先文字蓝图、人审、再渲染），画后四轴人眼核对；它是概念示意，不替代上面三类图。规则与风格锚点见 [图的规则 · 第七节](modules/figures.md)。
+
 ## 精简模式：省 token，但不省科学
 
 精简模式默认开启（`full` 档），纪律来自 [ponytail](https://github.com/obra/ponytail) 式的"最懒但真的能用"。一句话：**懒是指效率高，不是指马虎。**
@@ -246,12 +261,12 @@ macOS / Linux：
 | [四箱与事实锁](modules/four-box-compression.md) | 阶段2/3：分箱上限、红锁升级、二分搜索、导出原始存档 |
 | [阶段闸门](docs/PHASE_GATES.md) | 阶段通过条件、数值阈值、产物数据结构 |
 | [文献真实性](modules/evidence-integrity.md) | 引用四态判定、六类支持状态、高风险错配、待确认标记 |
-| [图的规则](modules/figures.md) | 线路图、原理示意图、数据图、配色逻辑与图表检查清单 |
+| [图的规则](modules/figures.md) | 线路图、原理示意图、数据图、2.5D 开篇主视觉图、配色逻辑与图表检查清单 |
 | [降 AI 模块](modules/deai-writing.md) | 反过度纠正红线、句式节奏、中文硬约束、交付前自查 |
 | [精简模式](modules/lean-mode.md) | 触发方式、生效范围、绝不砍的清单、省 token 的具体动作 |
 | [Token 统计口径](docs/TOKEN_ACCOUNTING.md) | 能测什么、公式与偏差、两种累计口径、展示形式 |
 | [目标期刊范文获取](modules/journal-sourcing.md) | 自动获取的目标/输入/输出、人工下载兜底清单、状态回填 |
-| [审稿人评审](modules/reviewer-panel.md) | 3–5 位独立审稿人的七维评分、意见登记、不平均的结论判定 |
+| [审稿人评审](modules/reviewer-panel.md) | 3–5 位独立审稿人的七维评分、意见登记、不平均的分歧结论 |
 | [讲解版 Word](modules/explainer-docx.md) | 七节固定结构、无依赖生成真实 .docx、数字一致性纪律 |
 | [海报制作](modules/poster.md) | 三个必答问题、尺寸表、版式引擎、色板逻辑与已知边界 |
 | [PPT 技能（第三方）](skills/ppt/MISSING_DEPENDENCIES.md) | 飞书幻灯片技能的 31 个文件；**先看缺失依赖清单** |
