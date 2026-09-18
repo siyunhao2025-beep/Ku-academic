@@ -1,0 +1,9 @@
+{
+  "owner": "siyunhao2025-beep",
+  "repo": "Ku-academic",
+  "display_name": "Cool-Academic",
+  "related_repositories": {
+    "math-modeling-to-sci-skill": "The legacy source repository this project was migrated from. Recorded in docs/MIGRATION.md and docs/LEGACY_VERIFICATION.md as provenance, so it may legitimately appear in GitHub URLs. It is not this project."
+  },
+  "note": "Single source of truth for the repository slug used in internal URLs. The project's display name is Cool-Academic, but the GitHub repository is still named Ku-academic. Links must use the slug that exists today: GitHub redirects the old slug to the new one after a rename, but not the other way round, so the old slug keeps working both before and after. When the repository is renamed, change repo here and run python -m unittest tests.test_repository_identity -v, which lists every file still using the old slug."
+}

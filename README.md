@@ -30,7 +30,7 @@
 
 **爱研究，也爱生活。** 好的工具该把时间还给你，而不是再拿走一点。
 
-[开始使用](docs/GETTING_STARTED.md) · [下载 Skill 安装包](https://github.com/siyunhao2025-beep/Cool-Academic/releases/latest) · [复制场景提示词](docs/USE_CASES.md) · [目标期刊范文获取](modules/journal-sourcing.md) · [Token 统计口径](docs/TOKEN_ACCOUNTING.md) · [查看测试](https://github.com/siyunhao2025-beep/Cool-Academic/actions)
+[开始使用](docs/GETTING_STARTED.md) · [下载 Skill 安装包](https://github.com/siyunhao2025-beep/Ku-academic/releases/latest) · [复制场景提示词](docs/USE_CASES.md) · [目标期刊范文获取](modules/journal-sourcing.md) · [Token 统计口径](docs/TOKEN_ACCOUNTING.md) · [查看测试](https://github.com/siyunhao2025-beep/Ku-academic/actions)
 
 </div>
 
@@ -105,7 +105,7 @@ v0.2.0 的规则不是凭空写的。本次实际检索并读取了八个同类�
 把下面这段发给 AI，无需先在电脑安装 Python：
 
 ```text
-@GitHub 请读取 siyunhao2025-beep/Cool-Academic 的根目录 SKILL.md，
+@GitHub 请读取 siyunhao2025-beep/Ku-academic 的根目录 SKILL.md，
 再读取 modules/workflow.md 与当前任务需要的模块。
 使用 research-mother，加载 example-domain 领域包。
 根据我上传的文献、稿件、代码和结果，先建立项目状态和证据矩阵，再推进研究。
@@ -117,15 +117,15 @@ AI 必须实际读到仓库文件，而不是只看到仓库名称。这是**会
 
 ### B. 想安装为 Skill：下载轻量包
 
-进入 **[Releases 下载页](https://github.com/siyunhao2025-beep/Cool-Academic/releases/latest)**，下载 `Cool-Academic-v0.3.0-skill.zip`。它包含 `research-mother/SKILL.md` 及配套模块；不要把 GitHub 自动生成的 `Source code (zip)` 当成同一个安装包。
+进入 **[Releases 下载页](https://github.com/siyunhao2025-beep/Ku-academic/releases/latest)**，下载名为 `Cool-Academic-v<版本号>-skill.zip` 的附件（版本号以该页实际文件名为准）。它包含 `research-mother/SKILL.md` 及配套模块；不要把 GitHub 自动生成的 `Source code (zip)` 当成同一个安装包。
 
 具有 Skills 上传权限的 ChatGPT 工作区：**Plugins → Skills → Create → Upload from your computer**，上传 ZIP，完成扫描并确认安装后，再说“使用 research-mother……”。没有该入口时，使用路线 A，或在支持文件与代码执行的对话中上传 ZIP、要求解压读取。以实际账号界面为准；GitHub 更新不会自动替换已上传副本。[官方安装说明](https://help.openai.com/en/articles/20001066-skills-in-chatgpt)
 
 ### C. 想在电脑处理文件：运行本地工具
 
 ```bash
-git clone https://github.com/siyunhao2025-beep/Cool-Academic.git
-cd Cool-Academic
+git clone https://github.com/siyunhao2025-beep/Ku-academic.git
+cd Ku-academic
 python -m venv .venv
 ```
 

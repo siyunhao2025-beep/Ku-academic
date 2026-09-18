@@ -13,7 +13,7 @@
 
 ## 2. 下载哪个文件？
 
-打开 [Releases](https://github.com/siyunhao2025-beep/Cool-Academic/releases/latest)，在 Assets 中下载 **Cool-Academic-v0.3.0-skill.zip**。同时提供 SHA256SUMS.txt，供核验下载文件。此 ZIP 内应只有一个 research-mother 顶层目录，包含 SKILL.md、modules、domains、scripts 和 docs。
+打开 [Releases](https://github.com/siyunhao2025-beep/Ku-academic/releases/latest)，在 Assets 中下载名为 **Cool-Academic-v<版本号>-skill.zip** 的附件（版本号以该页实际文件名为准）。同时提供 SHA256SUMS.txt，供核验下载文件。此 ZIP 内应只有一个 research-mother 顶层目录，包含 SKILL.md、modules、domains、scripts 和 docs。
 
 GitHub 的 Code → Download ZIP 或 Release 中的 Source code 是完整仓库源码，更适合开发者。它与可上传的 Skill 包不是同一文件，校验值也不同。
 
@@ -26,7 +26,7 @@ GitHub 的 Code → Download ZIP 或 Release 中的 Source code 是完整仓库�
 GitHub 方式可复制：
 
 ```text
-@GitHub 读取 siyunhao2025-beep/Cool-Academic 根目录 SKILL.md，
+@GitHub 读取 siyunhao2025-beep/Ku-academic 根目录 SKILL.md，
 再读取 modules/workflow.md。根据我的任务加载相关模块，不要一次加载全部上游仓库。
 使用 research-mother，加载 example-domain。
 本次任务：根据附件整理研究问题、证据矩阵和论文框架。
