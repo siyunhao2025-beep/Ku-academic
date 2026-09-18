@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/hero.svg" alt="Cool-Academic — 通用科研母 Skill × 可替换领域包，从 0 到 1" width="100%">
+<img src="https://aka.doubaocdn.com/s/YP7PkDDuB5" alt="Cool-Academic — 通用科研母 Skill × 可替换领域包，从 0 到 1" width="100%">
 
 </div>
 
@@ -130,7 +130,7 @@ AI 必须实际读到仓库文件，而不是只看到仓库名称。这是**会
 
 进入 **[Releases 下载页](https://github.com/siyunhao2025-beep/Ku-academic/releases/latest)**，下载名为 `Cool-Academic-v<版本号>-skill.zip` 的附件（版本号以该页实际文件名为准）。它包含 `research-mother/SKILL.md` 及配套模块；不要把 GitHub 自动生成的 `Source code (zip)` 当成同一个安装包。
 
-具有 Skills 上传权限的 ChatGPT 工作区：**Plugins → Skills → Create → Upload from your computer**，上传 ZIP，完成扫描并确认安装后，再说“使用 research-mother……”。没有该入口时，使用路线 A，或在支持文件与代码执行的对话中上传 ZIP、要求解压读取。以实际账号界面为准；GitHub 更新不会自动替换已上传副本。[官方安装说明](https://help.openai.com/en/articles/20001066-skills-in-chatgpt)
+具有 Skills 上传权限的 ChatGPT 工作区：**Plugins → Skills → Create → Upload from your computer**，上传 ZIP，完成扫描并确认安装后，再说"使用 research-mother……"。没有该入口时，使用路线 A，或在支持文件与代码执行的对话中上传 ZIP、要求解压读取。以实际账号界面为准；GitHub 更新不会自动替换已上传副本。[官方安装说明](https://help.openai.com/en/articles/2023-08-01-skills-in-chatgpt)
 
 ### C. 想在电脑处理文件：运行本地工具
 
