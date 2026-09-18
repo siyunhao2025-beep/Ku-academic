@@ -1,13 +1,13 @@
-<div align="center">
+﻿<div align="center">
 
-<img src="https://aka.doubaocdn.com/s/YP7PkDDuB5" alt="Cool-Academic — 通用科研母 Skill × 可替换领域包，从 0 到 1" width="100%">
+<img src="assets/hero-anime.png" alt="Cool-Academic — 通用科研母 Skill × 可替换领域包，从 0 到 1" width="100%">
 
 </div>
 
 <table width="100%" cellspacing="0" cellpadding="0" border="0">
   <tr>
     <td width="60%" valign="top" style="padding-right:28px;">
-      <h3>凌晨两点，第 7 版。导师回了三个字：<b>「还是不对」</b>。</h3>
+      <h3>凌晨两点，第 7 版。导师回了四个字：<b>「待会儿睡」</b>。</h3>
       <p><b>论文最难的不是写，是改。</b><br>改到第 5 版，你开始凭记忆写数字；<br>改到第 9 版，你已经说不清手里这版到底对不对。</p>
       <p><b>Cool-Academic 不是帮你写作文的。</b><br>它是一条带护栏、带审计日志的流水线：<br>每个数字上锁，每句话对回主旨，每次改动留痕。</p>
       <h4>这些事，你可能这周刚经历过</h4>
