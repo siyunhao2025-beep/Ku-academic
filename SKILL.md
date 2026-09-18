@@ -3,7 +3,7 @@ name: research-mother
 description: Orchestrate evidence-grounded research with replaceable domain packs across six explicit phases (topic and paper investigation, literature review, experiment design, computation, figures and manuscript writing, conclusion and revision): literature discovery and reviews, study design, real analysis, research roadmaps and schematic figures, genuine citation provenance and claim-support verification, de-AI writing, methods, manuscript development, contribution-driven supplementation, journal-corpus style learning and scientific editing. Use when a researcher asks to build or run a research workflow, distill a field or journal, write a review or paper from evidence, verify whether references actually exist and actually support the sentence, produce research diagrams, reduce AI traces in academic prose, or improve a manuscript without defensive boilerplate.
 license: MIT
 metadata:
-  version: "0.4.0"
+  version: "0.5.0"
 ---
 # Research Mother / 科研母 Skill
 
@@ -44,6 +44,13 @@ An upstream phase's deliverables are a downstream phase's inputs. Do not start a
 ## Task routing
 | Intent | Load | Expected output |
 |---|---|---|
+| Run the whole paper-writing pipeline end to end | modules/paper-orchestrator.md | four stages, five gates, four boxes, an audit trail per paragraph |
+| Distil an advisor's introduction style into a template | modules/intro-distillation.md | paragraph logic breakdown, structural template, prompt; never the advisor's sentences |
+| Block AI self-narration from the manuscript | modules/content-filter.md | pass/reject plus the reason; never deletes study-model sentences |
+| Keep every sentence anchored to the core thesis | modules/topic-anchoring.md | anchor match report, off-topic sentences, how to link them |
+| Check a paragraph hits the bullseye | modules/bullseye-check.md | target alignment, text-figure conflicts, flat data narration |
+| Place citations, especially in the conclusion | modules/citation-placement.md | unresolved keys, cited-minimum findings, existing-reference recommendations |
+| Compress context under the token brake | modules/four-box-compression.md | per-box max ratio, red-lock recall, dropped-items list, original-archive export |
 | Start/continue research or write a review | modules/workflow.md + modules/phases.md | scope, evidence matrix, claim/figure/section map |
 | Distill a field or methods | modules/field-distillation.md | source-linked capability cards and tests |
 | Latest papers / refresh references | modules/literature.md | dated search log, screened candidates, change decisions |
@@ -92,6 +99,9 @@ References must genuinely exist and be traceable: title, authors, year, journal/
 `python scripts/poster.py choices` prints the three mandatory poster questions (size, language, output form).
 `python scripts/poster.py plan --size ... --lang ... --output ... --out <spec.json>` refuses while any of the three is unanswered.
 `python scripts/poster.py render <spec.json> --out <poster.svg|poster.pptx>` renders the poster; overlapping layout exits 2.
+`python scripts/gates.py run <manuscript.json> --out <gates.json> --report <gates.md>` runs all five gates in fixed order; a rejection stops that paragraph.
+`python scripts/boxes.py init|add|locks|compress|search|budget|export` manages the four boxes, fact locks and context compression.
+`python scripts/locks.py verify <before> <after>` proves no red-locked fact was lost, changed or invented between two versions.
 
 ## Completion report
 Distinguish: implemented / tested / source staged / host installed / live validated / waiting for corpus or data.

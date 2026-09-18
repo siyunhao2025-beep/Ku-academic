@@ -356,5 +356,68 @@ iconpark_tool / color_contrast_check / gen_svg_charts）与 2 个 XML 文件
 明确标为"无法执行"，不要报告为已通过。
 ```
 
+## 23. 跑完整的论文写作流水线
+
+```text
+使用 research-mother，加载 modules/paper-orchestrator.md，按四阶段跑。
+
+阶段0（可选）：如果我要写引言，先用 modules/intro-distillation.md
+蒸馏导师引言的段落逻辑，只输出框架，禁止复制导师原句。
+引言我定稿后再存入引言箱原始存档。
+
+阶段1：其余章节写作。每段都要跑完五道关卡，顺序不许变：
+内容过滤器 → 主题锚定 → 靶心校验 → 去AI味润色 → 引文校验与布控。
+
+核心主旨与核心科学问题我写作前给你，作为永久参照基准，全程不变。
+domain_keywords 我填自己的仪器名与参数名。
+
+五道关卡里：
+- 前序驳回就让该段落停下，后续关卡不要假装跑过；
+- 第4关我如果不给润色结果，这一关就不算通过；
+- 每一关边界都要跑一次红锁校验，数字被改动就驳回。
+
+全部通过的段落才允许入箱存档，并告诉我哪些段落没入库、卡在哪一关。
+```
+
+## 24. 单独查一次五道关卡
+
+```text
+使用 research-mother 跑 scripts/gates.py：
+
+python scripts/gates.py run manuscript.json \
+  --out review/gates.json --report review/gates.md
+
+然后告诉我：
+1. 每段卡在哪一关、为什么；
+2. 可入库与不可入库的段落清单；
+3. 哪些段落是"未执行"而不是"通过"——不要把没跑的关卡报成通过。
+
+注意：图文一致性只在我提供了图件数值时比对，没提供就报 cannot_check，
+不要猜图里画了什么。
+```
+
+## 25. Token 刹车与四箱压缩
+
+```text
+使用 research-mother，加载 modules/four-box-compression.md。
+
+先看刹车：
+python scripts/boxes.py budget --window <N> --history <N> --query <N> --reserve <N>
+
+这四个数我从平台用量页拿给你。如果我有哪个没给，你必须返回 unknown
+并告诉我缺哪个，不要用估算值替我做决定。
+
+到阈值后：
+1. python scripts/boxes.py locks <ws> <box> 看每箱的红黄绿分布；
+2. python scripts/boxes.py search <ws> 二分搜索每箱最大可行倍率；
+3. 报告：各箱压缩率、红锁召回率（必须 100%）、黄锁保留率、丢失条目清单；
+4. 结果箱 C 不许压缩；超过箱子上限就报错，不要硬压。
+
+最后导出：
+python scripts/boxes.py export <ws> --out export/full.md --provenance export/prov.json
+导出必须只用原始存档，并把 source=original_archive 的来源证明给我看。
+```
+
+
 
 
