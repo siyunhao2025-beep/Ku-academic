@@ -16,6 +16,10 @@ import json
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import figures  # noqa: E402  图件护栏（单一事实源，规则见 modules/figures.md）
+import access   # noqa: E402  引用句子强度 × 访问级别护栏
+
 # ---------- 阈值（工程下限，可被 domain.json 覆盖） ----------
 DEFAULT_THRESHOLDS = {
     "gate1_candidates_per_question": 8,   # 每个子问题候选文献数
@@ -246,15 +250,39 @@ def check_p5(ws: Path, thr):
                  if isinstance(c, dict))
     r.append((bool(claims) and linked, "每个论点都挂了证据/结果", f"{len(claims)} 个论点"))
 
+    # 图件护栏：直接复用 figures.check_one，规则单一事实源在 modules/figures.md
     fm = load_json(ws / "figures" / "manifest.json")
-    figs = fm.get("figures", fm) if isinstance(fm, dict) else fm
-    figs = figs if isinstance(figs, list) else []
-    types_ = {f.get("type") for f in figs if isinstance(f, dict)}
-    r.append(("roadmap" in types_, "科研线路图已产出", ""))
-    r.append(("schematic" in types_, "原理示意图已产出（标注概念示意）", ""))
-    reviewed = [f for f in figs if isinstance(f, dict) and f.get("visual_review") == "passed"]
-    r.append((len(figs) > 0 and len(reviewed) == len(figs),
-              "所有图经过人工视觉审查", f"{len(reviewed)}/{len(figs)}"))
+    fig_errors = []
+    figs = []
+    if not isinstance(fm, dict):
+        fig_errors.append("figures/manifest.json 缺失或损坏（先 figures.py init）")
+    else:
+        figs = [f for f in (fm.get("figures") or []) if isinstance(f, dict)]
+        types_ = {f.get("type") for f in figs}
+        if "roadmap" not in types_:
+            fig_errors.append("缺科研线路图 roadmap")
+        if "data" not in types_:
+            fig_errors.append("缺数据图 data")
+        if "schematic" not in types_:
+            if not (fm.get("schematic_not_needed_reason") or "").strip():
+                fig_errors.append("缺原理示意图，或在 schematic_not_needed_reason 写明不需要的理由")
+        for f in figs:
+            errs, _ = figures.check_one(ws, f)
+            fig_errors.extend(errs)
+    r.append((len(fig_errors) == 0,
+              "图件护栏通过（三类图/无障碍配色/冗余通道/矢量/可复现链/人眼审查署名）",
+              "；".join(fig_errors[:3]) if fig_errors else f"{len(figs)} 张图"))
+
+    # 引用访问级别护栏：只有存在 citation-provenance 时才硬查（向后兼容早期项目）
+    prov = load_json(ws / "audit" / "citation-provenance.json")
+    citations = prov.get("citations") if isinstance(prov, dict) else None
+    if isinstance(citations, list) and citations:
+        acc_errors = []
+        for c in citations:
+            acc_errors.extend(access.evaluate_citation(c)["errors"])
+        r.append((len(acc_errors) == 0,
+                  "定量/机制句访问级别达标（access 句子分级，无付费墙硬写）",
+                  "；".join(acc_errors[:3]) if acc_errors else f"{len(citations)} 条引用"))
 
     gates = load_json(ws / "review" / "gates.json")
     paragraphs = gates.get("paragraphs", []) if isinstance(gates, dict) else []

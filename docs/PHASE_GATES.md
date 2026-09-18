@@ -130,8 +130,10 @@
 
 - [ ] `citation_verdict` 中 `UNRESOLVED` 数量为 0
 - [ ] 高风险错配数量为 0
-- [ ] 线路图与示意图已产出（或已说明为何该任务不需要示意图）
-- [ ] 数据图全部经人工视觉审查
+- [ ] 定量/机制句访问级别达标（`scripts/access.py check` 无阻断，`audit/access-report.json` 留档）
+- [ ] 线路图与示意图已产出（或已在 `schematic_not_needed_reason` 说明为何不需要）
+- [ ] 数据图全部经人工视觉审查（`scripts/figures.py check` 无阻断，每张图 `visual_review.status=passed` 且有署名/时间）
+- [ ] 若中途改过上一阶段产物，`scripts/impact.py analyze` 的受影响下游均已重做并重过闸门
 - [ ] 降 AI 自查第一层全过（见 `assets/deai-checklist.md`）
 - [ ] AI 辅助披露已按期刊要求处理
 
@@ -235,21 +237,39 @@
   "source": "文件路径或 DOI",
   "locator": "p.5, Fig.3 或 run ID",
   "evidence_level": "full_text",
+  "access_level": "full_text",
+  "sentence_tier": "quantitative",
   "citation_verdict": "VERIFIED",
   "support_status": "SUPPORTS",
   "conditions": {
-    "instrument": "...", "altitude": "...", "latitude_coordinate": "...",
-    "local_time": "...", "event_phase": "...", "baseline": "..."
+    "population_or_sample": "研究对象/样本",
+    "setting_or_context": "场景/条件背景",
+    "time_window": "时间范围或阶段",
+    "grouping_or_coordinate": "分组/坐标/分类口径",
+    "comparator_or_baseline": "对照或基线",
+    "domain_specific": {}
   },
   "claim": "该文献支持的主张",
   "claim_level": "observation"
 }
 ```
 
-`evidence_level` ∈ `{metadata_only, abstract_only, full_text, project_result}`
+`evidence_level` / `access_level` ∈ `{metadata_only, abstract_only, full_text, project_result}`（两者同义，记录实际读到的深度）
 `claim_level` ∈ `{observation, association, inference, bibliographic}`
+`sentence_tier` ∈ `{background, method, quantitative, causal}`
 
-**约束**：`metadata_only` 只能支持 `bibliographic` 层的句子。用 `metadata_only` 支持 `inference` 属于不通过。
+**条件维度随领域变化**：上面 `conditions` 只是通用槽，具体字段由领域包 `project_parameters` 定义（例如空间物理为仪器/高度/纬度坐标/地方时/事件阶段/静日基线，完整填法见 `domains/sample-space-physics/domain.json`）。母流程不假设任何领域的条件字段名。
+
+**访问级别按句子强度精准卡死（不连坐背景句）**：
+
+| sentence_tier | 最低 access_level | 需定位页/图/表 |
+|---|---|---|
+| background | metadata_only | 否 |
+| method | abstract_only | 否 |
+| quantitative | full_text | 是 |
+| causal | full_text | 是 |
+
+`metadata_only` 只能支撑 `background`/`bibliographic` 层句子；用 `metadata_only`/`abstract_only` 写定量数字或机制因果属于不通过。达不到时只允许两条合法出路：获取合法全文（`scripts/access.py resolve` 走 Unpaywall 的出版社/机构库/作者自存档，禁用盗版），或把句子**显式降级并改写**。由 `scripts/access.py check` 逐条校验，报告写入 `audit/access-report.json`。
 
 **精读卡片联动**：三遍法精读的核心文献由 `scripts/reading.py sync` 写入，带 `is_core_reading: true`、`reading_card`（卡片路径）、`evidence_level: full_text`、`relation_to_my_work`（`SUPPORTS / CONTRADICTS_MY_HYPOTHESIS / CONDITION_MISMATCH / METHOD_REFERENCE`），`claim_level` 由卡片勾选的结论强度（观测事实/统计关联/机制假设）映射。**精读不等于核验**：同步后 `citation_verdict` 仍为 `UNRESOLVED`、`support_status` 为空，必须再跑身份与支持两道核验才能计入 Gate 2。
 
@@ -258,15 +278,17 @@
 ```json
 {
   "hypotheses": [{"id": "H1", "statement": "...", "decision_rule": "..."}],
-  "parameters": {"instrument_version": null, "...": null},
+  "parameters": {"data_source_version": null, "<domain_parameter>": null},
   "matching_rules": "...",
   "alternative_settings": [{"id": "A1", "change": "...", "reason": "..."}],
   "confounds": [{"id": "C1", "factor": "...", "control": "..."}],
-  "uncertainty": {"definition": "SD", "sampling_unit": "per orbit"},
+  "uncertainty": {"definition": "SD", "sampling_unit": "per <independent resampling unit>"},
   "failure_modes": ["..."],
   "data_audit_verdict": "can_proceed"
 }
 ```
+
+`parameters` 的具体字段名由领域包 `project_parameters` 决定（母流程只强制"每个字段有值或 `null`"）；`sampling_unit` 必须是本研究真正的独立重采样单位（如按事件、按个体、按批次），平滑后的点不是独立样本。
 
 ### `analysis/run-log.json`（P4，每条运行）
 
@@ -309,28 +331,36 @@
 
 ```json
 {
+  "schematic_not_needed_reason": null,
   "figures": [
     {
       "id": "fig1",
       "type": "roadmap",
-      "source_data": ["..."],
+      "version": "actual",
+      "source_data": ["analysis/results/..."],
       "script": "figures/plot_fig1.py",
       "params": {},
       "axes": {"x": "...", "y": "..."},
       "colorbar": null,
       "masks": "...",
-      "colors": {"palette": "okabe-ito", "redundant_encoding": "marker shape"},
-      "uncertainty": {"type": "SD", "sampling_unit": "per orbit"},
+      "colors": {"palette": "okabe-ito", "n_series": 2,
+                 "redundant_encoding": "marker shape"},
+      "uncertainty": {"type": "SD", "sampling_unit": "per <independent unit>"},
       "caption": "...",
+      "conceptual": false,
       "outputs": ["figures/fig1.pdf", "figures/fig1.png"],
-      "visual_review": "passed",
-      "notes": "概念示意，非观测结果"
+      "visual_review": {"status": "passed", "reviewed_by": "署名",
+                        "reviewed_at": "ISO-8601", "notes": "..."},
+      "notes": ""
     }
   ]
 }
 ```
 
-`visual_review` 必须由人眼确认，不能凭文件存在填 `passed`。
+- `type` ∈ `{roadmap, schematic, data}`；roadmap 与 data 必须有，schematic 缺失时 `schematic_not_needed_reason` 必须写明理由。
+- 数据图 `colors.palette` 必须在无障碍名单（okabe-ito / tol-* / viridis / cividis / magma / plasma / inferno），禁用 jet/rainbow；`n_series>1` 必须有 `redundant_encoding`，`n_series>6` 判拆图；schematic 必须 `conceptual=true` 且图注含"概念示意/Conceptual"。
+- `visual_review` 是对象而非字符串：`status=passed` 必须同时有 `reviewed_by` 与 `reviewed_at`。**人眼确认不能由文件存在推断**；脚本只校验审查证据是否齐全，不替代看图。
+- 上述机器可判项由 `python scripts/figures.py check <workspace>` 硬执行（规则全文见 `modules/figures.md` 第八节）。
 
 ---
 

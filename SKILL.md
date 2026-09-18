@@ -39,7 +39,7 @@ metadata:
 Read `modules/workflow.md` first, then `modules/phases.md` for the phase contract.
 Read `modules/lean-mode.md` for the token-economy discipline (default-on, `full` intensity).
 Read only the task-relevant modules next.
-The first domain pack is `domains/example-domain/SKILL.md`; replace it through a project-local domain.json, never through fixed personal or event data.
+The neutral blank domain pack is `domains/example-domain/SKILL.md`; `domains/sample-space-physics/` is a fully-filled worked example (space physics) provided only to show how to fill a pack — it is a teaching sample, never a default. For your own field, copy example-domain, rename it, and fill it through a project-local domain.json; never hard-code personal or one-event data into the mother skill.
 
 ## Execution contract
 - Establish available files, tools, upstream source versions and project state before claiming work is done.
@@ -50,7 +50,7 @@ The first domain pack is `domains/example-domain/SKILL.md`; replace it through a
 - No synthetic scientific results, invented references, invented sample counts or claims of reading inaccessible full text.
 - A reference must pass two independent checks before it may support a sentence: bibliographic identity (does it exist, are the metadata right) and claim support (does it actually say this). A resolvable DOI is not a verified claim.
 - Never state a number the evidence cannot support, and never strengthen a hedged finding while editing language. Reducing AI traces must not manufacture over-claiming.
-- Do not turn absence of wind/conductivity observations into generic defensive paragraphs. Calibrate the specific mechanism claim, preserve material limitations once, and keep the argument moving.
+- Do not turn absence of a key explanatory or confounding variable into generic defensive paragraphs. Calibrate the specific mechanism claim to the variables actually observed, preserve each material limitation once, and keep the argument moving. (Which variable is "key" is defined by the active domain pack, not hard-coded to any field.)
 - Language editing preserves physics, quantities, units and evidence strength. It does not promise acceptance or evasion of AI detectors.
 - Express uncertainty honestly. When something cannot be verified, mark it `待确认` with what was checked and what is still needed. Never let "could not check" read as "clean".
 - Lean mode is default-on at `full` intensity: take the laziest route that still works, reuse what the project already has, and never cut anything on the lean-mode do-not-cut list. Saving tokens never justifies weakening a number, a citation check or an evidence-strength word.
@@ -99,7 +99,9 @@ An upstream phase's deliverables are a downstream phase's inputs. Do not start a
 | Make slides / edit a PPTX | skills/ppt/SKILL.md | deck built or edited per that skill; read skills/ppt/MISSING_DEPENDENCIES.md first |
 | Supplement an existing manuscript | modules/supplementation.md | substantive patch plan, source support, tracked changes |
 | Describe experiments/methods, plot data | modules/analysis-methods-figures.md | run-linked methods, data-derived figures and provenance |
-| Produce a research roadmap or schematic figure | modules/figures.md | roadmap + schematic + figure manifest with color logic |
+| Produce a research roadmap or schematic figure | modules/figures.md | roadmap + schematic + figure manifest with color logic, enforced by `scripts/figures.py` |
+| An upstream artifact changed / rework or revision — what downstream must be redone and where to roll back | modules/change-management.md | change severity (L0–L4), `impact.py` impact report, rollback SOP |
+| A citation is behind a paywall — which sentences still stand / how to get full text legally | modules/evidence-integrity.md §访问分级 | sentence-tier gating via `scripts/access.py`, legal Unpaywall fallback |
 | Produce a 2.5D isometric graphical abstract / opening hero figure | modules/figures.md §七 | blueprint → author review → render → four-axis check; conceptual illustration only |
 | Reduce AI traces in academic prose | modules/deai-writing.md + assets/deai-checklist.md | revised prose with an executed evidence-first self-check |
 | Explain the workflow to a non-expert user | assets/plain-language-prompts.md | plain-language guidance, one next action per reply |
@@ -127,6 +129,9 @@ References must genuinely exist and be traceable: title, authors, year, journal/
 `python scripts/research.py check-changes <changes.json> <evidence.json>` checks contracts, not scientific truth.
 `python scripts/research.py checkpoint <workspace> <stage> --inputs ... --outputs ...` records artifacts.
 `python scripts/research.py check <workspace>` detects hash changes and downstream invalidation.
+`python scripts/impact.py graph` prints the seven-phase artifact dependency graph; `python scripts/impact.py analyze <workspace> [--changed rel ...] [--strict]` propagates a change (or checkpoint hash drift when --changed is omitted) and lists the root cause, every contaminated downstream artifact with its redo action, the propagation chain, and the earliest stage to roll back to; it writes `audit/impact-report.json`.
+`python scripts/figures.py palettes` prints the accessible colour hex values; `python scripts/figures.py init|check <workspace>` enforces the figure manifest — three figure types (or a justified schematic waiver), accessible palettes only (jet/rainbow rejected), a non-colour redundant channel for multi-series, >6 series forces a split, vector output, the source_data→script→output reproducible chain, and a signed human `visual_review`. It checks evidence of review, never the picture itself.
+`python scripts/access.py tiers` prints the sentence-tier/access-level table; `python scripts/access.py check <workspace>` gates each citation by `sentence_tier` against the actual `access_level` (quantitative/causal sentences require full text plus a page/figure/table locator; background/method sentences are not over-blocked); `python scripts/access.py resolve <doi> --email <you>` finds legal open-access full text through Unpaywall (publisher / repository / author self-archive only — never piracy) and fails honestly to `待确认` when offline or not found.
 `python scripts/lean.py measure <path...>` counts artifact tokens (tiktoken when available, labelled heuristic otherwise).
 `python scripts/lean.py ledger <workspace> <step> --artifacts <paths...>` appends a measured step and prints the running total.
 `python scripts/lean.py report <workspace>` prints the cumulative artifact-token ledger.

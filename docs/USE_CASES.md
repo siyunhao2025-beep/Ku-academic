@@ -114,7 +114,12 @@ PARTIALLY_SUPPORTS 必须把句子收窄到文献真正覆盖的范围，不是�
 不要因为题名关键词重叠就推断支持关系。
 
 重点检查六类高风险错配：综述当原始实验、关联当因果、模拟当观测、
-高度纬度地方时范围不匹配、趋势方向相反、二手来源给精确数字。
+研究范围/条件不匹配、趋势方向相反、二手来源给精确数字。
+
+再按句子强度核对访问深度（python scripts/access.py check <workspace>）：
+背景句元数据即可、方法句至少摘要、定量句和机制句必须全文并定位页/图表；
+拿不到全文的只精准卡定量/机制句，可走 Unpaywall 合法获取或显式降级，
+背景/方法句不连坐，绝不使用盗版来源。
 
 输出 audit/citation-provenance.json，含 citations、blockers、warnings、to_confirm。
 查不了的显式标待确认，写明已查到什么、卡在哪、需要什么。
@@ -416,6 +421,57 @@ python scripts/boxes.py budget --window <N> --history <N> --query <N> --reserve 
 最后导出：
 python scripts/boxes.py export <ws> --out export/full.md --provenance export/prov.json
 导出必须只用原始存档，并把 source=original_archive 的来源证明给我看。
+```
+
+## 26. 图件护栏：三类图与无障碍配色硬检查
+
+```text
+使用 research-mother，加载 modules/figures.md。
+先跑 python scripts/figures.py init <workspace> 生成 manifest 骨架，
+我把每张图（roadmap/schematic/data）的源数据、绘图脚本、坐标轴、掩膜、
+配色、系列数、冗余通道、不确定度、图注、输出文件、人眼审查署名填进去。
+
+然后跑 python scripts/figures.py check <workspace>，按阻断项逐条修：
+数据图只用无障碍色板（okabe-ito/tol/viridis/cividis 等），禁用 jet/rainbow；
+多系列必须有形状/线型/纹理/直接标注的冗余通道；超过 6 个系列拆图；
+每张图至少一个矢量输出；source_data→script→outputs 文件真实存在；
+示意图必须标 conceptual 与“概念示意/Conceptual”；
+visual_review=passed 必须有 reviewed_by 和 reviewed_at。
+
+脚本通过只代表文件链和审查证据齐全，图是否科学、美观、数字一致，
+仍由我逐张人眼核对，不要用脚本通过替代看图。
+```
+
+## 27. 上游改了：变更影响分析与回退
+
+```text
+使用 research-mother，加载 modules/change-management.md。
+我改了 [文件/产物]，先判断变更级别（L0 排版 / L1 表述 / L2 结果 /
+L3 设计方法 / L4 问题或证据基础），再跑：
+python scripts/impact.py analyze <workspace> --changed <文件> [--strict]
+
+按报告执行：冻结现场 → 确认回退站点 → 从该站正向重做（重跑/重画/重写/重核）
+→ 重新 checkpoint 更新哈希基线 → 从该站 gate 一路重过到 P6。
+明确告诉我哪些产物可安全保留、哪些必须重做、每条传导链是什么。
+阈值或纳入标准若改动，必须在 audit/review.md 记旧值→新值与理由，
+并评估之前被纳入/排除的条目是否翻转；不准手改结果数字、不准改了上游不传播。
+```
+
+## 28. 付费墙文献：判断哪些句子还能写、合法找全文
+
+```text
+使用 research-mother，加载 modules/evidence-integrity.md 的访问分级一节。
+对我引用了某付费墙文献的句子，先标 sentence_tier（background/method/
+quantitative/causal），跑 python scripts/access.py check <workspace>。
+
+背景句、方法句在元数据/摘要可支撑时保留；定量句和机制句若只有摘要，
+跑 python scripts/access.py resolve <DOI> --email <我的邮箱>，
+只使用 Unpaywall 返回的出版社/机构库/作者自存档合法版本，
+注意 green 版本可能是 accepted manuscript，引用以正式版页码为准。
+
+找不到合法全文时，明确把该句标 待确认：要么我通过图书馆获取，
+要么把句子显式降级改写，不要硬写、不要静默降级，也不要使用盗版来源；
+无网络时如实报错，不要伪造可访问性。
 ```
 
 

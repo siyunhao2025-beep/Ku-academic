@@ -165,7 +165,7 @@ P1 画出草图（回答"打算怎么做"），P4 定稿（回答"实际怎么�
 - [ ] 对数轴、归一化、标准化已明示。
 - [ ] 缺测处断开，没有连线穿越。
 - [ ] 没有截轴或缩放来夸大效应。
-- [ ] 地图类图件写清投影、坐标类型、高度/纬度/地方时约定。
+- [ ] 空间/地图类图件写清投影、坐标类型、时空坐标约定（具体坐标口径以领域包为准）。
 - [ ] 子图编号与正文引用一致。
 - [ ] 图注自足：不看正文也能看懂这张图在说什么。
 - [ ] **这张图被人眼实际看过**，不是"文件存在所以通过"。
@@ -257,7 +257,7 @@ P1 画出草图（回答"打算怎么做"），P4 定稿（回答"实际怎么�
 - **实体清单 3–6 个**（研究对象、数据来源、方法、关键过程、输出），每个写清它对应论文里的哪一句；
 - **箭头清单（必须逐条列，不能只说"有流"）**：起点实体 → 终点实体 → 这根箭头代表什么（能量输入 / 极区加热 / 全球响应 / 观测测量……），每根指定一个颜色；
 - 叙事结构三选一：输入→过程→输出 / 微观→中观→宏观 / 左问题-中方法-右结果；
-- **禁区清单**：明确写出"论文里没有、不许画进去的东西"（例如没研究的纬度带、没用到的雷达、没做的反馈过程）。
+- **禁区清单**：明确写出"论文里没有、不许画进去的东西"（例如没研究的区域/分组、没用到的设备、没做的过程）。
 - **素材选型（治"太 AI"，必填）**：每个实体到下节"素材源"里指定**一个具体元件**（名称 + 来源 + 许可），不许只写"画个卫星"。卫星长什么样、雷达长什么样、地球怎么画，都要有据可查，不许让模型凭空脑补。
 
 蓝图先给作者看一眼：实体对不对？箭头连得对不对？素材选得对不对、能不能商用？有没有把论文根本没做的东西画进去？这一步错了，图再美也是错的。
@@ -334,6 +334,41 @@ P1 画出草图（回答"打算怎么做"），P4 定稿（回答"实际怎么�
 ### 来源借鉴
 
 本节是读了三个同类项目后只取可迁移的做法写成的：AIA（Logic 蓝图 → 人审 → Render 两阶段）、scientific-visual-skills 的 `scientific-paper-figure`（内容槽位 + 叙事结构 + 配色系统 + 生成前自检）、surgical-illustration（画前约束 prompt、画后四档审查、不确定就标给人定）。第一纪律（图标不替文字、关系必指箭头、不编造实体与连接）来自一次实际出图后发现的问题：AI 会自由发挥出论文里没有的箭头和元素、用图标代替明确标签。不搬它们的代码，只搬流程纪律，并与本项目"不编结果、不硬塞图、人眼必过"的原则对齐。
+
+---
+
+## 八、脚本护栏：能机器判的，不靠记性
+
+上面这些规则里，凡是能用文件和字段客观判定的，都由 `scripts/figures.py` 强制执行；人眼该看的，脚本明确声明替代不了。
+
+```bash
+python scripts/figures.py palettes              # 打印 Okabe-Ito / TOL 无障碍色板十六进制值
+python scripts/figures.py init <workspace>      # 生成 figures/manifest.json 三件套骨架
+python scripts/figures.py check <workspace>     # 校验全部图件，有阻断项则非零退出
+```
+
+`check` 把问题分成**阻断项**（必须处理）和**建议项**（提醒）：
+
+| 规则 | 脚本怎么判 | 级别 |
+|---|---|---|
+| 三类图齐全 | 必须有 roadmap 与 data；schematic 缺失时除非在 `schematic_not_needed_reason` 写明理由否则阻断 | 阻断 |
+| 数据图可复现链 | `source_data → script → outputs` 指向的文件必须真实存在，source_data 须在结果/输入登记目录 | 阻断 |
+| 矢量输出 | 每张图 outputs 至少一个 `.pdf/.svg/.eps` | 阻断 |
+| 无障碍配色 | palette 必须在登记名单（okabe-ito / tol-* / viridis / cividis / magma / plasma / inferno）；`jet/rainbow/hsv/gist_rainbow` 直接阻断 | 阻断 |
+| 冗余通道 | 系列数 >1 时 `colors.redundant_encoding` 必须是 marker shape / line style / hatching / direct label 之一 | 阻断 |
+| 系列数上限 | n_series > 6 判为应拆图 | 阻断 |
+| 示意图诚实性 | schematic 必须 `conceptual=true` 且图注/notes 含"概念示意/Conceptual" | 阻断 |
+| 人眼审查证据 | `visual_review.status=passed` 必须同时有 `reviewed_by` 与 `reviewed_at`，且输出文件存在 | 阻断 |
+| 数据来源可疑 | source_data 不在 `analysis/results`、`inputs`、`evidence`、`private-corpus` 下 | 建议 |
+| roadmap 版本 | 未标 planned/actual | 建议 |
+
+**`visual_review` 字段结构（脚本只查证据，不替你看图）：**
+
+```json
+"visual_review": {"status": "passed", "reviewed_by": "署名", "reviewed_at": "ISO时间", "notes": "看到了什么/问题"}
+```
+
+**脚本明确不判的事**：图好不好看、坐标轴标得对不对、误差条含义是否恰当、图上数字与正文是否一致、有没有截轴夸大、箭头关系通不通——这些必须由人按本模块的检查清单逐项看过。脚本通过只代表"文件链完整、审查留有署名记录"，不代表图在科学上正确。P5 阶段还会被 `scripts/progress.py gate <workspace> P6` 复核（所有图 visual_review=passed、roadmap/schematic 齐全）。
 
 ---
 

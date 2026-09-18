@@ -162,3 +162,28 @@
 2. **无红锁时召回率算成 0。** 这会让一个全是背景句的箱子永远无法通过压缩校验。正确语义是"没有红锁要保留 → 召回应为 1.0（空真）"。修改后 D 箱从 1.00× 变为 1.99×。
 
 **诚实说明：** 锚定与靶心的判定是**启发式初筛**（报告里固定标注 `heuristic_term_overlap`），不替代语义判断。测试通过证明的是护栏按设计工作，**不证明**它能判断你的科学结论是否正确。
+
+---
+
+## 七、续：把剩下靠自觉的规则也脚本化（四模块成体系补齐）
+
+v0.5.0 把"写稿/润色"环节的护栏做成了脚本。这一轮把同样的思路推到**图件、返工、取文献、换领域**四件此前仍靠模型自觉的事上，原则不变：**靠结构护栏，不靠模型自觉。**
+
+| 模块 | 新脚本/文档 | 把什么从"提醒"变成"硬拦" |
+|---|---|---|
+| A 图件护栏 | `scripts/figures.py`、`modules/figures.md` 第八节 | 三类图齐全（示意图可写理由豁免）；数据图只用无障碍色板（jet/rainbow 直接拦）；多系列必须有颜色之外的冗余通道、>6 系列判拆图；至少一个矢量输出；`source_data→script→outputs` 文件真实存在；人眼审查必须带署名和时间。脚本只查文件链与审查证据，**不替人看图** |
+| B 变更影响与回退 | `scripts/impact.py`、`modules/change-management.md` | 改了设计/结果/证据后，沿 26 节点七阶段依赖图正向传播，给出受影响产物（重跑/重画/重写/重核 + 最短传导链）、建议回退阶段、可安全保留产物，写 `audit/impact-report.json`；配套 L0–L4 变更分级、回退五步、阈值/纳入标准变更纪律与三条硬禁令 |
+| C 引用分级与合法全文 | `scripts/access.py`、`modules/evidence-integrity.md` | 按句子强度（背景/方法/定量/机制）定最低访问深度；定量句、机制句**必须读到全文并定位页/图/表**，拿不到全文只精准卡死这两类句，不连坐背景句；合法全文走 Unpaywall 指向出版社/机构库/作者自存档，**绝无盗版来源**，无网/无邮箱如实标"待确认"，不伪造可访问性 |
+| D 去领域化 + 示范包 | `domains/sample-space-physics/`、`domains/example-domain/` | 母流程规则型硬编码全部中性化（时间/空间分组、坐标口径、对照基线"以领域包为准"）；`example-domain` 是中性空模板，新增 `sample-space-physics` 作为**填好的教具**（数值仍全为 `null`，配 `parameter_guidance` 教每个参数去哪查），不是默认值 |
+
+**闸门接线：** `scripts/progress.py` 的 P5 闸门直接复用 `figures.check_one` 与 `access.evaluate_citation`（规则单一事实源，不双写）；示意图豁免、visual_review 对象格式在闸门生效，旧的字符串 `"passed"` 不再被默默当作通过。引用分级在存在 `audit/citation-provenance.json` 时硬查，早期项目无此文件则跳过，保持向后兼容。
+
+**分发包补遗：** `config/distribution-files.json` 除本轮 9 个新文件外，一并补上此前遗漏的 `progress.py / reading.py / topic_score.py / test_guardrails.py`、被路由引用但漏打包的四个引导模块（research-kickoff / topic-evaluation / paper-reading-guide / polishing-ladder），以及被引用的 `ga-reference-isometric.svg`、`hero-anime.png`，共 296 条逐条核验存在。
+
+| 检查 | 结果 |
+|---|---|
+| 单元测试 | **Ran 358 tests — OK (skipped=1)**，本轮新增 figures 16、impact 18、access 13、P5 闸门 10 |
+| 仓库校验 | `python scripts/check_repository.py` → **PASS** |
+| 分发包 | 清单 296 条全部存在，`build_distribution` 可复现构建 |
+
+**边界不变：** 这三个脚本同样只保证"流程没被跳过、证据链完整、来源合法"。图好不好看、改动是否动摇论证语义、文献里的科学结论对不对，仍由人判断；拿不到的全文一律标"待确认"，没有任何脚本会替你补一个数字或一个来源。

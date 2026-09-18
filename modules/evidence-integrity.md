@@ -82,13 +82,69 @@
 
 判定支持关系时，必须逐项比对：
 
-- **对象**：是同一个物理量吗？（温度 vs 温度梯度；风速 vs 风场）
-- **范围**：高度、纬度、地方时覆盖对得上吗？
-- **条件**：事件强度、事件阶段、静日基线定义一致吗？
+- **对象**：是同一个量吗？（均值 vs 方差、总量 vs 速率；一个量和它的梯度不是一回事）
+- **范围**：时间、空间/分组、样本的覆盖对得上吗？（具体条件维度以领域包为准）
+- **条件**：处理强度、阶段、对照/基线的定义一致吗？
 - **方法**：是观测、模拟、再分析还是实验室结果？
-- **时间尺度**：瞬时、日变化、季节还是年际？
+- **时间尺度**：瞬时、周期变化、季节还是年际？
 
 任一项明显不匹配，就不能给 `SUPPORTS`。
+
+### 按句子强度决定要读多深：访问分级（access_level）
+
+不是每句话都需要读到全文。一刀切地要求"所有引用都得看全文"既不现实，还会在拿不到全文时把大量本该能写的背景句、方法句也一起卡死；反过来，只凭摘要就写精确数字和机制更是灾难。正确做法是**按这句话主张的强度，决定最低访问深度**，拿不到全文时**精准卡死定量句和机制句**，不连坐。
+
+| 句子强度 `sentence_tier` | 典型写法 | 最低访问级别 `access_level` | 是否定位页/图/表 |
+|---|---|---|---|
+| `background` 背景/书目句 | "X 现象受到广泛关注"、"已有大量研究" | `metadata_only`（元数据准确即可） | 否 |
+| `method` 方法/存在性归因 | "Y 等采用 Z 方法研究了该问题"（不引具体数字、不断言机制） | `abstract_only`（至少读到摘要） | 否 |
+| `quantitative` 定量句 | 精确数字、幅度、比例、阈值、"升高 1.8 倍"、定量对比 | `full_text` | **是**，定位到页/图/表 |
+| `causal` 机制/因果句 | "这是由于……""……导致……""机制是……" | `full_text` | **是**，并核对原文措辞强度 |
+
+访问级别四档（与证据深度 `evidence_level` 同义，记录你**实际读到**的深度）：
+
+- `metadata_only`：只确认了题录元数据（DOI、作者、年份、期刊）；
+- `abstract_only`：读到摘要；
+- `full_text`：读到全文正文；
+- `project_result`：你自己项目产出的结果（最高，可直接支撑定量与机制）。
+
+**级别只能如实填，不能为了让句子过关而虚高。** 读到哪档就填哪档。
+
+**达不到最低级别时，只有两条合法出路，不许硬写、不许静默降级：**
+
+1. **去拿全文**（见下，Unpaywall 合法兜底；图书馆/馆际互借/向作者索取也都合法）；
+2. **把句子显式降级并改写**到现有访问深度能支撑的强度——例如把定量句"升高 1.8 倍"改成方法/背景句"已有研究报道该量在事件期间发生变化"，并在 `action` 记录"已降级，删除具体数值"。
+
+`quantitative`/`causal` 句即使拿到全文，也**必须填 `locator`**（具体页、图、表编号）；"全文已读"四个字不能替代定位——审稿人按你的定位翻不到，等于没读。
+
+#### 合法全文兜底：Unpaywall（禁用盗版来源）
+
+拿不到付费全文时，先走 [Unpaywall](https://unpaywall.org/)——它是合法的开放获取索引，只指向**出版社正式开放页面、机构知识库、作者自存档**三类合规位置：
+
+```bash
+# 查某 DOI 是否有合法免费全文（--email 填你的真实邮箱，Unpaywall 礼貌池要求）
+python scripts/access.py resolve 10.1029/XXXX --email you@example.com
+# 查看整张分级表
+python scripts/access.py tiers
+# 对 citation-provenance.json 逐条校验：哪些句子必须取全文、哪些可降级
+python scripts/access.py check <workspace>
+```
+
+`resolve` 返回 `oa_status`，含义与注意点：
+
+| oa_status | 含义 | 使用注意 |
+|---|---|---|
+| `gold` | 期刊开放获取（出版社，多为 CC 许可） | 最可靠，可直接用 |
+| `green` | 机构库/作者自存档 | **注意版本**：可能是 accepted manuscript，页码/图表与正式版有差异，引用以正式版为准 |
+| `hybrid` | 订阅期刊里单篇开放 | 可用，核对许可 |
+| `bronze` | 出版社页面免费可读但无明确开放许可 | 可读、可核对内容，但不要假定可再分发 |
+| `closed` | 无合法免费全文 | 走图书馆/馆际互借/向作者索取，或降级句子 |
+
+**合规红线：**
+
+- 只使用 Unpaywall 返回的出版社/机构库/作者自存位置，以及图书馆正规渠道；**绝不使用 Sci-Hub 等盗版来源**——盗版不仅有法律风险，其文件版本、页码也不可靠，会污染引用定位。
+- **无网络、未提供邮箱或 Unpaywall 查不到时，脚本明确报错并要求按"待确认"处理，绝不伪造一个 OA 链接或假装能访问全文。**
+- 用了 green/bronze 版本核对内容、最终引用正式版时，在记录里注明实际阅读版本。
 
 ---
 
@@ -101,7 +157,7 @@
 | 1 | **把综述当原始实验引用** | "该文观测到 X"——其实是综述里的二手描述 | 引用原始论文；综述只用于概括领域状态 |
 | 2 | **用关联证据支持因果** | 时间上同步就写成"A 导致 B" | 只写"与……一致"，或补机制证据 |
 | 3 | **把模拟当观测引用** | "观测显示"——其实是模式输出 | 明确写模式/再分析，不写"观测" |
-| 4 | **高度/纬度/地方时范围不匹配** | 拿极区冬季结果支持中纬夏季论断 | 换成匹配条件的文献，或收窄论断 |
+| 4 | **研究范围/条件不匹配** | 拿 A 条件下（某区域/时段/分组/人群）的结果，去支持 B 条件下的论断 | 换成条件匹配的文献，或把论断收窄到文献真正覆盖的条件 |
 | 5 | **趋势方向相反** | 文献报告升高，你写降低 | 按文献方向写，或解释差异来源 |
 | 6 | **用二手来源给精确数字** | 具体数值取自另一篇论文的转述 | 追溯到原始数据来源；追不到就删掉这个数字 |
 
@@ -152,10 +208,13 @@
       "volume_issue_pages": "从来源复制",
       "canonical_instance": "publisher version of record",
       "citation_verdict": "VERIFIED",
+      "sentence_tier": "quantitative",
+      "access_level": "full_text",
+      "locator": "p.4, Fig.2",
       "available_evidence": "full text p.4, Fig.2",
       "support_status": "PARTIALLY_SUPPORTS",
-      "confidence": "中：文献覆盖 60–90 km、冬季，未覆盖夏季",
-      "action": "改句：把论断收窄到冬季与 60–90 km"
+      "confidence": "中：文献只覆盖某一子条件/子范围，未覆盖本研究的目标条件",
+      "action": "改句：把论断收窄到文献实际覆盖的条件与范围"
     }
   ],
   "blockers": [],
@@ -168,8 +227,12 @@
 
 - `citation_verdict` ∈ `{VERIFIED, MISMATCH, UNRESOLVED, RETRACTED}`
 - `support_status` ∈ `{SUPPORTS, PARTIALLY_SUPPORTS, BACKGROUND_ONLY, CONTRADICTS, DOES_NOT_SUPPORT, CANNOT_VERIFY}`
-- `blockers` 里放所有 `CONTRADICTS` / `DOES_NOT_SUPPORT` / `RETRACTED` / `UNRESOLVED` 条目
+- `sentence_tier` ∈ `{background, method, quantitative, causal}`，决定该句最低访问深度（见第二节访问分级表）；缺省时脚本按最严的 `causal` 处理
+- `access_level` ∈ `{metadata_only, abstract_only, full_text, project_result}`，如实记录实际读到的深度；`quantitative`/`causal` 必须为 `full_text`/`project_result`
+- `locator`：`quantitative`/`causal` 句必填，定位到具体页/图/表（如 `p.4, Fig.2`）
+- `blockers` 里放所有 `CONTRADICTS` / `DOES_NOT_SUPPORT` / `RETRACTED` / `UNRESOLVED` 条目，以及访问级别不达句子强度的定量/机制句
 - `to_confirm` 里放所有 `待确认` 条目
+- 访问级别逐条校验与合法 OA 兜底由 `scripts/access.py check|resolve` 执行，报告写入 `audit/access-report.json`
 
 ### 检索日志（与 `modules/literature.md` 共用）
 

@@ -1,0 +1,78 @@
+{
+  "id": "sample-space-physics",
+  "version": "0.1.0",
+  "status": "worked_example_for_learning_not_a_default",
+  "is_teaching_example": true,
+  "scope": "【示例·非默认值】以 TIMED/SABER 卫星观测的热层大气（温度 ktemp / 密度 density，NetCDF）在地磁暴期间的响应为例，演示一个领域包应当怎样填写。换到你自己的研究方向时，请复制 domains/example-domain 重填，不要把这里的字段、检索词或期刊当成你项目的默认设置。本包不含任何已算好的结果或具体数值结论。",
+  "worked_example_question": "地磁暴期间，热层温度/密度相对静日基线的异常幅度，如何随高度、纬度（地理或地磁坐标）、地方时与暴相位而变化？",
+  "search_queries": [
+    "thermosphere density storm response SABER TIMED",
+    "thermospheric temperature geomagnetic storm local time altitude",
+    "neutral density perturbation magnetic storm latitude",
+    "thermosphere storm-time density review",
+    "<your target quantity> <dataset> geomagnetic storm"
+  ],
+  "project_parameters": {
+    "data_source_version": null,
+    "study_window": null,
+    "storm_event_list": null,
+    "quiet_day_baseline_definition": null,
+    "altitude_bins_km": null,
+    "latitude_coordinate": null,
+    "local_time_bins_h": null,
+    "ascending_descending_node": null,
+    "quality_flags": null,
+    "smoothing_window": null,
+    "uncertainty_definition": null,
+    "independent_sampling_unit": null
+  },
+  "parameter_guidance": {
+    "data_source_version": "SABER 数据版本/级别（如 v2.07 Level2A）、NetCDF 变量名（ktemp / density）、下载日期；一律以你实际文件的元数据为准，不从旧项目继承",
+    "study_window": "起止年月；暴时窗口与静日窗口分别多长",
+    "storm_event_list": "暴事件清单：日期、强度指标（Dst / Kp / ap）阈值与来源；阈值必须在看到结果之前固定",
+    "quiet_day_baseline_definition": "静日如何选（Kp 上限、取暴前几天还是同月静日平均）、基线窗口长度",
+    "altitude_bins_km": "高度分箱边界（km），是否等间隔、上下限；缺测高度如何处理",
+    "latitude_coordinate": "用地理纬度还是地磁纬度；坐标转换所用库与版本",
+    "local_time_bins_h": "地方时分箱（小时）；SABER 单星地方时漂移采样如何处理，能否支撑全日变化结论",
+    "ascending_descending_node": "升轨/降轨节点定义，是否分开统计",
+    "quality_flags": "采用哪些质量标记、如何剔除无效检索（无效值不得零填充或当真实低值）",
+    "smoothing_window": "平滑窗口与方法；平滑后的网格点不是独立样本",
+    "uncertainty_definition": "用 SD/SE/CI 还是仪器检索误差/基线误差，基于什么独立单位",
+    "independent_sampling_unit": "真正的独立重采样单位（按暴事件？按轨道？按日？），它决定误差条与显著性，不能按平滑后网格点数计样本量"
+  },
+  "evidence_conditions_schema": {
+    "instrument": "观测仪器/数据集版本",
+    "altitude_range_km": "高度覆盖范围",
+    "latitude_coordinate": "地理/地磁纬度范围",
+    "local_time": "地方时覆盖",
+    "event_phase": "暴相位（初相/主相/恢复相）与强度",
+    "baseline": "静日基线定义"
+  },
+  "checks": [
+    "每个变量写清定义、单位、坐标系（地理/地磁纬度、高度基准、地方时约定）",
+    "解释任何数值前，先记录 SABER 数据版本、变量名（ktemp/density）、质量标记含义与单星地方时漂移",
+    "区分观测事实、统计关联与机制推断；缺少风场/电导率等驱动量时，不得宣称已识别对应的机制项",
+    "静日基线、暴相位、高度/纬度/地方时分箱口径在分析前固定并写入 design.json，改阈值要在 audit/review.md 留痕",
+    "平滑后的网格点不是独立样本；误差条与显著性按真正的独立单位（如一个个暴事件）计算",
+    "不用单颗卫星、单一地方时的覆盖推断全球或全日变化；覆盖缺口显式说明",
+    "不硬编码具体日期、阈值、幅度或个人画像；本示例包不含任何已算好的结果"
+  ],
+  "confounders_candidates": [
+    "太阳活动周/太阳辐射（F10.7）、季节与年际变化",
+    "迁移性潮汐与周日变化（地方时采样不足时与暴响应混淆）",
+    "卫星地方时漂移与轨道覆盖不均",
+    "仪器检索误差随高度变化、不同数据版本之间的差异",
+    "暴前基线选择与暴后恢复时间尺度",
+    "多重比较（高度×纬度×地方时多个分箱同时检验）"
+  ],
+  "journal_candidates": [
+    "Journal of Geophysical Research: Space Physics",
+    "Geophysical Research Letters",
+    "Space Weather",
+    "Journal of Atmospheric and Solar-Terrestrial Physics",
+    "Annales Geophysicae",
+    "Earth and Space Science"
+  ],
+  "journal_note": "以上仅为该领域常见出口的候选清单，范围/体裁/审稿周期/格式以各刊官方作者指南为准，不凭印象核格式。",
+  "learned_capability_cards": []
+}

@@ -15,7 +15,7 @@ P0 入门准备 → P1 选题与论文调研 → P2 文献综述 → P3 实验�
 ## 原创研究
 
 范围与初始问题 → 文献/方法证据 → 设计与数据审计 → 实际计算 → 对照/稳健性检查 → 结果表和图件 → 方法/结果 → 讨论/引言修订 → 摘要/结论 → 科学与引用审查 → 语言修订。
-框架可以早建，但结果和机制不能提前写定。上游参数、基线或样本变化时，重审所有依赖图件、段落和摘要。用 checkpoint/check 记录与检查，而不是声称已实现任意分析代码的自动重跑。
+框架可以早建，但结果和机制不能提前写定。上游参数、基线、结果或证据变化时，用 `scripts/impact.py analyze <workspace> [--changed ...]` 算出受影响的图件、段落、摘要、结论与回退站点，按 `modules/change-management.md` 的分级与 SOP 重做，不靠记忆。用 checkpoint/check 记录哈希、发现漂移，而不是声称已实现任意分析代码的自动重跑。
 
 ## 综述
 
@@ -24,7 +24,7 @@ P0 入门准备 → P1 选题与论文调研 → P2 文献综述 → P3 实验�
 
 ## 每个任务都要出的三类图
 
-科研线路图（从数据到结论的路径）、原理示意图（机制或方法）、数据图（真实结果）。规则与检查清单见 `modules/figures.md`。示意图必须标为概念示意；图件必须经人眼审查，不能凭文件存在报告通过。
+科研线路图（从数据到结论的路径）、原理示意图（机制或方法）、数据图（真实结果）。规则与检查清单见 `modules/figures.md`，机器可判项（三类图齐全、无障碍色板、冗余通道、矢量输出、可复现链、人眼审查署名）由 `scripts/figures.py check` 硬查。示意图必须标为概念示意；图件必须经人眼审查，脚本只校验审查证据，不能凭文件存在报告通过。
 
 ## 文章写完之后的三件交付
 
@@ -48,12 +48,12 @@ P0 入门准备 → P1 选题与论文调研 → P2 文献综述 → P3 实验�
 
 ## 每个引用都要过两道检
 
-身份（是否存在、出处是否准确）与支持（是否真的支持这句话）分开判定，判定值与阻断项见 `modules/evidence-integrity.md`。无法核实的显式标 `待确认`，且不得进入论证链。
+身份（是否存在、出处是否准确）与支持（是否真的支持这句话）分开判定，判定值与阻断项见 `modules/evidence-integrity.md`；并按句子强度（背景/方法/定量/机制）核对实际访问深度，由 `scripts/access.py check` 执行，定量/机制句拿不到合法全文就精准阻断该句、不连坐背景句。无法核实的显式标 `待确认`，且不得进入论证链。
 
 ## 阶段产物
 
 scope.json：研究问题、体裁、时间范围、资料来源、已知限制。
-glossary.md：术语与同义词、坐标与地方时命名约定。
+glossary.md：术语与同义词、坐标/分类体系命名约定（具体口径以领域包为准）。
 evidence.json：已读证据和可定位的来源，含 citation_verdict 与 support_status。
 claim-map.json：论点—证据—结果文件—图表—章节的对应关系。
 analysis/run-log.json：数据/代码哈希、配置、版本、时间、命令、输出、失败。
@@ -61,6 +61,8 @@ methods-map.json：每个操作性 Methods 陈述对应的代码与运行记录�
 figures/manifest.json：源数据、处理、坐标、单位、不确定度定义、配色与冗余编码、输出。
 manuscript/changes.json：有证据支持的修订。
 audit/citation-provenance.json：引用身份与支持判定、blockers、待确认清单。
+audit/access-report.json：句子强度 × 实际访问级别核对，列出必须取全文/可降级的句子。
+audit/impact-report.json：变更影响分析，列受影响下游产物、重做动作与回退站点。
 audit/deai-selfcheck.md：交付前自查记录。
 audit/token-ledger.json：产出物 token 台账，每步含口径与方法标签；对话 token 记 not_measurable_from_here。
 review/panel.json：3–5 位审稿人的七维评分、逐条意见、结论与分歧统计。

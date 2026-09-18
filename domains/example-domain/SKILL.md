@@ -11,6 +11,8 @@ metadata:
 
 **怎么用它：** 复制本目录到你自己的项目，改 `domain.json` 的 `id` / `scope` / `search_queries` / `project_parameters` / `checks` / `journal_candidates`，再改写本文件。领域包是可替换的配置，不是模型权重。
 
+**想看一份填好的样子：** 参考 `domains/sample-space-physics/`（空间物理·热层磁暴方向的完整填写示范，配 `parameter_guidance` 教你每个参数去哪查）。它只是教具、不是默认值——所有具体数值仍为 `null`，必须来自你自己的项目。
+
 ## 填参数的原则
 
 `project_parameters` 里所有值默认是 `null`。填的时候只写**有确切依据的值**：

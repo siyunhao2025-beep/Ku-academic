@@ -78,7 +78,7 @@ python scripts/research.py init runs/my-study --kind original
 python scripts/research.py init runs/my-review --kind review
 ```
 
-两个目录互相独立。填写各项目 domain.json 的仪器版本、事件窗口、基线、分箱、地方时和不确定度设置，再交给模型读取 inputs 中的材料。项目默认 needs_inputs 是正常状态，不表示初始化失败。
+两个目录互相独立。填写各项目 domain.json 的数据源/仪器版本、时间窗口、对照基线、分箱、坐标/分类口径和不确定度设置（具体字段名以你的领域包 `project_parameters` 为准；中性空模板是 `domains/example-domain/`，一份填好的格式示范见 `domains/sample-space-physics/`），再交给模型读取 inputs 中的材料。项目默认 needs_inputs 是正常状态，不表示初始化失败。
 
 联网检索示例（日期需改为实际窗口）：
 
