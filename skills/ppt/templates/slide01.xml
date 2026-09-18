@@ -1,0 +1,50 @@
+<slide xmlns="https://www.larkoffice.com/sml/2.0">
+  <style>
+    <fill>
+      <fillColor color="rgba(255,255,255,1)" />
+    </fill>
+  </style>
+  <data>
+    <img src="@./cherry-logo.png" width="26" height="26" topLeftX="40" topLeftY="25" />
+    <shape type="text" topLeftX="74" topLeftY="27" width="160" height="24">
+      <content fontFamily="思源黑体" fontSize="12" color="rgba(30,34,44,1)" bold="true" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>Cherry Studio</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="716" topLeftY="27" width="204" height="20">
+      <content fontFamily="思源黑体" fontSize="10" color="rgba(93,101,116,1)" bold="false" textAlign="right" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>封面 · 左对齐大标题</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="40" topLeftY="508" width="520" height="18">
+      <content fontFamily="思源黑体" fontSize="10" color="rgba(93,101,116,1)" bold="false" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>Cherry Studio · Internal Template</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="864" topLeftY="508" width="56" height="18">
+      <content fontFamily="思源黑体" fontSize="10" color="rgba(93,101,116,1)" bold="false" textAlign="right" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>01</p>
+      </content>
+    </shape>
+    <img src="@./cherry-logo.png" width="170" height="170" topLeftX="710" topLeftY="206" />
+    <shape type="text" topLeftX="40" topLeftY="164" width="600" height="144">
+      <content fontFamily="思源黑体" fontSize="50" color="rgba(30,34,44,1)" bold="true" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>让每一次表达，</p>
+        <p>都更接近行动</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="40" topLeftY="326" width="594" height="54">
+      <content fontFamily="思源黑体" fontSize="18" color="rgba(93,101,116,1)" bold="false" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>用清晰的结构连接洞察、共识与下一步。</p>
+      </content>
+    </shape>
+    <line type="straight-connector1" startX="40" startY="402" endX="80" endY="402">
+      <border color="rgba(233,70,93,1)" width="4" />
+    </line>
+    <shape type="text" topLeftX="40" topLeftY="420" width="400" height="28">
+      <content fontFamily="思源黑体" fontSize="16" color="rgba(93,101,116,1)" bold="false" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>开始创建</p>
+      </content>
+    </shape>
+  </data>
+</slide>

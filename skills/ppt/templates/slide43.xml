@@ -1,0 +1,132 @@
+<slide xmlns="https://www.larkoffice.com/sml/2.0">
+  <style>
+    <fill>
+      <fillColor color="rgba(255,255,255,1)" />
+    </fill>
+  </style>
+  <data>
+    <img src="@./cherry-logo.png" width="26" height="26" topLeftX="40" topLeftY="25" />
+    <shape type="text" topLeftX="74" topLeftY="27" width="160" height="24">
+      <content fontFamily="思源黑体" fontSize="12" color="rgba(30,34,44,1)" bold="true" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>Cherry Studio</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="716" topLeftY="27" width="204" height="20">
+      <content fontFamily="思源黑体" fontSize="10" color="rgba(93,101,116,1)" bold="false" textAlign="right" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>时间 · 里程碑</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="40" topLeftY="79" width="880" height="50">
+      <content fontFamily="思源黑体" fontSize="32" color="rgba(30,34,44,1)" bold="true" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>四个里程碑，标记项目关键跃迁</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="40" topLeftY="508" width="520" height="18">
+      <content fontFamily="思源黑体" fontSize="10" color="rgba(93,101,116,1)" bold="false" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>Cherry Studio · Internal Template</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="864" topLeftY="508" width="56" height="18">
+      <content fontFamily="思源黑体" fontSize="10" color="rgba(93,101,116,1)" bold="false" textAlign="right" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>43</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="58" topLeftY="190" width="168" height="32">
+      <content fontFamily="思源黑体" fontSize="17" color="rgba(67,103,199,1)" bold="false" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>03.15</p>
+      </content>
+    </shape>
+    <img src="@./lucide-ListChecks-e86e75.png" topLeftX="58" topLeftY="274" width="32" height="32" />
+    <shape type="text" topLeftX="58" topLeftY="317" width="174" height="38">
+      <content fontFamily="思源黑体" fontSize="22" color="rgba(30,34,44,1)" bold="true" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>需求冻结</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="58" topLeftY="365" width="174" height="66">
+      <content fontFamily="思源黑体" fontSize="17" color="rgba(93,101,116,1)" bold="false" textAlign="left" verticalAlign="top" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>范围与优先级确认</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="283" topLeftY="190" width="168" height="32">
+      <content fontFamily="思源黑体" fontSize="17" color="rgba(67,103,199,1)" bold="false" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>04.02</p>
+      </content>
+    </shape>
+    <img src="@./lucide-Cloud-e86e75.png" topLeftX="283" topLeftY="274" width="32" height="32" />
+    <shape type="text" topLeftX="283" topLeftY="317" width="174" height="38">
+      <content fontFamily="思源黑体" fontSize="22" color="rgba(30,34,44,1)" bold="true" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>首版上线</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="283" topLeftY="365" width="174" height="66">
+      <content fontFamily="思源黑体" fontSize="17" color="rgba(93,101,116,1)" bold="false" textAlign="left" verticalAlign="top" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>核心流程可用</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="508" topLeftY="190" width="168" height="32">
+      <content fontFamily="思源黑体" fontSize="17" color="rgba(67,103,199,1)" bold="false" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>04.28</p>
+      </content>
+    </shape>
+    <img src="@./lucide-UserRoundCheck-e86e75.png" topLeftX="508" topLeftY="274" width="32" height="32" />
+    <shape type="text" topLeftX="508" topLeftY="317" width="174" height="38">
+      <content fontFamily="思源黑体" fontSize="22" color="rgba(30,34,44,1)" bold="true" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>规模试点</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="508" topLeftY="365" width="174" height="66">
+      <content fontFamily="思源黑体" fontSize="17" color="rgba(93,101,116,1)" bold="false" textAlign="left" verticalAlign="top" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>覆盖关键团队</p>
+      </content>
+    </shape>
+    <shape type="round-rect" topLeftX="715" topLeftY="260" width="205" height="164" presetHandlers="10">
+      <fill>
+        <fillColor color="rgba(255,240,243,1)" />
+      </fill>
+    </shape>
+    <shape type="text" topLeftX="733" topLeftY="190" width="168" height="32">
+      <content fontFamily="思源黑体" fontSize="17" color="rgba(233,70,93,1)" bold="false" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>05.20</p>
+      </content>
+    </shape>
+    <img src="@./lucide-Cloud-f10802.png" topLeftX="733" topLeftY="274" width="32" height="32" />
+    <shape type="text" topLeftX="733" topLeftY="317" width="174" height="38">
+      <content fontFamily="思源黑体" fontSize="22" color="rgba(30,34,44,1)" bold="true" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>正式发布</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="733" topLeftY="365" width="174" height="66">
+      <content fontFamily="思源黑体" fontSize="17" color="rgba(93,101,116,1)" bold="false" textAlign="left" verticalAlign="top" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>完成全量推广</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="40" topLeftY="472" width="880" height="22">
+      <content fontFamily="思源黑体" fontSize="12" color="rgba(93,101,116,1)" bold="false" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>使用统一节点表示同层级里程碑；仅对确需强调的节点着色。</p>
+      </content>
+    </shape>
+    <line type="straight-connector1" startX="58" startY="240" endX="733" endY="240">
+      <border color="rgba(221,225,232,1)" width="1" />
+    </line>
+    <shape type="ellipse" topLeftX="53" topLeftY="235" width="10" height="10">
+      <fill>
+        <fillColor color="rgba(67,103,199,1)" />
+      </fill>
+    </shape>
+    <shape type="ellipse" topLeftX="278" topLeftY="235" width="10" height="10">
+      <fill>
+        <fillColor color="rgba(67,103,199,1)" />
+      </fill>
+    </shape>
+    <shape type="ellipse" topLeftX="503" topLeftY="235" width="10" height="10">
+      <fill>
+        <fillColor color="rgba(67,103,199,1)" />
+      </fill>
+    </shape>
+    <shape type="ellipse" topLeftX="728" topLeftY="235" width="10" height="10">
+      <fill>
+        <fillColor color="rgba(233,70,93,1)" />
+      </fill>
+    </shape>
+  </data>
+</slide>

@@ -1,0 +1,82 @@
+<slide xmlns="https://www.larkoffice.com/sml/2.0"><style><fill><fillColor color="rgba(255,255,255,1)" /></fill></style><data><img src="@./cherry-logo.png" width="26" height="26" topLeftX="40" topLeftY="25" />
+    <shape type="text" topLeftX="74" topLeftY="27" width="160" height="24"><content fontFamily="思源黑体" fontSize="12" color="rgba(30,34,44,1)" bold="true" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit"><p>Cherry Studio</p></content></shape><shape type="text" topLeftX="716" topLeftY="27" width="204" height="20"><content fontFamily="思源黑体" fontSize="10" color="rgba(93,101,116,1)" bold="false" textAlign="right" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit"><p>方案 · 对比表</p></content></shape><shape type="text" topLeftX="40" topLeftY="79" width="880" height="50"><content fontFamily="思源黑体" fontSize="32" color="rgba(30,34,44,1)" bold="true" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit"><p>关键维度对比，一眼看清差异</p></content></shape><shape type="text" topLeftX="40" topLeftY="133" width="880" height="25"><content fontFamily="思源黑体" fontSize="14" color="rgba(93,101,116,1)" bold="false" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit"><p>每行一个方案，沿同一维度比较。</p></content></shape><shape type="text" topLeftX="40" topLeftY="508" width="520" height="18"><content fontFamily="思源黑体" fontSize="10" color="rgba(93,101,116,1)" bold="false" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit"><p>Cherry Studio · Internal Template</p></content></shape><shape type="text" topLeftX="864" topLeftY="508" width="56" height="18"><content fontFamily="思源黑体" fontSize="10" color="rgba(93,101,116,1)" bold="false" textAlign="right" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit"><p>36</p></content></shape><table topLeftX="40" topLeftY="181" width="880" height="272"><colgroup><col width="176" /><col width="258" /><col width="248" /><col width="198" /></colgroup><tr height="56"><td>
+          <content fontFamily="思源黑体" fontSize="15" color="rgba(30,34,44,1)" bold="true" textAlign="left" verticalAlign="middle" wrap="true" autoFit="normal-auto-fit" lineSpacing="multiple:1.2" paddingLeft="16" paddingRight="12" paddingTop="12" paddingBottom="12">
+            <p>维度</p>
+          </content>
+        <fill><fillColor color="rgba(244,247,253,1)" /></fill></td>
+        <td>
+          <content fontFamily="思源黑体" fontSize="15" color="rgba(30,34,44,1)" bold="true" textAlign="left" verticalAlign="middle" wrap="true" autoFit="normal-auto-fit" lineSpacing="multiple:1.2" paddingLeft="16" paddingRight="12" paddingTop="12" paddingBottom="12">
+            <p>部署效率</p>
+          </content>
+        <fill><fillColor color="rgba(244,247,253,1)" /></fill></td>
+        <td>
+          <content fontFamily="思源黑体" fontSize="15" color="rgba(30,34,44,1)" bold="true" textAlign="left" verticalAlign="middle" wrap="true" autoFit="normal-auto-fit" lineSpacing="multiple:1.2" paddingLeft="16" paddingRight="12" paddingTop="12" paddingBottom="12">
+            <p>协作体验</p>
+          </content>
+        <fill><fillColor color="rgba(244,247,253,1)" /></fill></td>
+        <td>
+          <content fontFamily="思源黑体" fontSize="15" color="rgba(30,34,44,1)" bold="true" textAlign="left" verticalAlign="middle" wrap="true" autoFit="normal-auto-fit" lineSpacing="multiple:1.2" paddingLeft="16" paddingRight="12" paddingTop="12" paddingBottom="12">
+            <p>综合推荐</p>
+          </content>
+        <fill><fillColor color="rgba(244,247,253,1)" /></fill></td>
+        </tr><tr height="72"><td>
+          <content fontFamily="思源黑体" fontSize="17" color="rgba(30,34,44,1)" bold="true" textAlign="left" verticalAlign="middle" wrap="true" autoFit="normal-auto-fit" lineSpacing="multiple:1.2" paddingLeft="16" paddingRight="12" paddingTop="12" paddingBottom="12">
+            <p>我们</p>
+          </content>
+        <fill><fillColor color="rgba(255,255,255,1)" /></fill></td>
+        <td>
+          <content fontFamily="思源黑体" fontSize="16" color="rgba(93,101,116,1)" bold="false" textAlign="left" verticalAlign="middle" wrap="true" autoFit="normal-auto-fit" lineSpacing="multiple:1.2" paddingLeft="16" paddingRight="12" paddingTop="12" paddingBottom="12">
+            <p>即开即用</p>
+          </content>
+        <fill><fillColor color="rgba(255,255,255,1)" /></fill></td>
+        <td>
+          <content fontFamily="思源黑体" fontSize="16" color="rgba(93,101,116,1)" bold="false" textAlign="left" verticalAlign="middle" wrap="true" autoFit="normal-auto-fit" lineSpacing="multiple:1.2" paddingLeft="16" paddingRight="12" paddingTop="12" paddingBottom="12">
+            <p>原生共享</p>
+          </content>
+        <fill><fillColor color="rgba(255,255,255,1)" /></fill></td>
+        <td>
+          <content fontFamily="思源黑体" fontSize="16" color="rgba(93,101,116,1)" bold="false" textAlign="left" verticalAlign="middle" wrap="true" autoFit="normal-auto-fit" lineSpacing="multiple:1.2" paddingLeft="16" paddingRight="12" paddingTop="12" paddingBottom="12">
+            <p>★★★★★</p>
+          </content>
+        <fill><fillColor color="rgba(255,255,255,1)" /></fill></td>
+        </tr><tr height="72"><td>
+          <content fontFamily="思源黑体" fontSize="17" color="rgba(30,34,44,1)" bold="true" textAlign="left" verticalAlign="middle" wrap="true" autoFit="normal-auto-fit" lineSpacing="multiple:1.2" paddingLeft="16" paddingRight="12" paddingTop="12" paddingBottom="12">
+            <p>竞品 A</p>
+          </content>
+        <fill><fillColor color="rgba(255,255,255,1)" /></fill></td>
+        <td>
+          <content fontFamily="思源黑体" fontSize="16" color="rgba(93,101,116,1)" bold="false" textAlign="left" verticalAlign="middle" wrap="true" autoFit="normal-auto-fit" lineSpacing="multiple:1.2" paddingLeft="16" paddingRight="12" paddingTop="12" paddingBottom="12">
+            <p>需配置</p>
+          </content>
+        <fill><fillColor color="rgba(255,255,255,1)" /></fill></td>
+        <td>
+          <content fontFamily="思源黑体" fontSize="16" color="rgba(93,101,116,1)" bold="false" textAlign="left" verticalAlign="middle" wrap="true" autoFit="normal-auto-fit" lineSpacing="multiple:1.2" paddingLeft="16" paddingRight="12" paddingTop="12" paddingBottom="12">
+            <p>文件同步</p>
+          </content>
+        <fill><fillColor color="rgba(255,255,255,1)" /></fill></td>
+        <td>
+          <content fontFamily="思源黑体" fontSize="16" color="rgba(93,101,116,1)" bold="false" textAlign="left" verticalAlign="middle" wrap="true" autoFit="normal-auto-fit" lineSpacing="multiple:1.2" paddingLeft="16" paddingRight="12" paddingTop="12" paddingBottom="12">
+            <p>★★★</p>
+          </content>
+        <fill><fillColor color="rgba(255,255,255,1)" /></fill></td>
+        </tr><tr height="72"><td>
+          <content fontFamily="思源黑体" fontSize="17" color="rgba(30,34,44,1)" bold="true" textAlign="left" verticalAlign="middle" wrap="true" autoFit="normal-auto-fit" lineSpacing="multiple:1.2" paddingLeft="16" paddingRight="12" paddingTop="12" paddingBottom="12">
+            <p>竞品 B</p>
+          </content>
+        <fill><fillColor color="rgba(255,255,255,1)" /></fill></td>
+      <td>
+          <content fontFamily="思源黑体" fontSize="16" color="rgba(93,101,116,1)" bold="false" textAlign="left" verticalAlign="middle" wrap="true" autoFit="normal-auto-fit" lineSpacing="multiple:1.2" paddingLeft="16" paddingRight="12" paddingTop="12" paddingBottom="12">
+            <p>需开发</p>
+          </content>
+        <fill><fillColor color="rgba(255,255,255,1)" /></fill></td>
+      <td>
+          <content fontFamily="思源黑体" fontSize="16" color="rgba(93,101,116,1)" bold="false" textAlign="left" verticalAlign="middle" wrap="true" autoFit="normal-auto-fit" lineSpacing="multiple:1.2" paddingLeft="16" paddingRight="12" paddingTop="12" paddingBottom="12">
+            <p>单人使用</p>
+          </content>
+        <fill><fillColor color="rgba(255,255,255,1)" /></fill></td>
+      <td>
+          <content fontFamily="思源黑体" fontSize="16" color="rgba(93,101,116,1)" bold="false" textAlign="left" verticalAlign="middle" wrap="true" autoFit="normal-auto-fit" lineSpacing="multiple:1.2" paddingLeft="16" paddingRight="12" paddingTop="12" paddingBottom="12">
+            <p>★★</p>
+          </content>
+        <fill><fillColor color="rgba(255,255,255,1)" /></fill></td>
+      </tr></table><img src="@./lucide-ShieldCheck-915923.png" topLeftX="40" topLeftY="464" width="22" height="22" /><shape type="text" topLeftX="74" topLeftY="459" width="846" height="32"><content fontFamily="思源黑体" fontSize="13" color="rgba(30,126,130,1)" bold="false" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit"><p>示例评分仅用于排版展示；请替换为真实比较依据。</p></content></shape></data></slide>

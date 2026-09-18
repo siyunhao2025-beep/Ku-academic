@@ -1,0 +1,289 @@
+schema_version: 1
+theme: Cherry Studio (default; replace with --tokens for another brand)
+colors:
+  brand_coral:
+    hex: '#FF5A5F'
+    rgba: rgba(255,90,95,1)
+    role: 品牌强调/结论/甲方
+  brand_black:
+    hex: '#171717'
+    rgba: rgba(23,23,23,1)
+    role: 标题/正文/图标线条；默认主题不用作填充
+  text_body:
+    hex: '#48484E'
+    rgba: rgba(72,72,78,1)
+    role: 正文
+  text_secondary:
+    hex: '#696970'
+    rgba: rgba(105,105,112,1)
+    role: 次要/说明
+  text_placeholder:
+    hex: '#58585F'
+    rgba: rgba(88,88,95,1)
+    role: 占位文字
+  border_default:
+    hex: '#D6D6D2'
+    rgba: rgba(214,214,210,1)
+    role: 卡片边框
+  bg_white:
+    hex: '#FFFFFF'
+    rgba: rgba(255,255,255,1)
+    role: 画布/卡片底
+  bg_light_red:
+    hex: '#FDEBED'
+    rgba: rgba(253,235,237,1)
+    role: 浅红强调底/短结论卡
+  bg_light_gray:
+    hex: '#F5F5F3'
+    rgba: rgba(245,245,243,1)
+    role: 标签底/浅灰
+  text_white:
+    hex: '#FFFFFF'
+    rgba: rgba(255,255,255,1)
+    role: 深底白字
+  partner_cyan:
+    hex: '#37D8FF'
+    rgba: rgba(55,216,255,1)
+    role: 伙伴/乙方/硬件
+  partner_cyan_deep:
+    hex: '#3796C8'
+    rgba: rgba(55,150,200,1)
+    role: 伙伴深青(文字)
+  dark_bg:
+    hex: '#111111'
+    rgba: rgba(17,17,17,1)
+    role: 深色文字/图标线条；默认主题禁止深色填充
+  palette_255_90_95_0p06:
+    rgba: rgba(255,90,95,0.06)
+    role: 主题允许的辅助颜色
+  palette_255_90_95_0p10:
+    rgba: rgba(255,90,95,0.10)
+    role: 主题允许的辅助颜色
+  palette_255_90_95_0p12:
+    rgba: rgba(255,90,95,0.12)
+    role: 主题允许的辅助颜色
+  palette_255_160_164_1:
+    rgba: rgba(255,160,164,1)
+    role: 主题允许的辅助颜色
+  palette_255_210_213_1:
+    rgba: rgba(255,210,213,1)
+    role: 主题允许的辅助颜色
+  palette_255_220_222_1:
+    rgba: rgba(255,220,222,1)
+    role: 主题允许的辅助颜色
+  palette_255_240_241_1:
+    rgba: rgba(255,240,241,1)
+    role: 主题允许的辅助颜色
+  palette_31_35_41_1:
+    rgba: rgba(31,35,41,1)
+    role: 主题允许的辅助颜色
+  palette_55_55_58_1:
+    rgba: rgba(55,55,58,1)
+    role: 主题允许的辅助颜色
+  palette_226_226_224_1:
+    rgba: rgba(226,226,224,1)
+    role: 主题允许的辅助颜色
+  palette_238_238_236_1:
+    rgba: rgba(238,238,236,1)
+    role: 主题允许的辅助颜色
+  palette_240_240_238_1:
+    rgba: rgba(240,240,238,1)
+    role: 主题允许的辅助颜色
+  palette_245_245_244_1:
+    rgba: rgba(245,245,244,1)
+    role: 主题允许的辅助颜色
+  palette_247_247_246_1:
+    rgba: rgba(247,247,246,1)
+    role: 主题允许的辅助颜色
+  palette_248_248_247_1:
+    rgba: rgba(248,248,247,1)
+    role: 主题允许的辅助颜色
+  palette_250_250_249_1:
+    rgba: rgba(250,250,249,1)
+    role: 主题允许的辅助颜色
+  palette_255_255_255_0p65:
+    rgba: rgba(255,255,255,0.65)
+    role: 主题允许的辅助颜色
+  palette_255_255_255_0p7:
+    rgba: rgba(255,255,255,0.7)
+    role: 主题允许的辅助颜色
+  palette_0_0_0_0:
+    rgba: rgba(0,0,0,0)
+    role: 主题允许的辅助颜色
+  palette_255_190_70_1:
+    rgba: rgba(255,190,70,1)
+    role: 主题允许的辅助颜色
+  palette_244_93_155_1:
+    rgba: rgba(244,93,155,1)
+    role: 主题允许的辅助颜色
+  palette_244_93_155_0p12:
+    rgba: rgba(244,93,155,0.12)
+    role: 主题允许的辅助颜色
+  palette_43_201_209_1:
+    rgba: rgba(43,201,209,1)
+    role: 主题允许的辅助颜色
+  palette_43_201_209_0p12:
+    rgba: rgba(43,201,209,0.12)
+    role: 主题允许的辅助颜色
+  palette_166_107_234_1:
+    rgba: rgba(166,107,234,1)
+    role: 主题允许的辅助颜色
+  palette_166_107_234_0p12:
+    rgba: rgba(166,107,234,0.12)
+    role: 主题允许的辅助颜色
+  palette_34_199_106_1:
+    rgba: rgba(34,199,106,1)
+    role: 主题允许的辅助颜色
+  palette_34_199_106_0p12:
+    rgba: rgba(34,199,106,0.12)
+    role: 主题允许的辅助颜色
+  palette_88_158_247_1:
+    rgba: rgba(88,158,247,1)
+    role: 主题允许的辅助颜色
+  palette_88_158_247_0p12:
+    rgba: rgba(88,158,247,0.12)
+    role: 主题允许的辅助颜色
+  palette_120_220_160_1:
+    rgba: rgba(120,220,160,1)
+    role: 主题允许的辅助颜色
+  flat_ink:
+    hex: '#1E222C'
+    rgba: rgba(30,34,44,1)
+    role: 正文与标题
+  flat_muted:
+    hex: '#5D6574'
+    rgba: rgba(93,101,116,1)
+    role: 次要说明
+  flat_coral:
+    hex: '#E9465D'
+    rgba: rgba(233,70,93,1)
+    role: 重点、会话与行动
+  flat_blue:
+    hex: '#4367C7'
+    rgba: rgba(67,103,199,1)
+    role: 模型与平台类别
+  flat_teal:
+    hex: '#1E7E82'
+    rgba: rgba(30,126,130,1)
+    role: 知识与资料类别
+  flat_purple:
+    hex: '#764EAB'
+    rgba: rgba(118,78,171,1)
+    role: 工具与流程类别
+  flat_edge:
+    hex: '#DDE1E8'
+    rgba: rgba(221,225,232,1)
+    role: 必要细边界
+  flat_connector:
+    hex: '#AEB8C6'
+    rgba: rgba(174,184,198,1)
+    role: 关系连线
+  flat_grid:
+    hex: '#EDEFF4'
+    rgba: rgba(237,239,244,1)
+    role: 图表网格
+  flat_light:
+    hex: '#F7F8FA'
+    rgba: rgba(247,248,250,1)
+    role: 中性分区
+  flat_neutral_tint:
+    hex: '#F6F8FA'
+    rgba: rgba(246,248,250,1)
+    role: 中性浅底分组
+  flat_coral_tint:
+    hex: '#FFF0F3'
+    rgba: rgba(255,240,243,1)
+    role: 重点浅底
+  flat_core_tint:
+    hex: '#FFEDF2'
+    rgba: rgba(255,237,242,1)
+    role: 核心浅底
+  flat_coral_soft:
+    hex: '#FFF6F8'
+    rgba: rgba(255,246,248,1)
+    role: 次要会话类别浅底
+  flat_blue_tint:
+    hex: '#F4F7FD'
+    rgba: rgba(244,247,253,1)
+    role: 模型类别浅底
+  flat_teal_tint:
+    hex: '#F3F9F9'
+    rgba: rgba(243,249,249,1)
+    role: 资料类别浅底
+  flat_purple_tint:
+    hex: '#F8F5FC'
+    rgba: rgba(248,245,252,1)
+    role: 工具类别浅底
+  flat_chart_secondary:
+    hex: '#F6B1BB'
+    rgba: rgba(246,177,187,1)
+    role: 同系列次要数据
+accent_colors:
+- brand_coral
+- partner_cyan
+- partner_cyan_deep
+- palette_255_190_70_1
+- palette_244_93_155_1
+- palette_43_201_209_1
+- palette_166_107_234_1
+- palette_34_199_106_1
+- palette_88_158_247_1
+- palette_120_220_160_1
+- flat_coral
+- flat_blue
+- flat_teal
+- flat_purple
+font_sizes:
+  page_title: 32
+  card_title: 22
+  body: 18
+  caption: 12
+  footer: 10
+  kpi_number: 48
+radii:
+  card: 8
+  tag: 8
+  bar: 16
+spacing:
+  margin: 40
+  block_gap: 24
+  inner_gap: 16
+  grid: 8
+components:
+  conclusion_card:
+    height: 34
+    radius: 12
+    fill: bg_light_red
+    text_color: brand_coral
+    font_size: 16
+    max_per_page: 1
+    max_width: 420
+  primary_cta:
+    fill: bg_white
+    text_color: brand_coral
+    max_per_page: 1
+  header_logo:
+    size: 26
+    pos: 40,25
+  footer:
+    y: 508
+    font_size: 10
+validation:
+  canvas:
+    width: 960
+    height: 540
+  min_font_size: 10
+  max_font_variants: 6
+  max_accent_colors: 2
+  page_background: bg_white
+  forbid_dark_page: true
+  forbid_dark_fills: true
+  dark_luminance_threshold: 60
+  bottom_pill_bar:
+    enabled: true
+    min_y: 430
+    min_width: 420
+    max_height: 60
+    colors:
+    - bg_light_red
+    - brand_coral

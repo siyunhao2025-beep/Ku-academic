@@ -1,0 +1,98 @@
+<slide xmlns="https://www.larkoffice.com/sml/2.0">
+  <style>
+    <fill>
+      <fillColor color="rgba(255,255,255,1)" />
+    </fill>
+  </style>
+  <data>
+    <img src="@./cherry-logo.png" width="26" height="26" topLeftX="40" topLeftY="25" />
+    <shape type="text" topLeftX="74" topLeftY="27" width="160" height="24">
+      <content fontFamily="思源黑体" fontSize="12" color="rgba(30,34,44,1)" bold="true" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>Cherry Studio</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="716" topLeftY="27" width="204" height="20">
+      <content fontFamily="思源黑体" fontSize="10" color="rgba(93,101,116,1)" bold="false" textAlign="right" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>方案 · 三栏核心</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="40" topLeftY="79" width="880" height="50">
+      <content fontFamily="思源黑体" fontSize="32" color="rgba(30,34,44,1)" bold="true" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>一个方案，三个关键支点</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="40" topLeftY="508" width="520" height="18">
+      <content fontFamily="思源黑体" fontSize="10" color="rgba(93,101,116,1)" bold="false" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>Cherry Studio · Internal Template</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="864" topLeftY="508" width="56" height="18">
+      <content fontFamily="思源黑体" fontSize="10" color="rgba(93,101,116,1)" bold="false" textAlign="right" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>04</p>
+      </content>
+    </shape>
+    <shape type="round-rect" topLeftX="40" topLeftY="184" width="280" height="264" presetHandlers="10">
+      <fill>
+        <fillColor color="rgba(244,247,253,1)" />
+      </fill>
+    </shape>
+    <img src="@./lucide-UserRoundCheck-e86e75.png" topLeftX="62" topLeftY="210" width="32" height="32" />
+    <shape type="text" topLeftX="106" topLeftY="207" width="194" height="38">
+      <content fontFamily="思源黑体" fontSize="22" color="rgba(30,34,44,1)" bold="true" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>定位</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="62" topLeftY="276" width="238" height="78">
+      <content fontFamily="思源黑体" fontSize="18" color="rgba(93,101,116,1)" bold="false" textAlign="left" verticalAlign="top" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>明确这套方案服务的对象、要解决的痛点，以及为什么是现在这个时机。</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="62" topLeftY="376" width="238" height="44">
+      <content fontFamily="思源黑体" fontSize="17" color="rgba(67,103,199,1)" bold="false" textAlign="left" verticalAlign="top" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>[写清：面向谁 · 解决什么]</p>
+      </content>
+    </shape>
+    <shape type="round-rect" topLeftX="340" topLeftY="184" width="280" height="264" presetHandlers="10">
+      <fill>
+        <fillColor color="rgba(243,249,249,1)" />
+      </fill>
+    </shape>
+    <img src="@./lucide-FileText-915923.png" topLeftX="362" topLeftY="210" width="32" height="32" />
+    <shape type="text" topLeftX="406" topLeftY="207" width="194" height="38">
+      <content fontFamily="思源黑体" fontSize="22" color="rgba(30,34,44,1)" bold="true" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>交付</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="362" topLeftY="276" width="238" height="78">
+      <content fontFamily="思源黑体" fontSize="18" color="rgba(93,101,116,1)" bold="false" textAlign="left" verticalAlign="top" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>交付什么、分几步、每个阶段的关键产出与验收标准，让推进路径可预期。</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="362" topLeftY="376" width="238" height="44">
+      <content fontFamily="思源黑体" fontSize="17" color="rgba(30,126,130,1)" bold="false" textAlign="left" verticalAlign="top" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>[写清：交付物 · 阶段]</p>
+      </content>
+    </shape>
+    <shape type="round-rect" topLeftX="640" topLeftY="184" width="280" height="264" presetHandlers="10">
+      <fill>
+        <fillColor color="rgba(243,249,249,1)" />
+      </fill>
+    </shape>
+    <img src="@./lucide-Clock-915923.png" topLeftX="662" topLeftY="210" width="32" height="32" />
+    <shape type="text" topLeftX="706" topLeftY="207" width="194" height="38">
+      <content fontFamily="思源黑体" fontSize="22" color="rgba(30,34,44,1)" bold="true" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>节奏</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="662" topLeftY="276" width="238" height="78">
+      <content fontFamily="思源黑体" fontSize="18" color="rgba(93,101,116,1)" bold="false" textAlign="left" verticalAlign="top" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>时间节奏、里程碑和关键决策点，让协作方清楚什么时候该做什么。</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="662" topLeftY="376" width="238" height="44">
+      <content fontFamily="思源黑体" fontSize="17" color="rgba(30,126,130,1)" bold="false" textAlign="left" verticalAlign="top" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>[写清：节奏 · 里程碑]</p>
+      </content>
+    </shape>
+  </data>
+</slide>

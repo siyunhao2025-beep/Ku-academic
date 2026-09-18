@@ -1,0 +1,51 @@
+<slide xmlns="https://www.larkoffice.com/sml/2.0">
+  <style>
+    <fill>
+      <fillColor color="rgba(255,255,255,1)" />
+    </fill>
+  </style>
+  <data>
+    <img src="@./cherry-logo.png" width="26" height="26" topLeftX="40" topLeftY="25" />
+    <shape type="text" topLeftX="74" topLeftY="27" width="160" height="24">
+      <content fontFamily="思源黑体" fontSize="12" color="rgba(30,34,44,1)" bold="true" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>Cherry Studio</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="716" topLeftY="27" width="204" height="20">
+      <content fontFamily="思源黑体" fontSize="10" color="rgba(93,101,116,1)" bold="false" textAlign="right" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>论证 · 引证引用</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="40" topLeftY="508" width="520" height="18">
+      <content fontFamily="思源黑体" fontSize="10" color="rgba(93,101,116,1)" bold="false" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>Cherry Studio · Internal Template</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="864" topLeftY="508" width="56" height="18">
+      <content fontFamily="思源黑体" fontSize="10" color="rgba(93,101,116,1)" bold="false" textAlign="right" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>14</p>
+      </content>
+    </shape>
+    <shape type="round-rect" topLeftX="40" topLeftY="168" width="880" height="254" presetHandlers="12">
+      <fill>
+        <fillColor color="rgba(255,240,243,1)" />
+      </fill>
+    </shape>
+    <shape type="text" topLeftX="66" topLeftY="240" width="54" height="66">
+      <content fontFamily="思源黑体" fontSize="54" color="rgba(233,70,93,1)" bold="true" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>“</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="132" topLeftY="209" width="736" height="124">
+      <content fontFamily="思源黑体" fontSize="44" color="rgba(30,34,44,1)" bold="true" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>设计不是让信息更漂亮，</p>
+        <p>而是让行动更清晰。</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="132" topLeftY="350" width="736" height="36">
+      <content fontFamily="思源黑体" fontSize="16" color="rgba(93,101,116,1)" bold="false" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>— Cherry Studio · Design Principle</p>
+      </content>
+    </shape>
+  </data>
+</slide>

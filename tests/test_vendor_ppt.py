@@ -1,8 +1,11 @@
 """Guards for the vendored PPT skill.
 
-The vendored tree is third-party content: it is preserved verbatim except for
-three documented sibling-path fixes. These tests pin what must stay true, and
-pin the honest declaration of what was never delivered.
+The vendored tree is third-party content. The 31 markdown files are preserved
+verbatim except for three documented sibling-path fixes. In 2026-09 the
+originally-missing executable toolchain was completed by vendoring the upstream
+full implementation `YinsenWANG/feishu-ppt-skill` (MIT). These tests pin what
+must stay true, and keep the honest declaration of what is still NOT provided
+(namely: the old script-name files and the `lark-cli` runtime).
 """
 from pathlib import Path
 import re
@@ -46,8 +49,10 @@ EXPECTED_MD = [
     'references/workflow/local-compat.md',
 ]
 
-# Declared absent: never delivered by the source dump, never fabricated here.
-MISSING_ARTIFACTS = [
+# Old script-name files referenced by the original merged doc dump. They are NOT
+# created under these exact names; the upstream toolchain uses different command
+# names (validate.py / xml2svg.py / ...). See MISSING_DEPENDENCIES.md mapping.
+LEGACY_NAMES_NOT_SHIPPED = [
     'references/xml/slides_chart_demo.xml',
     'references/xml/slides_xml_schema_definition.xml',
     'scripts/xml_lint.py',
@@ -55,6 +60,26 @@ MISSING_ARTIFACTS = [
     'scripts/iconpark_tool.py',
     'scripts/color_contrast_check.py',
     'scripts/gen_svg_charts.py',
+]
+
+# Actually present after the 2026-09 upstream completion.
+EXPECTED_VENDORED = [
+    'scripts/preflight.py',
+    'scripts/validate.py',
+    'scripts/review_layout.py',
+    'scripts/review_design.py',
+    'scripts/xml2svg.py',
+    'scripts/template_fields.py',
+    'scripts/compare_slides.py',
+    'scripts/sml.py',
+    'templates/INDEX.md',
+    'templates/fields.json',
+    'templates/slide01.xml',
+    'templates/slide51.xml',
+    'tokens.yaml',
+    'requirements.txt',
+    'assets/Lucide-LICENSE',
+    'tests/test_validators.py',
 ]
 
 
@@ -73,16 +98,20 @@ class VendorTreeTests(unittest.TestCase):
     def test_missing_dependencies_page_exists(self):
         self.assertTrue((VENDOR / 'MISSING_DEPENDENCIES.md').is_file())
 
-    def test_every_missing_artifact_is_declared(self):
+    def test_every_legacy_name_is_still_documented(self):
         page = (VENDOR / 'MISSING_DEPENDENCIES.md').read_text(encoding='utf-8')
-        for artifact in MISSING_ARTIFACTS:
+        for artifact in LEGACY_NAMES_NOT_SHIPPED:
             self.assertIn(Path(artifact).name, page,
-                          'undeclared missing artifact: %s' % artifact)
+                          'legacy name not documented: %s' % artifact)
 
-    def test_missing_artifacts_are_not_fabricated(self):
-        for artifact in MISSING_ARTIFACTS:
+    def test_legacy_names_are_not_shipped_under_old_paths(self):
+        for artifact in LEGACY_NAMES_NOT_SHIPPED:
             self.assertFalse((VENDOR / artifact).exists(),
-                             'a declared-missing file was invented: %s' % artifact)
+                             'a legacy name was invented: %s' % artifact)
+
+    def test_vendored_toolchain_is_present(self):
+        missing = [p for p in EXPECTED_VENDORED if not (VENDOR / p).is_file()]
+        self.assertEqual(missing, [], 'vendored PPT toolchain incomplete: %s' % missing)
 
     def test_lark_cli_requirement_is_documented(self):
         page = (VENDOR / 'MISSING_DEPENDENCIES.md').read_text(encoding='utf-8')

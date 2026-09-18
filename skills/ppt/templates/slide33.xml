@@ -1,0 +1,104 @@
+<slide xmlns="https://www.larkoffice.com/sml/2.0">
+  <style>
+    <fill>
+      <fillColor color="rgba(255,255,255,1)" />
+    </fill>
+  </style>
+  <data>
+    <img src="@./cherry-logo.png" width="26" height="26" topLeftX="40" topLeftY="25" />
+    <shape type="text" topLeftX="74" topLeftY="27" width="160" height="24">
+      <content fontFamily="思源黑体" fontSize="12" color="rgba(30,34,44,1)" bold="true" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>Cherry Studio</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="716" topLeftY="27" width="204" height="20">
+      <content fontFamily="思源黑体" fontSize="10" color="rgba(93,101,116,1)" bold="false" textAlign="right" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>产品 · 截图+要点</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="40" topLeftY="79" width="880" height="50">
+      <content fontFamily="思源黑体" fontSize="32" color="rgba(30,34,44,1)" bold="true" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>一个界面，承载完整工作流</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="40" topLeftY="508" width="520" height="18">
+      <content fontFamily="思源黑体" fontSize="10" color="rgba(93,101,116,1)" bold="false" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>Cherry Studio · Internal Template</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="864" topLeftY="508" width="56" height="18">
+      <content fontFamily="思源黑体" fontSize="10" color="rgba(93,101,116,1)" bold="false" textAlign="right" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>33</p>
+      </content>
+    </shape>
+    <img src="@./product-placeholder.png" width="514" height="218.208" topLeftX="40" topLeftY="199" />
+    <line type="straight-connector1" startX="610" startY="200" endX="610" endY="403">
+      <border color="rgba(221,225,232,1)" width="2" />
+    </line>
+    <shape type="ellipse" topLeftX="591" topLeftY="181" width="38" height="38">
+      <fill>
+        <fillColor color="rgba(244,247,253,1)" />
+      </fill>
+    </shape>
+    <shape type="text" topLeftX="591" topLeftY="181" width="38" height="38">
+      <content fontFamily="思源黑体" fontSize="15" color="rgba(67,103,199,1)" bold="true" textAlign="center" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>01</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="650" topLeftY="176" width="268" height="34">
+      <content fontFamily="思源黑体" fontSize="20" color="rgba(30,34,44,1)" bold="true" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>统一工作区</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="650" topLeftY="216" width="268" height="48">
+      <content fontFamily="思源黑体" fontSize="15" color="rgba(93,101,116,1)" bold="false" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>模型、助手与知识集中管理</p>
+      </content>
+    </shape>
+    <shape type="ellipse" topLeftX="591" topLeftY="280" width="38" height="38">
+      <fill>
+        <fillColor color="rgba(244,247,253,1)" />
+      </fill>
+    </shape>
+    <shape type="text" topLeftX="591" topLeftY="280" width="38" height="38">
+      <content fontFamily="思源黑体" fontSize="15" color="rgba(67,103,199,1)" bold="true" textAlign="center" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>02</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="650" topLeftY="275" width="268" height="34">
+      <content fontFamily="思源黑体" fontSize="20" color="rgba(30,34,44,1)" bold="true" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>灵活编排</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="650" topLeftY="315" width="268" height="48">
+      <content fontFamily="思源黑体" fontSize="15" color="rgba(93,101,116,1)" bold="false" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>按任务自由组合能力</p>
+      </content>
+    </shape>
+    <shape type="ellipse" topLeftX="591" topLeftY="379" width="38" height="38">
+      <fill>
+        <fillColor color="rgba(255,240,243,1)" />
+      </fill>
+    </shape>
+    <shape type="text" topLeftX="591" topLeftY="379" width="38" height="38">
+      <content fontFamily="思源黑体" fontSize="15" color="rgba(233,70,93,1)" bold="true" textAlign="center" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>03</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="650" topLeftY="374" width="268" height="34">
+      <content fontFamily="思源黑体" fontSize="20" color="rgba(30,34,44,1)" bold="true" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>结果可复用</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="650" topLeftY="414" width="268" height="48">
+      <content fontFamily="思源黑体" fontSize="15" color="rgba(93,101,116,1)" bold="false" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>高质量内容快速沉淀</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="40" topLeftY="486" width="880" height="22">
+      <content fontFamily="思源黑体" fontSize="12" color="rgba(93,101,116,1)" bold="false" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>替换为真实界面截图，保持比例并同步说明文字。</p>
+      </content>
+    </shape>
+  </data>
+</slide>

@@ -1,0 +1,127 @@
+<slide xmlns="https://www.larkoffice.com/sml/2.0">
+  <style>
+    <fill>
+      <fillColor color="rgba(255,255,255,1)" />
+    </fill>
+  </style>
+  <data>
+    <img src="@./cherry-logo.png" width="26" height="26" topLeftX="40" topLeftY="25" />
+    <shape type="text" topLeftX="74" topLeftY="27" width="160" height="24">
+      <content fontFamily="思源黑体" fontSize="12" color="rgba(30,34,44,1)" bold="true" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>Cherry Studio</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="716" topLeftY="27" width="204" height="20">
+      <content fontFamily="思源黑体" fontSize="10" color="rgba(93,101,116,1)" bold="false" textAlign="right" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>图表 · 双图表 + 结论</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="40" topLeftY="79" width="880" height="50">
+      <content fontFamily="思源黑体" fontSize="32" color="rgba(30,34,44,1)" bold="true" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>增长与留存同步改善</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="40" topLeftY="133" width="880" height="25">
+      <content fontFamily="思源黑体" fontSize="15" color="rgba(93,101,116,1)" bold="false" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>两个指标共同验证策略有效。</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="40" topLeftY="508" width="520" height="18">
+      <content fontFamily="思源黑体" fontSize="10" color="rgba(93,101,116,1)" bold="false" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>Cherry Studio · Internal Template</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="864" topLeftY="508" width="56" height="18">
+      <content fontFamily="思源黑体" fontSize="10" color="rgba(93,101,116,1)" bold="false" textAlign="right" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>24</p>
+      </content>
+    </shape>
+    <shape type="round-rect" topLeftX="40" topLeftY="176" width="430" height="280" presetHandlers="10">
+      <fill>
+        <fillColor color="rgba(244,247,253,1)" />
+      </fill>
+    </shape>
+    <shape type="text" topLeftX="60" topLeftY="188" width="370" height="32">
+      <content fontFamily="思源黑体" fontSize="20" color="rgba(67,103,199,1)" bold="true" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>新增用户</p>
+      </content>
+    </shape>
+    <chart topLeftX="41" topLeftY="221" width="424" height="234">
+      <chartPlotArea>
+        <chartPlot type="column">
+          <chartBars color="rgba(67,103,199,1)" width="44" />
+          <chartLabels position="outside" value="true" fontSize="12" color="rgba(30,34,44,1)" format="0" />
+        </chartPlot>
+        <chartAxes>
+          <chartAxis type="x">
+            <chartLabel fontSize="12" color="rgba(93,101,116,1)" angle="0" />
+          </chartAxis>
+          <chartAxis type="y" position="left" min="0" max="40">
+            <chartGridLine color="rgba(237,239,244,1)" width="1" />
+            <chartLabel fontSize="12" color="rgba(93,101,116,1)" format="0" />
+          </chartAxis>
+        </chartAxes>
+      </chartPlotArea>
+      <chartData>
+        <dim1>
+          <chartField name="季度" valueType="string">Q1,Q2,Q3,Q4</chartField>
+        </dim1>
+        <dim2>
+          <chartField name="新增" valueType="number">12,18,25,34</chartField>
+        </dim2>
+      </chartData>
+      <chartStyle>
+        <chartBackground color="rgba(0, 0, 0, 0)" />
+        <chartColorTheme>
+          <color value="rgba(67,103,199,1)" />
+        </chartColorTheme>
+      </chartStyle>
+    </chart>
+    <shape type="round-rect" topLeftX="490" topLeftY="176" width="430" height="280" presetHandlers="10">
+      <fill>
+        <fillColor color="rgba(255,240,243,1)" />
+      </fill>
+    </shape>
+    <shape type="text" topLeftX="510" topLeftY="188" width="370" height="32">
+      <content fontFamily="思源黑体" fontSize="20" color="rgba(233,70,93,1)" bold="true" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>次月留存</p>
+      </content>
+    </shape>
+    <chart topLeftX="491" topLeftY="221" width="424" height="234">
+      <chartPlotArea>
+        <chartPlot type="column">
+          <chartBars color="rgba(233,70,93,1)" width="44" />
+          <chartLabels position="outside" value="true" fontSize="12" color="rgba(30,34,44,1)" format="0" />
+        </chartPlot>
+        <chartAxes>
+          <chartAxis type="x">
+            <chartLabel fontSize="12" color="rgba(93,101,116,1)" angle="0" />
+          </chartAxis>
+          <chartAxis type="y" position="left" min="0" max="80">
+            <chartGridLine color="rgba(237,239,244,1)" width="1" />
+            <chartLabel fontSize="12" color="rgba(93,101,116,1)" format="0" />
+          </chartAxis>
+        </chartAxes>
+      </chartPlotArea>
+      <chartData>
+        <dim1>
+          <chartField name="季度" valueType="string">Q1,Q2,Q3,Q4</chartField>
+        </dim1>
+        <dim2>
+          <chartField name="留存" valueType="number">42,48,57,64</chartField>
+        </dim2>
+      </chartData>
+      <chartStyle>
+        <chartBackground color="rgba(0, 0, 0, 0)" />
+        <chartColorTheme>
+          <color value="rgba(233,70,93,1)" />
+        </chartColorTheme>
+      </chartStyle>
+    </chart>
+    <shape type="text" topLeftX="40" topLeftY="469" width="880" height="22">
+      <content fontFamily="思源黑体" fontSize="12" color="rgba(93,101,116,1)" bold="false" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>示例指标采用各自刻度。比较结论须先核对量纲与统计口径。</p>
+      </content>
+    </shape>
+  </data>
+</slide>

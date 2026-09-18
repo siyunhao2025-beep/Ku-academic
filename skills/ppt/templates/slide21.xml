@@ -1,0 +1,120 @@
+<slide xmlns="https://www.larkoffice.com/sml/2.0">
+  <style>
+    <fill>
+      <fillColor color="rgba(255,255,255,1)" />
+    </fill>
+  </style>
+  <data>
+    <img src="@./cherry-logo.png" topLeftX="40" topLeftY="25" width="26" height="26" />
+    <shape type="text" topLeftX="74" topLeftY="27" width="160" height="24">
+      <content fontFamily="思源黑体" fontSize="12" color="rgba(30,34,44,1)" bold="true" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>Cherry Studio</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="716" topLeftY="27" width="204" height="20">
+      <content fontFamily="思源黑体" fontSize="10" color="rgba(93,101,116,1)" bold="false" textAlign="right" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>数据 · 柱状图</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="40" topLeftY="79" width="880" height="50">
+      <content fontFamily="思源黑体" fontSize="32" color="rgba(30,34,44,1)" bold="true" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>用六个时间点，看清变化</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="40" topLeftY="133" width="880" height="25">
+      <content fontFamily="思源黑体" fontSize="14" color="rgba(93,101,116,1)" bold="false" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>使用同一指标比较六个时间点，并说明统计范围。</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="40" topLeftY="486" width="720" height="18">
+      <content fontFamily="思源黑体" fontSize="10" color="rgba(93,101,116,1)" bold="false" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>来源：模板示例数据，使用前替换真实来源与查询日期。</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="864" topLeftY="508" width="56" height="18">
+      <content fontFamily="思源黑体" fontSize="10" color="rgba(93,101,116,1)" bold="false" textAlign="right" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>21</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="40" topLeftY="178" width="410" height="24">
+      <content fontFamily="思源黑体" fontSize="13" color="rgba(93,101,116,1)" bold="false" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>指标值 · 单位</p>
+      </content>
+    </shape>
+    <chart topLeftX="23" topLeftY="201" width="652" height="287">
+      <chartPlotArea>
+        <chartPlot type="column">
+          <chartBars color="rgba(246,177,187,1)" width="48" />
+          <chartLabels position="outside" value="true" fontSize="13" color="rgba(30,34,44,1)" format="0" />
+          <chartSeriesList>
+            <chartSeries index="1">
+              <chartBars>
+                <chartBar index="6" color="rgba(233,70,93,1)" />
+              </chartBars>
+            </chartSeries>
+          </chartSeriesList>
+        </chartPlot>
+        <chartAxes>
+          <chartAxis type="x">
+            <chartLabel fontSize="12" color="rgba(93,101,116,1)" angle="0" />
+          </chartAxis>
+          <chartAxis type="y" position="left" min="0" max="15">
+            <chartLabel fontSize="12" color="rgba(93,101,116,1)" format="0" />
+            <chartGridLine color="rgba(237,239,244,1)" width="1" />
+          </chartAxis>
+        </chartAxes>
+      </chartPlotArea>
+      <chartData>
+        <dim1>
+          <chartField name="时间点" valueType="string">第1期,第2期,第3期,第4期,第5期,第6期</chartField>
+        </dim1>
+        <dim2>
+          <chartField name="指标值" valueType="number">9,5,4,2,4,13</chartField>
+        </dim2>
+      </chartData>
+      <chartStyle>
+        <chartBackground color="rgba(0, 0, 0, 0)" />
+        <chartColorTheme>
+          <color value="rgba(105, 105, 112, 1)" />
+        </chartColorTheme>
+      </chartStyle>
+    </chart>
+    <line type="straight-connector1" startX="702" startY="194" endX="702" endY="472">
+      <border color="rgba(221,225,232,1)" width="1" />
+    </line>
+    <shape type="text" topLeftX="734" topLeftY="206" width="176" height="25">
+      <content fontFamily="思源黑体" fontSize="13" color="rgba(93,101,116,1)" bold="false" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>第6期</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="729" topLeftY="242" width="135" height="104">
+      <content fontFamily="思源黑体" fontSize="84" color="rgba(233,70,93,1)" bold="true" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>13</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="844" topLeftY="310" width="32" height="28">
+      <content fontFamily="思源黑体" fontSize="16" color="rgba(233,70,93,1)" bold="false" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>单位</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="734" topLeftY="361" width="186" height="28">
+      <content fontFamily="思源黑体" fontSize="14" color="rgba(30,34,44,1)" bold="false" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>展示范围内的最高值</p>
+      </content>
+    </shape>
+    <line type="straight-connector1" startX="734" startY="408" endX="920" endY="408">
+      <border color="rgba(221,225,232,1)" width="1" />
+    </line>
+    <shape type="text" topLeftX="734" topLeftY="429" width="186" height="43">
+      <content fontFamily="思源黑体" fontSize="12" color="rgba(93,101,116,1)" bold="false" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>同步替换数值与重点</p>
+        <p>说明范围与统计口径</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="40" topLeftY="508" width="520" height="18">
+      <content fontSize="10" fontFamily="思源黑体" color="rgba(105, 105, 112, 1)" bold="false" textAlign="left" verticalAlign="top" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>Cherry Studio · Internal Template</p>
+      </content>
+    </shape>
+  </data>
+</slide>

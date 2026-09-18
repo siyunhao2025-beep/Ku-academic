@@ -1,0 +1,92 @@
+<slide xmlns="https://www.larkoffice.com/sml/2.0">
+  <style>
+    <fill>
+      <fillColor color="rgba(255,255,255,1)" />
+    </fill>
+  </style>
+  <data>
+    <img src="@./cherry-logo.png" width="26" height="26" topLeftX="40" topLeftY="25" />
+    <shape type="text" topLeftX="74" topLeftY="27" width="160" height="24">
+      <content fontFamily="思源黑体" fontSize="12" color="rgba(30,34,44,1)" bold="true" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>Cherry Studio</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="716" topLeftY="27" width="204" height="20">
+      <content fontFamily="思源黑体" fontSize="10" color="rgba(93,101,116,1)" bold="false" textAlign="right" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>数据 · 指标对比</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="40" topLeftY="79" width="880" height="50">
+      <content fontFamily="思源黑体" fontSize="32" color="rgba(30,34,44,1)" bold="true" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>改变，清晰可见</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="40" topLeftY="133" width="880" height="25">
+      <content fontFamily="思源黑体" fontSize="15" color="rgba(93,101,116,1)" bold="false" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>同一指标，在优化前后的对比。</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="40" topLeftY="508" width="520" height="18">
+      <content fontFamily="思源黑体" fontSize="10" color="rgba(93,101,116,1)" bold="false" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>Cherry Studio · Internal Template</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="864" topLeftY="508" width="56" height="18">
+      <content fontFamily="思源黑体" fontSize="10" color="rgba(93,101,116,1)" bold="false" textAlign="right" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>20</p>
+      </content>
+    </shape>
+    <shape type="round-rect" topLeftX="40" topLeftY="184" width="398" height="250" presetHandlers="10">
+      <fill>
+        <fillColor color="rgba(255,240,243,1)" />
+      </fill>
+    </shape>
+    <img src="@./lucide-ListChecks-f10802.png" topLeftX="64" topLeftY="205" width="32" height="32" />
+    <shape type="text" topLeftX="112" topLeftY="204" width="300" height="34">
+      <content fontFamily="思源黑体" fontSize="20" color="rgba(30,34,44,1)" bold="true" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>优化前</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="64" topLeftY="261" width="350" height="86">
+      <content fontFamily="思源黑体" fontSize="64" color="rgba(233,70,93,1)" bold="true" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>42%</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="64" topLeftY="372" width="350" height="44">
+      <content fontFamily="思源黑体" fontSize="18" color="rgba(93,101,116,1)" bold="false" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>关键动作完成率</p>
+      </content>
+    </shape>
+    <shape type="round-rect" topLeftX="522" topLeftY="184" width="398" height="250" presetHandlers="10">
+      <fill>
+        <fillColor color="rgba(244,247,253,1)" />
+      </fill>
+    </shape>
+    <img src="@./lucide-ListChecks-e86e75.png" topLeftX="546" topLeftY="205" width="32" height="32" />
+    <shape type="text" topLeftX="594" topLeftY="204" width="300" height="34">
+      <content fontFamily="思源黑体" fontSize="20" color="rgba(30,34,44,1)" bold="true" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>优化后</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="546" topLeftY="261" width="350" height="86">
+      <content fontFamily="思源黑体" fontSize="64" color="rgba(67,103,199,1)" bold="true" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>68%</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="546" topLeftY="372" width="350" height="44">
+      <content fontFamily="思源黑体" fontSize="18" color="rgba(93,101,116,1)" bold="false" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>关键动作完成率</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="448" topLeftY="282" width="64" height="42">
+      <content fontFamily="思源黑体" fontSize="20" color="rgba(93,101,116,1)" bold="false" textAlign="center" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>→</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="40" topLeftY="449" width="880" height="22">
+      <content fontFamily="思源黑体" fontSize="12" color="rgba(93,101,116,1)" bold="false" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>↑ 26 个百分点</p>
+      </content>
+    </shape>
+  </data>
+</slide>

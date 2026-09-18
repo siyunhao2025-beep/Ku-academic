@@ -1,0 +1,66 @@
+<slide xmlns="https://www.larkoffice.com/sml/2.0">
+  <style>
+    <fill>
+      <fillColor color="rgba(255,255,255,1)" />
+    </fill>
+  </style>
+  <data>
+    <img src="@./cherry-logo.png" width="26" height="26" topLeftX="40" topLeftY="25" />
+    <shape type="text" topLeftX="74" topLeftY="27" width="160" height="24">
+      <content fontFamily="思源黑体" fontSize="12" color="rgba(30,34,44,1)" bold="true" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>Cherry Studio</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="716" topLeftY="27" width="204" height="20">
+      <content fontFamily="思源黑体" fontSize="10" color="rgba(93,101,116,1)" bold="false" textAlign="right" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>导航 · 章节开场</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="40" topLeftY="508" width="520" height="18">
+      <content fontFamily="思源黑体" fontSize="10" color="rgba(93,101,116,1)" bold="false" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>Cherry Studio · Internal Template</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="864" topLeftY="508" width="56" height="18">
+      <content fontFamily="思源黑体" fontSize="10" color="rgba(93,101,116,1)" bold="false" textAlign="right" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>09</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="40" topLeftY="169" width="188" height="32">
+      <content fontFamily="思源黑体" fontSize="18" color="rgba(233,70,93,1)" bold="true" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>02 / 05</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="40" topLeftY="226" width="660" height="110">
+      <content fontFamily="思源黑体" fontSize="44" color="rgba(30,34,44,1)" bold="true" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>洞察与机会</p>
+      </content>
+    </shape>
+    <shape type="text" topLeftX="40" topLeftY="366" width="648" height="66">
+      <content fontFamily="思源黑体" fontSize="18" color="rgba(93,101,116,1)" bold="false" textAlign="left" verticalAlign="middle" lineSpacing="multiple:1.15" wrap="true" autoFit="normal-auto-fit">
+        <p>把分散的信息，收束成一个值得行动的判断。</p>
+      </content>
+    </shape>
+    <line type="straight-connector1" startX="816" startY="217" endX="816" endY="411">
+      <border color="rgba(221,225,232,1)" width="2" />
+    </line>
+    <shape type="ellipse" topLeftX="782" topLeftY="189" width="68" height="68">
+      <fill>
+        <fillColor color="rgba(243,249,249,1)" />
+      </fill>
+    </shape>
+    <img src="@./lucide-FileText-915923.png" topLeftX="800" topLeftY="207" width="32" height="32" />
+    <shape type="ellipse" topLeftX="782" topLeftY="281" width="68" height="68">
+      <fill>
+        <fillColor color="rgba(243,249,249,1)" />
+      </fill>
+    </shape>
+    <img src="@./lucide-FileSearch-915923.png" topLeftX="800" topLeftY="299" width="32" height="32" />
+    <shape type="ellipse" topLeftX="782" topLeftY="373" width="68" height="68">
+      <fill>
+        <fillColor color="rgba(248,245,252,1)" />
+      </fill>
+    </shape>
+    <img src="@./lucide-BrainCircuit-88ec17.png" topLeftX="800" topLeftY="391" width="32" height="32" />
+  </data>
+</slide>
