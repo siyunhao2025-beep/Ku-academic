@@ -171,7 +171,7 @@ class ConsoleEncodingTests(unittest.TestCase):
         env["PYTHONIOENCODING"] = "gbk"
         completed = subprocess.run(
             [sys.executable, str(repo / "scripts" / "figures.py"), "check", str(ws)],
-            cwd=repo, capture_output=True, text=True, env=env,
+            cwd=repo, capture_output=True, text=True, encoding="gbk", env=env,
         )
         output = completed.stdout + completed.stderr
         self.assertEqual(completed.returncode, 1, output)

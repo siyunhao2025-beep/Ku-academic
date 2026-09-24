@@ -280,7 +280,7 @@ class ReadingCardTests(unittest.TestCase):
             env["PYTHONIOENCODING"] = "gbk"
             completed = subprocess.run(
                 [sys.executable, str(repo / "scripts" / "reading.py"), *args],
-                cwd=repo, capture_output=True, text=True, env=env,
+                cwd=repo, capture_output=True, text=True, encoding="gbk", env=env,
             )
             # Windows Chinese terminals commonly use GBK. Every user-facing
             # status emitted by the full command chain must remain encodable.
