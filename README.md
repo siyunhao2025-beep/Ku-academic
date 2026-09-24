@@ -172,7 +172,7 @@ flowchart LR
 | 找新论文、写综述 | 按日期发现候选，再筛选、读全文、比较条件与结论 | 检索日志、证据矩阵、主题综合 |
 | 核对引用是否真实可靠 | 身份与支持分开判定，阻断项单独列出，查不了的标待确认 | 引用溯源记录、阻断项清单、待确认清单 |
 | 描述实验或分析过程 | 根据实际代码、配置和日志写 Methods | 方法—代码对应记录、可复现的描述 |
-| 做科研图 | 线路图、原理示意图、数据图三类分开，保留处理与不确定度定义 | 源数据、绘图代码、图件、图注、配色逻辑 |
+| 做科研图 / figures4papers 风格 Matplotlib 图 | 线路图、原理示意图、数据图三类分开；按需触发独立 `scientific-figure-making` Skill，同时让本地真实性、追溯、无障碍和许可门优先 | 源数据、绘图代码、矢量与预览图、图注、配色逻辑、来源记录 |
 | 给已有文章补内容 | 只补有贡献的比较、方法依据、机制约束或纠错 | 有证据的修改方案与前后对照 |
 | 学习目标期刊、润色英文 | 从同刊同体裁全文提炼论证和表达习惯，再检验应用效果 | 逐篇阅读卡、期刊风格档案、修订稿 |
 | 让稿子读起来更像人写的 | 先锁死数字与证据强度，再改句式节奏 | 修订稿、交付前自查记录 |
@@ -289,6 +289,13 @@ macOS / Linux：
 
 配色逻辑、色差自检阈值、跨图一致性规则与图注写法见 [图的规则](modules/figures.md)。
 
+需要 publication-ready Matplotlib 或 figures4papers 风格时，可独立触发
+[`scientific-figure-making`](skills/scientific-figure-making/SKILL.md)。它保留
+真实上游主 Skill、五个 references、完整 CC BY-NC 4.0 许可与锁定来源；本地
+[`figures4papers-profile`](modules/figures4papers-profile.md) 负责把截断轴、
+隐藏标签、alpha-only、红绿单通道、超宽画布、雷达和 3D 等来源做法按科研
+诚信与无障碍要求 adapt/reject。第三方样式永远不能覆盖真实数据与图件追溯。
+
 这些规则里能机器判的部分由 `scripts/figures.py check` 硬执行：三类图齐全（或写明示意图豁免理由）、数据图只用无障碍色板（jet/rainbow 直接拦）、多系列必须有颜色之外的冗余通道、超过 6 个系列判拆图、至少一个矢量输出、`source_data→script→outputs` 文件真实存在、每张图的人眼审查要有署名和时间。**脚本只查文件链与审查证据，图本身好不好仍须你逐张看过。**
 
 **加：一张 2.5D 开篇主视觉图（可选）。** 论文最前面那张"一眼看懂"的 Graphical Abstract——等轴测微缩模型 + 彩色流箭头，把整篇的核心系统画成一个画面。两阶段出图（先文字蓝图、人审、再渲染），画后四轴人眼核对；它是概念示意，不替代上面三类图。规则与风格锚点见 [图的规则 · 第七节](modules/figures.md)。
@@ -348,6 +355,7 @@ macOS / Linux：
 | [阶段闸门](docs/PHASE_GATES.md) | 阶段通过条件、数值阈值、产物数据结构 |
 | [文献真实性](modules/evidence-integrity.md) | 引用四态判定、六类支持状态、高风险错配、句子强度×访问级别、Unpaywall 合法全文兜底、待确认标记 |
 | [图的规则](modules/figures.md) | 线路图、原理示意图、数据图、2.5D 开篇主视觉图、配色逻辑、图表检查清单与 figures.py 脚本护栏 |
+| [Scientific Figure Making Skill（第三方、独立许可）](skills/scientific-figure-making/SKILL.md) | figures4papers 的真实主 Skill + 五个 references；CC BY-NC 4.0，受本地图件护栏和许可门约束 |
 | [变更管理与回退](modules/change-management.md) | 改动 L0–L4 分级、impact.py 影响传播、回退五步、阈值/纳入标准变更纪律 |
 | [降 AI 模块](modules/deai-writing.md) | 反过度纠正红线、句式节奏、中文硬约束、交付前自查 |
 | [精简模式](modules/lean-mode.md) | 触发方式、生效范围、绝不砍的清单、省 token 的具体动作 |
@@ -373,8 +381,10 @@ macOS / Linux：
 
 ## 维护、隐私与许可
 
-源自 Research Mother v0.1.0，现以 **Cool-Academic 独立仓库**维护，调用名保持 `research-mother`，当前版本 v0.5.0。已登记的上游项目通过 [版本清单](config/upstream.lock.json) 按需取用；登记或下载源码不代表全部原生安装与调用验收完成。没有默认开启后台文献订阅或自动投稿。
+源自 Research Mother v0.1.0，现以 **Cool-Academic 独立仓库**维护，调用名保持 `research-mother`，当前版本 v0.5.0。已登记的上游项目通过 [版本清单](config/upstream.lock.json) 按需取用；状态会区分仅登记、仓库内独立 Skill 安装与宿主账户安装，不能互相替代。没有默认开启后台文献订阅或自动投稿。
 
 **第三方技能说明：** `skills/ppt/` 是飞书幻灯片技能，现已接入上游完整实现 `YinsenWANG/feishu-ppt-skill`（MIT）：31 个设计文档逐字保留，51 个模板、Python 校验/预览脚本、Lucide 图标已补入并在本地跑通。在线创建/截图/写回仍需 `lark-cli` 与飞书授权，本仓库不安装它。详见 [PPT 技能状态说明](skills/ppt/MISSING_DEPENDENCIES.md)。
+
+`skills/scientific-figure-making/` 是从 figures4papers 锁定提交独立安装并做本地护栏适配的真实 Skill，保留完整 CC BY-NC 4.0 LICENSE、SOURCE 署名与变更说明；未收录 demo 脚本、数据、图片或 PDF。它没有被本仓库根 MIT 重许可，也不等于已安装进用户的全局 Codex 账户。
 
 论文全文、未发表稿件、科研数据和密钥留在私有工作目录。不要提交到这个公开仓库；忽略规则和打包清单也不能替代发布前核查。本项目原创代码与文档遵循 [MIT](LICENSE)，第三方技能、论文及素材保留各自许可。

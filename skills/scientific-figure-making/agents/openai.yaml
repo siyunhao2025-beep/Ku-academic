@@ -1,0 +1,7 @@
+interface:
+  display_name: "Scientific Figure Making"
+  short_description: "Publication-ready Matplotlib figures with local guardrails"
+  default_prompt: "Use $scientific-figure-making to create a publication-ready Matplotlib figure from real data under Ku-academic's provenance and accessibility rules."
+
+policy:
+  allow_implicit_invocation: true

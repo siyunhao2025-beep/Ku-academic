@@ -1,6 +1,6 @@
 # 图：一张路线图、一张原理图、一批数据图
 
-[返回首页](../README.md) · [阶段总控](phases.md) · [figures4papers 适配画像](figures4papers-profile.md) · [同类对比来源](../docs/PEER_COMPARISON.md)
+[返回首页](../README.md) · [阶段总控](phases.md) · [独立 scientific-figure-making Skill](../skills/scientific-figure-making/SKILL.md) · [figures4papers 适配画像](figures4papers-profile.md) · [同类对比来源](../docs/PEER_COMPARISON.md)
 
 **每个研究任务默认产三张图，一张都不能省：**
 
@@ -110,7 +110,7 @@ P1 画出草图（回答"打算怎么做"），P4 定稿（回答"实际怎么�
 
 只从真实结果文件出图。**不准用生成式工具造数据图。** 手工编辑过数字的结果文件不能作为绘图输入。
 
-用户明确要求 figures4papers 风格或需要其柱图、趋势、热图、多面板等经验时，再读取 [`figures4papers-profile.md`](figures4papers-profile.md)。它只提供表现层画像；本模块的数据真实性、可追溯、无障碍、坐标诚信和人眼审查规则始终优先。
+用户明确要求 figures4papers 风格或需要其柱图、趋势、热图、多面板等经验时，读取独立安装的 [`skills/scientific-figure-making/SKILL.md`](../skills/scientific-figure-making/SKILL.md)，并同时读取 [`figures4papers-profile.md`](figures4papers-profile.md)。第三方 Skill 提供真实上游方法与 references，画像负责本地 adopt/adapt/reject 决策；本模块的数据真实性、可追溯、无障碍、坐标诚信、人眼审查和许可门始终优先。
 
 ### 必须留档的东西
 

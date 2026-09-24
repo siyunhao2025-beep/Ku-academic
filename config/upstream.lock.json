@@ -59,9 +59,11 @@
       "commit": "3c181f85e82c6f24948fcaaf3be6696102b41d8d",
       "declared_license": "CC BY-NC 4.0",
       "entrypoint": "scientific-figure-making/SKILL.md",
-      "status": "pinned_reference_profile_not_vendored",
-      "review_scope": "license, skill documentation, demo index, and plotting categories reviewed; no upstream code or assets vendored or executed, and no runtime or dependency audit",
+      "status": "pinned_repository_skill_installed_not_host_installed",
+      "review_scope": "SKILL.md, five references, and full license installed in-repository with documented local guardrail adaptations; no demo scripts, data, images, PDFs, runtime execution, or dependency audit",
       "source_url": "https://github.com/ChenLiu-1996/figures4papers",
+      "local_skill": "skills/scientific-figure-making/SKILL.md",
+      "local_license": "skills/scientific-figure-making/LICENSE",
       "local_profile": "modules/figures4papers-profile.md"
     }
   ]

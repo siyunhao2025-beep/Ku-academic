@@ -12,7 +12,7 @@
 Cool-Academic 是独立项目名称；research-mother 是保留兼容性的 Skill 标识。安装包顶层目录也叫 research-mother。
 
 ### 登记的上游 Skill 都安装了吗？
-没有这一默认保证。config/upstream.lock.json 登记的是固定来源、版本和入口。scripts/upstream.py 可以隔离下载源码；不会在 GPT 原生安装、执行 hooks 或自动配置密钥。必须分别验收安装和实际调用。
+没有这一默认保证。config/upstream.lock.json 会区分仅登记、隔离取得源码、仓库内独立安装和宿主账户安装。当前 `skills/scientific-figure-making/` 已作为 CC BY-NC 4.0 的独立 Skill 放入仓库及分发包，但这仍不等于装进用户的全局 Codex 账户；其余登记项也不会因此自动安装、执行 hooks 或配置密钥。必须分别验收每一种状态和实际调用。
 
 ### 需要收费 API 或云服务器吗？
 本项目本地脚本不需要模型 API Key，也不要求云服务器；联网检索需要网络。全文阅读与写作使用你当前的 AI 平台，费用、额度与外部连接由该平台及服务决定。本仓库没有代购模型、充值或隐藏上传功能。

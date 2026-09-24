@@ -1,8 +1,8 @@
 # figures4papers 绘图画像：吸收方法，不搬运材料
 
-[返回图件主模块](figures.md) · [分析—方法—图件](analysis-methods-figures.md) · [上游登记](../docs/UPSTREAM.md)
+[返回图件主模块](figures.md) · [独立 scientific-figure-making Skill](../skills/scientific-figure-making/SKILL.md) · [分析—方法—图件](analysis-methods-figures.md) · [上游登记](../docs/UPSTREAM.md)
 
-这是一份独立撰写的适配画像，用来回答“哪些绘图经验可以迁移、哪些必须改造、哪些只能参考”。它不是上游仓库的镜像、替代文档或代码移植，也不降低 `modules/figures.md` 的科学诚信、可复现和无障碍要求。
+这是一份独立撰写的本地适配画像，用来回答“独立安装的真实上游 Skill 中，哪些绘图经验可以迁移、哪些必须改造、哪些只能参考”。真实 Skill 位于 `skills/scientific-figure-making/`，保留 CC BY-NC 4.0 与来源记录；本画像不是它的重许可或替代品，并且与 `modules/figures.md` 一起作为更高优先级的科学诚信、可复现、无障碍和坐标诚信门。
 
 ## 固定来源与许可边界
 
@@ -11,12 +11,12 @@
 | 来源 | Chen Liu, [Figures for Papers](https://github.com/ChenLiu-1996/figures4papers) |
 | 锁定提交 | `3c181f85e82c6f24948fcaaf3be6696102b41d8d` |
 | 上游声明许可 | [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/) |
-| 本地接入方式 | 方法画像与决策护栏；不 vendoring 上游源码、图片、PDF 或长段文字 |
+| 本地接入方式 | 独立安装真实 `scientific-figure-making` Skill（主 SKILL + 五个 references + 完整许可）并叠加本画像；不 vendoring demo 脚本、数据、图片或 PDF |
 
 许可操作边界：
 
-- 本文件只用独立语言归纳通用绘图思想；本仓库的 MIT 许可不覆盖上游材料。
-- 不复制、翻译或改写上游代码、图片、成品图、论文图、教程长段或 README 长段；不把上游 demo 数据当作本项目数据或研究证据。
+- 本文件只用独立语言归纳通用绘图思想；独立安装目录保留 CC BY-NC 4.0，本仓库的 MIT 许可不覆盖它或其它上游材料。
+- 已安装的主 SKILL 与五个 references 是带变更说明的 CC BY-NC 4.0 适配副本；除此之外不复制上游 demo 代码、数据、图片、成品图、论文图、PDF 或 README 长段，不把上游 demo 数据当作本项目数据或研究证据。
 - 若未来确需复用或改编上游材料，先确认用途为非商业，保留作者、仓库 URL、上述提交、CC BY-NC 4.0 链接，并明确标注改动；还要逐件核验图片、论文图和第三方素材是否确由上游许可覆盖。
 - 商业用途、许可范围不清或希望省略署名时，不使用上游材料；改用本画像中的通用原则从零实现，或先取得单独授权。本段是保守的工程边界，不替代法律意见。
 
@@ -123,4 +123,4 @@
 - [ ] 热图完整声明尺度、归一化、色条、裁剪和缺测掩膜。
 - [ ] 雷达或 3D 若保留，已有更可核对的 2D/表格替代和显式限制说明。
 - [ ] 最终栏宽下文字、线宽、图例和面板顺序可读；矢量与栅格文件都实际打开检查过。
-- [ ] 没有复制或分发上游代码、图片、长文；若后来加入受许可材料，署名、非商业、许可链接、改动说明和逐件权利核验均已完成。
+- [ ] 独立 Skill 的主文件、五个 references、SOURCE 与 LICENSE 保持成套分发且未被根 MIT 重许可；没有额外复制 demo 代码、数据、图片或 PDF。若后来加入其它受许可材料，署名、非商业、许可链接、改动说明和逐件权利核验均已完成。

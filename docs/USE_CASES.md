@@ -442,6 +442,24 @@ visual_review=passed 必须有 reviewed_by 和 reviewed_at。
 仍由我逐张人眼核对，不要用脚本通过替代看图。
 ```
 
+## 26A. 独立使用 figures4papers 的 Scientific Figure Making Skill
+
+```text
+使用 $scientific-figure-making 制作 publication-ready Matplotlib 图。
+先读 skills/scientific-figure-making/SKILL.md，再读 modules/figures.md、
+modules/figures4papers-profile.md 和 modules/analysis-methods-figures.md。
+
+只从真实、已登记的数据或分析结果出图，保留
+source_data -> plot_script -> outputs -> caption_or_explanation。
+上游 references 只提供样式与图型经验：柱图默认零基线；不能隐藏仍需识别的标签；
+不能只用 alpha、红绿或色相编码；超宽画布按最终期刊栏宽重算；
+热图披露尺度/归一化/色条/缺测；雷达和 3D 同时给可核对的 2D 或表格替代。
+
+开始前说明用途是否商业。这个独立 Skill 是 CC BY-NC 4.0，
+不被仓库根 MIT 重许可；商业或权利不清时不得复制/改编上游材料，
+改用独立实现的通用原则或先取得单独授权。
+```
+
 ## 27. 上游改了：变更影响分析与回退
 
 ```text
@@ -473,7 +491,5 @@ quantitative/causal），跑 python scripts/access.py check <workspace>。
 要么把句子显式降级改写，不要硬写、不要静默降级，也不要使用盗版来源；
 无网络时如实报错，不要伪造可访问性。
 ```
-
-
 
 
