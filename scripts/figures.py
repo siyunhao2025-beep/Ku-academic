@@ -47,6 +47,18 @@ MAX_SERIES = 6
 CONCEPT_WORDS = ("概念示意", "概念图", "示意", "conceptual", "schematic", "illustration")
 
 
+def configure_console_output():
+    """Keep dynamic manifest text printable on legacy Windows consoles."""
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is None:
+            continue
+        try:
+            reconfigure(errors="backslashreplace")
+        except (OSError, ValueError):
+            pass
+
+
 def load(path):
     try:
         return json.loads(path.read_text(encoding="utf-8-sig"))
@@ -221,11 +233,11 @@ def check_one(ws, fig):
 def cmd_check(ws):
     manifest = load(ws / "figures" / "manifest.json")
     if not manifest:
-        print("⛔ 找不到 figures/manifest.json，先运行 figures.py init。")
+        print("[ERROR] 找不到 figures/manifest.json，先运行 figures.py init。")
         sys.exit(2)
     figs = manifest.get("figures") or []
     if not isinstance(figs, list) or not figs:
-        print("⛔ manifest 里没有任何图。")
+        print("[ERROR] manifest 里没有任何图。")
         sys.exit(1)
 
     all_errors, all_warnings = [], []
@@ -248,23 +260,24 @@ def cmd_check(ws):
             all_warnings.append(f"已声明不需要示意图：{reason}")
 
     print("=" * 60)
-    print("📊 图件护栏检查（scripts/figures.py）")
+    print("[FIGURES] 图件护栏检查（scripts/figures.py）")
     print("=" * 60)
     if all_warnings:
-        print("\n⚠️ 建议（不阻断）：")
+        print("\n[WARN] 建议（不阻断）：")
         for w in all_warnings:
-            print(f"   · {w}")
+            print(f"   - {w}")
     if all_errors:
-        print("\n⛔ 阻断项（必须处理，人眼审查无法由脚本替代）：")
+        print("\n[ERROR] 阻断项（必须处理，人眼审查无法由脚本替代）：")
         for e in all_errors:
-            print(f"   ❌ {e}")
+            print(f"   [FAIL] {e}")
         print(f"\n共 {len(all_errors)} 项阻断、{len(all_warnings)} 项建议。")
         sys.exit(1)
-    print(f"\n✅ 机器可查项全部通过（{len(figs)} 张图），{len(all_warnings)} 项建议。")
+    print(f"\n[OK] 机器可查项全部通过（{len(figs)} 张图），{len(all_warnings)} 项建议。")
     print("提醒：脚本只验证文件链与审查证据，图是否科学、美观、数字一致，仍需人眼核对。")
 
 
 def main():
+    configure_console_output()
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
     sp = sub.add_parser("palettes")

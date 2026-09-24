@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "checked_at": "2026-09-16",
+  "checked_at": "2026-09-24",
   "status": "registered_pinned_not_host_installed",
   "sources": [
     {
@@ -52,6 +52,19 @@
       "status": "pinned_source_not_installed",
       "review_scope": "repository metadata and selected entrypoints; not full dependency or security audit",
       "source_url": "https://github.com/yusufkaraaslan/Skill_Seekers"
+    },
+    {
+      "id": "figures4papers",
+      "repository": "ChenLiu-1996/figures4papers",
+      "commit": "3c181f85e82c6f24948fcaaf3be6696102b41d8d",
+      "declared_license": "CC BY-NC 4.0",
+      "entrypoint": "scientific-figure-making/SKILL.md",
+      "status": "pinned_repository_skill_installed_not_host_installed",
+      "review_scope": "SKILL.md, five references, and full license installed in-repository with documented local guardrail adaptations; no demo scripts, data, images, PDFs, runtime execution, or dependency audit",
+      "source_url": "https://github.com/ChenLiu-1996/figures4papers",
+      "local_skill": "skills/scientific-figure-making/SKILL.md",
+      "local_license": "skills/scientific-figure-making/LICENSE",
+      "local_profile": "modules/figures4papers-profile.md"
     }
   ]
 }

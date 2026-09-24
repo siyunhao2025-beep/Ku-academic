@@ -41,6 +41,11 @@ modules/workflow.md 和当前任务需要的模块，按里面的流程处理我
 这是会话内读取，不要报告为已永久安装。不要执行上游安装脚本。
 ```
 
+若任务是 publication-ready Matplotlib 或明确要求 figures4papers 风格，
+再读取 `skills/scientific-figure-making/SKILL.md`。它是包内独立的第三方
+Skill（CC BY-NC 4.0），但会话内可读不等于已安装到全局 Codex 账户；执行时
+仍以 `modules/figures.md` 与 `modules/figures4papers-profile.md` 为高优先级护栏。
+
 ## 4. 第一次准备哪些研究材料？
 
 准备研究目标、已取得的文献全文、已有稿件、实际代码和结果。没有完成实验时，也可以先做检索、研究设计或框架，但不能写出不存在的 Results。
@@ -53,7 +58,7 @@ modules/workflow.md 和当前任务需要的模块，按里面的流程处理我
 
 安装 Python 3.10 或更高版本，打开仓库所在文件夹。不会用 Git 时，可从 Code → Download ZIP 下载并解压源码。确保当前目录能看到 requirements.txt 和 scripts。
 
-双击 START_WINDOWS.bat，会创建 .venv、安装本项目依赖、运行 doctor 和首次离线示例；不会安装五个上游项目，不会上传论文。也可以在 PowerShell 手动执行：
+双击 START_WINDOWS.bat，会创建 .venv、安装本项目依赖、运行 doctor 和首次离线示例；不会安装任何登记的上游项目，不会上传论文。也可以在 PowerShell 手动执行：
 
 ```powershell
 python -m venv .venv
@@ -102,4 +107,4 @@ python scripts/check_repository.py
 python scripts/build_distribution.py --out dist
 ```
 
-打包输出不能覆盖已有发行文件；需要重新构建时换输出目录。分发包只包含 config/distribution-files.json 列出的源码和文档，不包括用户研究目录、上游 ZIP 或 PDF。
+打包输出不能覆盖已有发行文件；需要重新构建时换输出目录。分发包只包含 config/distribution-files.json 列出的源码和文档，不包括用户研究目录、上游 ZIP 或 PDF。例外是清单明确列出的独立 `skills/scientific-figure-making/` 文档树；它保留自己的 CC BY-NC 4.0 LICENSE，不受根 MIT 重许可。
