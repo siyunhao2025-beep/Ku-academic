@@ -11,7 +11,7 @@
 ### 为什么仓库叫 Cool-Academic，调用名还是 research-mother？
 Cool-Academic 是独立项目名称；research-mother 是保留兼容性的 Skill 标识。安装包顶层目录也叫 research-mother。
 
-### 五个上游 Skill 都安装了吗？
+### 登记的上游 Skill 都安装了吗？
 没有这一默认保证。config/upstream.lock.json 登记的是固定来源、版本和入口。scripts/upstream.py 可以隔离下载源码；不会在 GPT 原生安装、执行 hooks 或自动配置密钥。必须分别验收安装和实际调用。
 
 ### 需要收费 API 或云服务器吗？

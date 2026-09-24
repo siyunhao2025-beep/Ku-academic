@@ -53,7 +53,7 @@ modules/workflow.md 和当前任务需要的模块，按里面的流程处理我
 
 安装 Python 3.10 或更高版本，打开仓库所在文件夹。不会用 Git 时，可从 Code → Download ZIP 下载并解压源码。确保当前目录能看到 requirements.txt 和 scripts。
 
-双击 START_WINDOWS.bat，会创建 .venv、安装本项目依赖、运行 doctor 和首次离线示例；不会安装五个上游项目，不会上传论文。也可以在 PowerShell 手动执行：
+双击 START_WINDOWS.bat，会创建 .venv、安装本项目依赖、运行 doctor 和首次离线示例；不会安装任何登记的上游项目，不会上传论文。也可以在 PowerShell 手动执行：
 
 ```powershell
 python -m venv .venv

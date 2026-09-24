@@ -367,13 +367,13 @@ macOS / Linux：
 | [文件接口](docs/CONTRACTS.md) | PDF 清单、期刊阅读卡、补稿证据、断点记录格式 |
 | [架构与扩展](docs/ARCHITECTURE.md) | 新增领域包、区分期刊风格与项目结果、阶段依赖；中性模板 example-domain 与示范包 sample-space-physics |
 | [常见问题](docs/FAQ.md) | 没有 Skills 入口、是否自动写论文、费用、PDF 和隐私 |
-| [上游来源](docs/UPSTREAM.md) | 五个参考项目的版本、适配规则与独立许可 |
+| [上游来源](docs/UPSTREAM.md) | 已登记参考项目的版本、适配规则与独立许可 |
 | [迁移记录](docs/MIGRATION.md) | 旧项目来源、迁入范围与历史验收的区别 |
 | [验收范围](docs/ACCEPTANCE.md) | 自动化能检查什么，还需要哪些真实任务验证 |
 
 ## 维护、隐私与许可
 
-源自 Research Mother v0.1.0，现以 **Cool-Academic 独立仓库**维护，调用名保持 `research-mother`，当前版本 v0.5.0。五个上游项目通过 [版本清单](config/upstream.lock.json) 按需取用；登记或下载源码不代表全部原生安装与调用验收完成。没有默认开启后台文献订阅或自动投稿。
+源自 Research Mother v0.1.0，现以 **Cool-Academic 独立仓库**维护，调用名保持 `research-mother`，当前版本 v0.5.0。已登记的上游项目通过 [版本清单](config/upstream.lock.json) 按需取用；登记或下载源码不代表全部原生安装与调用验收完成。没有默认开启后台文献订阅或自动投稿。
 
 **第三方技能说明：** `skills/ppt/` 是飞书幻灯片技能，现已接入上游完整实现 `YinsenWANG/feishu-ppt-skill`（MIT）：31 个设计文档逐字保留，51 个模板、Python 校验/预览脚本、Lucide 图标已补入并在本地跑通。在线创建/截图/写回仍需 `lark-cli` 与飞书授权，本仓库不安装它。详见 [PPT 技能状态说明](skills/ppt/MISSING_DEPENDENCIES.md)。
 

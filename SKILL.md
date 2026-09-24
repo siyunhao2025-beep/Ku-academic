@@ -1,6 +1,18 @@
 ---
 name: research-mother
-description: Orchestrate evidence-grounded research with replaceable domain packs across seven explicit phases (onboarding/preparation, topic and paper investigation, literature review, experiment design, computation, figures and manuscript writing, conclusion and revision): literature discovery and reviews, study design, real analysis, research roadmaps and schematic figures, genuine citation provenance and claim-support verification, de-AI writing, methods, manuscript development, contribution-driven supplementation, journal-corpus style learning and scientific editing. Use when a researcher asks to build or run a research workflow, distill a field or journal, write a review or paper from evidence, verify whether references actually exist and actually support the sentence, produce research diagrams, reduce AI traces in academic prose, or improve a manuscript without defensive boilerplate.
+description: >-
+  Orchestrate evidence-grounded research with replaceable domain packs across
+  seven explicit phases (onboarding/preparation, topic and paper investigation,
+  literature review, experiment design, computation, figures and manuscript
+  writing, conclusion and revision): literature discovery and reviews, study
+  design, real analysis, research roadmaps and schematic figures, genuine
+  citation provenance and claim-support verification, de-AI writing, methods,
+  manuscript development, contribution-driven supplementation, journal-corpus
+  style learning and scientific editing. Use when a researcher asks to build or
+  run a research workflow, distill a field or journal, write a review or paper
+  from evidence, verify whether references actually exist and actually support
+  the sentence, produce research diagrams, reduce AI traces in academic prose,
+  or improve a manuscript without defensive boilerplate.
 license: MIT
 metadata:
   version: "0.5.0"
@@ -100,6 +112,7 @@ An upstream phase's deliverables are a downstream phase's inputs. Do not start a
 | Supplement an existing manuscript | modules/supplementation.md | substantive patch plan, source support, tracked changes |
 | Describe experiments/methods, plot data | modules/analysis-methods-figures.md | run-linked methods, data-derived figures and provenance |
 | Produce a research roadmap or schematic figure | modules/figures.md | roadmap + schematic + figure manifest with color logic, enforced by `scripts/figures.py` |
+| Apply figures4papers-informed publication styling | modules/figures.md + modules/figures4papers-profile.md | source-aware style choices under local traceability/accessibility rules; no upstream code or assets |
 | An upstream artifact changed / rework or revision — what downstream must be redone and where to roll back | modules/change-management.md | change severity (L0–L4), `impact.py` impact report, rollback SOP |
 | A citation is behind a paywall — which sentences still stand / how to get full text legally | modules/evidence-integrity.md §访问分级 | sentence-tier gating via `scripts/access.py`, legal Unpaywall fallback |
 | Produce a 2.5D isometric graphical abstract / opening hero figure | modules/figures.md §七 | blueprint → author review → render → four-axis check; conceptual illustration only |

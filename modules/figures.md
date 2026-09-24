@@ -1,6 +1,6 @@
 # 图：一张路线图、一张原理图、一批数据图
 
-[返回首页](../README.md) · [阶段总控](phases.md) · [同类对比来源](../docs/PEER_COMPARISON.md)
+[返回首页](../README.md) · [阶段总控](phases.md) · [figures4papers 适配画像](figures4papers-profile.md) · [同类对比来源](../docs/PEER_COMPARISON.md)
 
 **每个研究任务默认产三张图，一张都不能省：**
 
@@ -109,6 +109,8 @@ P1 画出草图（回答"打算怎么做"），P4 定稿（回答"实际怎么�
 ### 数据从哪来
 
 只从真实结果文件出图。**不准用生成式工具造数据图。** 手工编辑过数字的结果文件不能作为绘图输入。
+
+用户明确要求 figures4papers 风格或需要其柱图、趋势、热图、多面板等经验时，再读取 [`figures4papers-profile.md`](figures4papers-profile.md)。它只提供表现层画像；本模块的数据真实性、可追溯、无障碍、坐标诚信和人眼审查规则始终优先。
 
 ### 必须留档的东西
 

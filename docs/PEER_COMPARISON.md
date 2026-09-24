@@ -47,7 +47,7 @@
 
 ## 上游文本的来源与许可
 
-上表所有仓库均为公开仓库，本项目**未收录其原始文件**。`modules/evidence-integrity.md`、`modules/figures.md`、`modules/deai-writing.md` 中的规则均为改写与泛化后的重新表述，行文与原仓库不同，阈值与清单项可逐条追溯到上表来源。`config/upstream.lock.json` 登记的是另五个只做源码隔离下载的项目，与本次同类对比无关，未做改动。
+上表所有仓库均为公开仓库，本项目**未收录其原始文件**。`modules/evidence-integrity.md`、`modules/figures.md`、`modules/deai-writing.md` 中的规则均为改写与泛化后的重新表述，行文与原仓库不同，阈值与清单项可逐条追溯到上表来源。`config/upstream.lock.json` 另行登记按固定提交隔离获取或只读参考的项目；登记不代表安装、执行或重新分发。
 
 ## 后续可继续观察的方向
 
