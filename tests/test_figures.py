@@ -1,6 +1,8 @@
 """Tests for the figure guardrail (scripts/figures.py). No network.
 Synthetic manifests and temp files only."""
 import json
+import os
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -148,6 +150,33 @@ class MissingFileTests(unittest.TestCase):
         errors, _ = figures.check_one(self.ws, base_data_figure(
             source_data=["../../../../etc/passwd"]))
         self.assertTrue(any("source_data" in e for e in errors))
+
+
+class ConsoleEncodingTests(unittest.TestCase):
+    def test_cli_survives_dynamic_emoji_under_gbk(self):
+        tmp, ws = make_workspace()
+        self.addCleanup(tmp.cleanup)
+        manifest = {
+            "schematic_not_needed_reason": "not needed 🧪",
+            "figures": [base_data_figure(
+                id="result-🧪",
+                source_data=["analysis/results/missing-🧪.csv"],
+            )],
+        }
+        (ws / "figures/manifest.json").write_text(
+            json.dumps(manifest, ensure_ascii=False), encoding="utf-8",
+        )
+        repo = Path(__file__).resolve().parents[1]
+        env = os.environ.copy()
+        env["PYTHONIOENCODING"] = "gbk"
+        completed = subprocess.run(
+            [sys.executable, str(repo / "scripts" / "figures.py"), "check", str(ws)],
+            cwd=repo, capture_output=True, text=True, env=env,
+        )
+        output = completed.stdout + completed.stderr
+        self.assertEqual(completed.returncode, 1, output)
+        self.assertNotIn("UnicodeEncodeError", output)
+        output.encode("gbk")
 
 
 if __name__ == "__main__":

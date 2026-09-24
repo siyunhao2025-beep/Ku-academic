@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-文献三遍精读卡片：生成骨架 → 校验完整度 → 同步进 evidence.json
+文献三遍精读卡片：生成骨架 -> 校验完整度 -> 同步进 evidence.json
 
 用法：
   python scripts/reading.py card <workspace> --title "标题" [--author 第一作者]
@@ -34,6 +34,18 @@ RELATION_MAP = {
 # 卡片里需要人填的关键字段（完整度判定）
 REQUIRED = ["research_question", "core_conclusion", "data_methods",
             "key_results", "claim_strength", "relation", "doubts"]
+
+
+def configure_console_output():
+    """Keep dynamic user text printable on legacy Windows consoles."""
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is None:
+            continue
+        try:
+            reconfigure(errors="backslashreplace")
+        except (OSError, ValueError):
+            pass
 
 
 def load(path, default=None):
@@ -83,32 +95,32 @@ def cmd_card(ws, a):
 {json.dumps(meta, ensure_ascii=False, indent=2)}
 -->
 
-> 三遍法协议见 modules/paper-reading-guide.md。带 ❗ 的是必填，填不出来就是没读懂，回去重读。
+> 三遍法协议见 modules/paper-reading-guide.md。带 [必填] 标记的是必填，填不出来就是没读懂，回去重读。
 
 ## 第一遍 · 鸟瞰（10-15 分钟，只看标题/摘要/图表标题/结论段）
 - 和我的方向直接相关吗：
-- 一句话核心结论 ❗：
+- 一句话核心结论 [必填]：
 - 用了什么数据/方法：
 - 处置（精读 / 泛读 / 跳过）：
 
 ## 第二遍 · 拆解（1-2 小时，逐节填）
-- **研究问题** ❗（具体到"什么条件下、什么量、和什么的关系"）：
+- **研究问题** [必填]（具体到"什么条件下、什么量、和什么的关系"）：
 - **核心假设**（作者预期什么）：
-- **数据与方法** ❗（仪器/样本量/时间范围/分析方法）：
-- **关键结果** ❗（最多3条，每条必须带具体数字）：
+- **数据与方法** [必填]（仪器/样本量/时间范围/分析方法）：
+- **关键结果** [必填]（最多3条，每条必须带具体数字）：
   1.
   2.
   3.
-- **结论强度** ❗（三选一，在前面 [ ] 里填 x，不许混）：
+- **结论强度** [必填]（三选一，在前面 [ ] 里填 x，不许混）：
   - [ ] 观测事实（我们看到了X）
   - [ ] 统计关联（X和Y相关）
   - [ ] 机制假设（推测因为Z）
-- **和我研究的关系** ❗（四选一填 x）：
+- **和我研究的关系** [必填]（四选一填 x）：
   - [ ] 支持我的假设
   - [ ] 反对我的假设
   - [ ] 条件不同，不能直接比
   - [ ] 方法可以参考
-- **存疑的地方** ❗（漏洞/过度推导/没说清的）：
+- **存疑的地方** [必填]（漏洞/过度推导/没说清的）：
 - **没懂的术语/方法**（记下来查或问导师）：
 
 ## 第三遍 · 批判（30-60 分钟，挑毛病）
@@ -122,7 +134,7 @@ def cmd_card(ws, a):
 """
     p.write_text(body, encoding="utf-8")
     print(f"已生成卡片骨架：{p}")
-    print("按三遍法填写，带 ❗ 的必填。填完运行：")
+    print("按三遍法填写，带 [必填] 标记的字段必须填写。填完运行：")
     print(f"  python scripts/reading.py check {ws}")
 
 
@@ -208,10 +220,10 @@ def cmd_list(ws):
     print(f"共 {len(cards)} 张精读卡片：\n")
     for m in cards:
         if m.get("_parse_error"):
-            print(f"  ⚠️ {m['_file']} META 块损坏，无法解析")
+            print(f"  [WARN] {m['_file']} META 块损坏，无法解析")
             continue
         miss = completeness(m)
-        tag = "✅完整" if not miss else f"🔄缺{len(miss)}项"
+        tag = "[OK] 完整" if not miss else f"[进行中] 缺{len(miss)}项"
         title = m.get("title") or m.get("_file")
         synced = "已同步" if m.get("synced") else "未同步"
         print(f"  {tag} [{synced}] {m.get('first_author','?')}{m.get('year','')} {title[:34]}")
@@ -225,17 +237,17 @@ def cmd_check(ws):
     bad = [(m, x) for m, x in bad if x]
     corrupted = [m for m in cards if m.get("_parse_error")]
     if not cards:
-        print("⛔ 没有任何精读卡片。P0 至少精读 2 篇代表作。")
+        print("[ERROR] 没有任何精读卡片。P0 至少精读 2 篇代表作。")
         sys.exit(1)
     if corrupted:
         for m in corrupted:
-            print(f"⚠️ META 块损坏：{m['_file']}")
+            print(f"[WARN] META 块损坏：{m['_file']}")
     if bad:
-        print("⛔ 以下卡片不完整，没填完不算读过：\n")
+        print("[ERROR] 以下卡片不完整，没填完不算读过：\n")
         for m, miss in bad:
             print(f"  {m.get('_file')}：缺 {'、'.join(miss)}")
         sys.exit(1)
-    print(f"✅ {len(cards)} 张卡片全部完整。可运行 sync 同步进 evidence.json。")
+    print(f"[OK] {len(cards)} 张卡片全部完整。可运行 sync 同步进 evidence.json。")
 
 
 def cmd_sync(ws):
@@ -290,12 +302,13 @@ def cmd_sync(ws):
         cp.write_text(txt, encoding="utf-8")
 
     save(ev_path, ev)
-    print(f"✅ 同步完成：新增 {n_new} 条，更新 {n_upd} 条 → {ev_path}")
-    print("⚠️ 这些条目 citation_verdict=UNRESOLVED、support_status 为空；")
+    print(f"[OK] 同步完成：新增 {n_new} 条，更新 {n_upd} 条 -> {ev_path}")
+    print("[WARN] 这些条目 citation_verdict=UNRESOLVED、support_status 为空；")
     print("   精读不等于核验，接下来必须跑引用身份+支持两道核验才能计入 Gate 2。")
 
 
 def main():
+    configure_console_output()
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
     pc = sub.add_parser("card")
