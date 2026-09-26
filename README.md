@@ -349,7 +349,7 @@ macOS / Linux：
 | [文献真实性](modules/evidence-integrity.md) | 引用四态判定、六类支持状态、高风险错配、句子强度×访问级别、Unpaywall 合法全文兜底、待确认标记 |
 | [图的规则](modules/figures.md) | 线路图、原理示意图、数据图、2.5D 开篇主视觉图、配色逻辑、图表检查清单与 figures.py 脚本护栏 |
 | [变更管理与回退](modules/change-management.md) | 改动 L0–L4 分级、impact.py 影响传播、回退五步、阈值/纳入标准变更纪律 |
-| [降 AI 模块](modules/deai-writing.md) | 反过度纠正红线、句式节奏、中文硬约束、交付前自查 |
+| [自然学术表达模块](modules/deai-writing.md) | 反过度纠正红线、读者清晰度、证据有界改写、交付前自查 |
 | [精简模式](modules/lean-mode.md) | 触发方式、生效范围、绝不砍的清单、省 token 的具体动作 |
 | [Token 统计口径](docs/TOKEN_ACCOUNTING.md) | 能测什么、公式与偏差、两种累计口径、展示形式 |
 | [目标期刊范文获取](modules/journal-sourcing.md) | 自动获取的目标/输入/输出、人工下载兜底清单、状态回填 |
