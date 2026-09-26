@@ -39,6 +39,24 @@ class WritingRevisionContractTests(unittest.TestCase):
         self.assertIn("只为了检测器分数", module)
         self.assertIn("不按配额机械处理", checklist)
 
+    def test_active_entrypoints_frame_style_revision_around_readers(self):
+        skill = (ROOT / "SKILL.md").read_text(encoding="utf-8")
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        ladder = (ROOT / "modules" / "polishing-ladder.md").read_text(encoding="utf-8")
+        active_text = "\n".join((skill, readme, ladder))
+        retired_claims = (
+            "reduce AI traces in academic prose",
+            "Reduce AI traces in academic prose",
+            "先锁死数字，再改句式节奏",
+            "连续多个长度接近的句子要重组",
+            "长短句结合，不要全是长句，也不要全是短句",
+            "本项目把两个最接近的来源融合",
+        )
+        for claim in retired_claims:
+            self.assertNotIn(claim, active_text)
+        self.assertIn("without targeting AI-detector scores", skill)
+        self.assertIn("读者能否一次读清楚", readme)
+
 
 if __name__ == "__main__":
     unittest.main()

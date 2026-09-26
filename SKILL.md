@@ -1,7 +1,7 @@
 ---
 name: research-mother
 description: >-
-  Orchestrate evidence-grounded research with replaceable domain packs across seven explicit phases (onboarding/preparation, topic and paper investigation, literature review, experiment design, computation, figures and manuscript writing, conclusion and revision): literature discovery and reviews, study design, real analysis, research roadmaps and schematic figures, genuine citation provenance and claim-support verification, de-AI writing, methods, manuscript development, contribution-driven supplementation, journal-corpus style learning and scientific editing. Use when a researcher asks to build or run a research workflow, distill a field or journal, write a review or paper from evidence, verify whether references actually exist and actually support the sentence, produce research diagrams, reduce AI traces in academic prose, or improve a manuscript without defensive boilerplate.
+  Orchestrate evidence-grounded research with replaceable domain packs across seven explicit phases (onboarding/preparation, topic and paper investigation, literature review, experiment design, computation, figures and manuscript writing, conclusion and revision): literature discovery and reviews, study design, real analysis, research roadmaps and schematic figures, genuine citation provenance and claim-support verification, evidence-preserving academic style revision, methods, manuscript development, contribution-driven supplementation, journal-corpus style learning and scientific editing. Use when a researcher asks to build or run a research workflow, distill a field or journal, write a review or paper from evidence, verify whether references actually exist and actually support the sentence, produce research diagrams, reduce formulaic or AI-like phrasing by improving clarity and natural academic voice without targeting AI-detector scores, or revise a manuscript without defensive boilerplate.
 license: MIT
 metadata:
   version: "0.5.0"
@@ -50,7 +50,7 @@ The neutral blank domain pack is `domains/example-domain/SKILL.md`; `domains/sam
 - Proceed autonomously through supported, reversible stages. Do not ask for permission at every step. Missing evidence blocks only dependent claims; continue independent work and report precise gaps.
 - No synthetic scientific results, invented references, invented sample counts or claims of reading inaccessible full text.
 - A reference must pass two independent checks before it may support a sentence: bibliographic identity (does it exist, are the metadata right) and claim support (does it actually say this). A resolvable DOI is not a verified claim.
-- Never state a number the evidence cannot support, and never strengthen a hedged finding while editing language. Reducing AI traces must not manufacture over-claiming.
+- Never state a number the evidence cannot support, and never strengthen a hedged finding while editing language. Style revision must not chase detector scores or manufacture over-claiming.
 - Do not turn absence of a key explanatory or confounding variable into generic defensive paragraphs. Calibrate the specific mechanism claim to the variables actually observed, preserve each material limitation once, and keep the argument moving. (Which variable is "key" is defined by the active domain pack, not hard-coded to any field.)
 - Language editing preserves physics, quantities, units and evidence strength. It does not promise acceptance or evasion of AI detectors.
 - Express uncertainty honestly. When something cannot be verified, mark it `待确认` with what was checked and what is still needed. Never let "could not check" read as "clean".
@@ -104,7 +104,7 @@ An upstream phase's deliverables are a downstream phase's inputs. Do not start a
 | An upstream artifact changed / rework or revision — what downstream must be redone and where to roll back | modules/change-management.md | change severity (L0–L4), `impact.py` impact report, rollback SOP |
 | A citation is behind a paywall — which sentences still stand / how to get full text legally | modules/evidence-integrity.md §访问分级 | sentence-tier gating via `scripts/access.py`, legal Unpaywall fallback |
 | Produce a 2.5D isometric graphical abstract / opening hero figure | modules/figures.md §七 | blueprint → author review → render → four-axis check; conceptual illustration only |
-| Reduce AI traces in academic prose | modules/deai-writing.md + assets/deai-checklist.md | revised prose with an executed evidence-first self-check |
+| Improve formulaic or AI-like academic prose without targeting detectors | modules/deai-writing.md + assets/deai-checklist.md | revised prose with an executed evidence-first self-check |
 | Explain the workflow to a non-expert user | assets/plain-language-prompts.md | plain-language guidance, one next action per reply |
 | Save tokens without losing function | modules/lean-mode.md + docs/TOKEN_ACCOUNTING.md | named ledger entries with basis and method labelled |
 | Polish or review | modules/writing-review.md | revised prose, numerical/causal checks, focused audit |
