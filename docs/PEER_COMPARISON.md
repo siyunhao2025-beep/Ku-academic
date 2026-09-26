@@ -4,6 +4,25 @@
 
 本文件记录 v0.2.0 优化前实际检索到的同类科研 / 学术写作 Skill，逐项列出它们做得好的地方、做得不足的地方，以及本项目吸收了什么、为什么吸收、写进了哪个文件。
 
+> **2026-09-26 复核说明：** 下表保留 v0.2.0 当时的历史判断，不再代表当前执行契约。
+> `matsuikentaro1/humanizer_academic` 在提交
+> `aa72480894f198ad4db878683df363cc7bb7bcd8` 已明确改为“读者清晰度优先”，反对按检测器分数、
+> 句长方差或长短句配额优化；`redbaronyyyyy-eng/humanizer-zh-academic` 的量化阈值来自未公开的
+> 单篇改写/检测器比较，不能外推成跨作者、跨语言的科学门槛。当前
+> `modules/deai-writing.md` 已取消这些伪精确配额，以语义清晰度、术语一致性和证据保护为准。
+
+## 2026-09-26 增量审计
+
+| 仓库 | 锁定提交 | 许可 | 本轮判断 |
+|---|---|---|---|
+| `lensback940701/Evidence-Bound-Press-Conference-Revision-Skill` | `33e6c3a2f69c8c27dfd328e7b8df97609c81687f` | MIT | 独立实现“编辑前锁主张/必要边界—逐条处置—改后回归”；不采用其项目专属领域规则或原文。 |
+| `Worigin0314/academic-defensive-writing-auditor` | `89f26b8a7f8149e6458f657010d354587d42cfe9` | MIT | 交叉核对防御性措辞类别；不复制清单、评分或提示词。 |
+| `Adkid-Zephyr/anti-defensive-writing-Skill` | `102c8b21acf5eda3a0aef3d9779a65db646c8980` | MIT | 仅接受“突出有证据的贡献”；拒绝隐藏负结果、事后换指标或删必要限制。 |
+| `matsuikentaro1/humanizer_academic` | `aa72480894f198ad4db878683df363cc7bb7bcd8` | `LICENSE` 自称 MIT 但缺完整授权条款 | 只作概念比较，不复制文本/代码；采用的是独立形成的“清晰度优先、无检测器配额”原则。 |
+
+`SKILL.md` 的触发描述现已把这类任务限定为“保护证据的自然学术表达修订”，明确不以检测器分数为目标；
+这一收窄与现行模块一致。P0–P6、硬闸门、领域包、事实锁、引用双检和变更传播契约均未改变。
+
 ## 检索与判定方法
 
 - 检索对象：GitHub 上以科研全流程、学术写作、降 AI 痕迹、科研绘图为主体的可复用 Skill 仓库。
