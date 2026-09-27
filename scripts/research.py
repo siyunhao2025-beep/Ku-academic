@@ -176,6 +176,81 @@ def search(query, since, until, output, pages=2, rows=50, mode="published", fetc
     return report
 
 
+def assess_search_progress(rounds, budget, patience, min_new):
+    """Apply a bounded, evidence-matrix-aware stopping rule to search rounds.
+
+    This is an engineering control for search effort. It never establishes that
+    the literature is exhaustive or that admitted sources support a claim.
+    """
+    if not isinstance(rounds, list) or not rounds:
+        raise ValueError("rounds must be a non-empty array")
+    if not all(isinstance(x, int) and x >= 1 for x in (budget, patience, min_new)):
+        raise ValueError("budget, patience and min_new must be positive integers")
+
+    required = {"round", "queries", "new_deduped_records", "admitted_sources",
+                "matrix_changing_sources", "open_required_gaps"}
+    trajectory = []
+    for index, entry in enumerate(rounds):
+        if not isinstance(entry, dict) or not required.issubset(entry):
+            raise ValueError(f"round {index} is missing required fields")
+        if entry["round"] != index:
+            raise ValueError("round identifiers must be contiguous and start at 0")
+        if not isinstance(entry["queries"], list) or not entry["queries"] or not all(
+                isinstance(query, str) and query.strip() for query in entry["queries"]):
+            raise ValueError(f"round {index} needs at least one non-empty query")
+        counts = [entry["new_deduped_records"], entry["admitted_sources"],
+                  entry["matrix_changing_sources"]]
+        if not all(isinstance(value, int) and value >= 0 for value in counts):
+            raise ValueError(f"round {index} counts must be non-negative integers")
+        if entry["matrix_changing_sources"] > entry["admitted_sources"]:
+            raise ValueError(f"round {index} cannot change the matrix with more sources than it admitted")
+        if not isinstance(entry["open_required_gaps"], list) or not all(
+                isinstance(gap, str) and gap.strip() for gap in entry["open_required_gaps"]):
+            raise ValueError(f"round {index} open_required_gaps must be an array of non-empty strings")
+        trajectory.append(entry["matrix_changing_sources"])
+
+    dry_streak = 0
+    for count in reversed(trajectory):
+        if count >= min_new:
+            break
+        dry_streak += 1
+    open_gaps = list(dict.fromkeys(rounds[-1]["open_required_gaps"]))
+    budget_reached = len(rounds) >= budget
+    if budget_reached and open_gaps:
+        decision = "AUTHOR_ACTION_REQUIRED"
+        reason = "budget reached while required coverage gaps remain"
+    elif budget_reached:
+        decision = "STOP_BUDGET"
+        reason = "configured search-round budget reached"
+    elif dry_streak >= patience and open_gaps:
+        decision = "CONTINUE_FOR_COVERAGE"
+        reason = "yield is dry but required coverage gaps remain"
+    elif dry_streak >= patience:
+        decision = "STOP_SATURATED"
+        reason = "matrix-changing yield stayed below the configured minimum for the configured patience"
+    else:
+        decision = "CONTINUE"
+        reason = "neither the saturation nor budget stop is met"
+
+    return {"decision": decision, "reason": reason, "rounds_completed": len(rounds),
+            "budget": budget, "patience": patience, "min_new": min_new,
+            "dry_streak": dry_streak, "trajectory": trajectory,
+            "open_required_gaps": open_gaps, "coverage_note_required": True,
+            "exhaustiveness_claim_allowed": False,
+            "important_limit": "This stopping rule limits search effort; it does not prove exhaustive coverage or citation support."}
+
+
+def search_progress(ledger, output, budget, patience, min_new):
+    out = Path(output)
+    if out.exists():
+        raise FileExistsError("Use a new output path to preserve previous progress decisions")
+    payload = read(ledger)
+    result = assess_search_progress(payload.get("rounds") if isinstance(payload, dict) else None,
+                                    budget, patience, min_new)
+    write(out, result)
+    return result
+
+
 def init_project(target, domain, kind):
     target = Path(target)
     if (target / "project.json").exists():
@@ -366,6 +441,12 @@ def main(argv=None):
     s.add_argument("--until", default=dt.date.today().isoformat()); s.add_argument("--out", required=True)
     s.add_argument("--pages", type=int, default=2); s.add_argument("--rows", type=int, default=50)
     s.add_argument("--mode", choices=["published", "indexed"], default="published")
+    sp = sub.add_parser("search-progress")
+    sp.add_argument("--ledger", required=True)
+    sp.add_argument("--out", required=True)
+    sp.add_argument("--budget", type=int, required=True)
+    sp.add_argument("--patience", type=int, required=True)
+    sp.add_argument("--min-new", type=int, required=True)
     ch = sub.add_parser("checkpoint"); ch.add_argument("project"); ch.add_argument("stage")
     ch.add_argument("--inputs", nargs="+", required=True); ch.add_argument("--outputs", nargs="+", required=True)
     check = sub.add_parser("check"); check.add_argument("project")
@@ -386,6 +467,8 @@ def main(argv=None):
         elif args.command == "init": result = init_project(args.target, args.domain, args.kind)
         elif args.command == "search":
             result = search(args.query, args.since, args.until, args.out, args.pages, args.rows, args.mode)
+        elif args.command == "search-progress":
+            result = search_progress(args.ledger, args.out, args.budget, args.patience, args.min_new)
         elif args.command == "checkpoint": result = checkpoint(args.project, args.stage, args.inputs, args.outputs)
         elif args.command == "check": result = check_project(args.project)
         elif args.command == "check-changes": result = validate_changes(read(args.changes), read(args.evidence))

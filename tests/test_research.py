@@ -175,6 +175,50 @@ class SearchTests(unittest.TestCase):
             with self.assertRaises(FileExistsError): r.search('x', '2026-01-01', '2026-02-01', t)
 
 
+class SearchProgressTests(unittest.TestCase):
+    def round(self, number, matrix_changing, gaps=None):
+        return {'round': number, 'queries': [f'fixture-{number}'],
+                'new_deduped_records': matrix_changing + 2,
+                'admitted_sources': matrix_changing,
+                'matrix_changing_sources': matrix_changing,
+                'open_required_gaps': gaps or []}
+
+    def test_stops_after_configured_dry_streak(self):
+        rounds = [self.round(0, 5), self.round(1, 1), self.round(2, 0)]
+        out = r.assess_search_progress(rounds, budget=6, patience=2, min_new=2)
+        self.assertEqual(out['decision'], 'STOP_SATURATED')
+        self.assertEqual(out['dry_streak'], 2)
+        self.assertEqual(out['trajectory'], [5, 1, 0])
+        self.assertFalse(out['exhaustiveness_claim_allowed'])
+
+    def test_required_gap_prevents_false_saturation(self):
+        rounds = [self.round(0, 1), self.round(1, 0, ['undercovered population'])]
+        out = r.assess_search_progress(rounds, budget=4, patience=2, min_new=2)
+        self.assertEqual(out['decision'], 'CONTINUE_FOR_COVERAGE')
+
+    def test_budget_with_required_gap_needs_human_decision(self):
+        rounds = [self.round(0, 3), self.round(1, 0, ['missing comparator'])]
+        out = r.assess_search_progress(rounds, budget=2, patience=2, min_new=2)
+        self.assertEqual(out['decision'], 'AUTHOR_ACTION_REQUIRED')
+
+    def test_invalid_ledger_is_rejected(self):
+        bad = [self.round(0, 1)]
+        bad[0]['queries'] = []
+        with self.assertRaises(ValueError):
+            r.assess_search_progress(bad, budget=3, patience=2, min_new=1)
+
+    def test_cli_writes_an_auditable_decision(self):
+        with tempfile.TemporaryDirectory() as t:
+            root = Path(t)
+            ledger = root / 'rounds.json'
+            output = root / 'progress.json'
+            r.write(ledger, {'rounds': [self.round(0, 4), self.round(1, 0)]})
+            code = r.main(['search-progress', '--ledger', str(ledger), '--out', str(output),
+                           '--budget', '5', '--patience', '1', '--min-new', '2'])
+            self.assertEqual(code, 0)
+            self.assertEqual(r.read(output)['decision'], 'STOP_SATURATED')
+
+
 class ChangeTests(unittest.TestCase):
     def setUp(self):
         self.change = {'id': 'C', 'location': 'Discussion', 'before': 'old', 'after': 'new',

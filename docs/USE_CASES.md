@@ -473,3 +473,20 @@ quantitative/causal），跑 python scripts/access.py check <workspace>。
 无网络时如实报错，不要伪造可访问性。
 ```
 
+## 29. 多轮检索：什么时候该停，什么时候不能停
+
+```text
+使用 research-mother，加载 modules/literature.md。
+围绕[研究问题]执行多轮扩展检索，每轮记录完整查询、去重后的新记录、
+实际纳入证据矩阵的来源、真正改变支持/反驳/限定/缺口判断的来源数，
+以及当前项目范围内仍必须覆盖的缺口。
+
+开始前和我确认本项目的最大轮数 budget、连续低收益容忍 patience、
+最低矩阵变化来源数 min_new；这些是成本控制参数，不是科学充分性阈值。
+用 scripts/research.py search-progress 生成判定与收益轨迹。
+
+重复命中、只补元数据或未读全文的机制主张不能算 matrix-changing。
+若低收益但仍有必需覆盖缺口，继续定向补查；若预算耗尽仍有缺口，
+转 AUTHOR_ACTION_REQUIRED，让我选择缩小范围、增加资源或接受覆盖限制。
+任何停止都要列出薄弱区域，不得声称穷尽文献。
+```

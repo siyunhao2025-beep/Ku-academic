@@ -88,6 +88,17 @@ python scripts/research.py search --query "your key construct your method" --sin
 
 同一窗口的延迟收录补捞可使用 --mode indexed 并换新输出目录。search.json 中的 records 是待筛选元数据，不是已经读完、确定相关的新论文。status=error 要看错误日志；truncated=true 表示只返回了受限候选。
 
+若围绕不同子问题执行多轮检索，把每轮的查询、去重新记录、纳入来源、真正改变证据矩阵的
+来源数和仍需覆盖的缺口写入 `audit/search-rounds.json`，再显式指定本项目的工程停止参数：
+
+```bash
+python scripts/research.py search-progress --ledger audit/search-rounds.json --budget 6 --patience 2 --min-new 2 --out audit/search-progress.json
+```
+
+这些数字只是示例，不是通用充分性阈值。`STOP_SATURATED` 仅表示达到设定的连续低收益条件；
+只要仍有项目范围内的必需缺口，工具会要求继续或转人工，不会宣称检索已经穷尽。账本结构与
+五种判定见 [文献模块](../modules/literature.md)。
+
 PDF 下载、导入和阅读卡格式见 [文件接口](CONTRACTS.md)。全文阅读与期刊风格归纳需要模型实际执行，不能仅跑提取脚本。
 
 ## 7. 更新和维护
