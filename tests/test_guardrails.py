@@ -305,5 +305,19 @@ class ReadingCardTests(unittest.TestCase):
         self.assertNotIn("\\", rec["reading_card"])
 
 
+class FieldDistillationContractTests(unittest.TestCase):
+    def test_method_lineage_keeps_mechanism_and_evidence_guards(self):
+        root = Path(__file__).resolve().parents[1]
+        module = (root / "modules" / "field-distillation.md").read_text(encoding="utf-8")
+        for term in ("假设变化", "实现机制", "新增代价", "适用条件", "失效条件"):
+            self.assertIn(term, module)
+        for channel in ("引用链", "局限反推", "问题框架"):
+            self.assertIn(channel, module)
+        self.assertIn("claimed / demonstrated / inferred", module)
+        self.assertIn("检索失败不等于零命中", module)
+        self.assertIn("引用身份/支持双检", module)
+        self.assertIn("full_text", module)
+
+
 if __name__ == "__main__":
     unittest.main()
