@@ -57,6 +57,25 @@ class WritingRevisionContractTests(unittest.TestCase):
         self.assertIn("without targeting AI-detector scores", skill)
         self.assertIn("读者能否一次读清楚", readme)
 
+    def test_plain_language_contract_is_complete_but_not_colloquialized(self):
+        module = (ROOT / "modules" / "deai-writing.md").read_text(encoding="utf-8")
+        guidance = (ROOT / "assets" / "plain-language-prompts.md").read_text(encoding="utf-8")
+        combined = module + "\n" + guidance
+        for requirement in (
+            "完整句子",
+            "主体—动作—对象",
+            "比较对象",
+            "适用条件",
+            "必要的中间步骤",
+            "逐词直译",
+            "自造缩写",
+            "信息充分之后再精简",
+        ):
+            self.assertIn(requirement, combined)
+        self.assertIn("目标期刊或学科语体", module)
+        self.assertIn("专业术语锁", module)
+        self.assertNotIn("像给照片磨皮", module)
+
 
 if __name__ == "__main__":
     unittest.main()
