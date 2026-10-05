@@ -245,6 +245,10 @@ macOS / Linux：
 `budget / patience / min-new`，停止只表示达到工程控制条件，不表示已经穷尽文献；字段与判定
 语义见 [文献模块](modules/literature.md)。
 
+已有已知关键研究时，可用 `scripts/research.py seed-coverage` 核验“种子是否找回”以及项目声明的
+向后/向前引文链是否完成。它把身份待核验、检索失败、零命中和未运行渠道分开，不把种子测试
+通过写成“文献已穷尽”；账本格式与五种判定同样见 [文献模块](modules/literature.md)。
+
 ## 按什么顺序工作？
 
 **七个阶段，所有任务共用。** 每个阶段都定义了输入、执行步骤、产出物和检查清单，见 [阶段总控](modules/phases.md)。

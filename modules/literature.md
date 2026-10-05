@@ -12,6 +12,65 @@
 
 输出：候选列表、纳入/排除理由、证据矩阵、与现稿的关系。只有确有贡献的论文进入 supplementation；其余写“无需修改正文”即可。检索失败与零命中分开报告。
 
+## 种子文献覆盖与引文链审计
+
+当团队已经知道 3–5 篇应被检索策略找回的关键研究时，先核验其 DOI、PMID 或题名身份，再把
+它们写成种子账本。种子用于发现检索漏洞，不用于证明检索已经完整；“没找回已核验种子”是
+`SEARCH_GAP`，不是“该文献不相关”。身份为 `MISMATCH / UNRESOLVED / RETRACTED` 的条目必须
+先人工处置，不能计入覆盖。
+
+引文链是否需要向后、向前或双向扩展，由项目问题和可用数据库决定。账本必须显式写
+`required_chain_directions`，即使项目决定不要求引文链而填写空数组，也不能靠工具猜默认值：
+
+```json
+{
+  "required_chain_directions": ["backward", "forward"],
+  "seeds": [
+    {
+      "id": "S1",
+      "identity_status": "VERIFIED",
+      "search_status": "FOUND",
+      "locator": "doi:10.xxxx/example"
+    }
+  ],
+  "citation_chains": [
+    {
+      "seed_id": "S1",
+      "direction": "backward",
+      "status": "COMPLETE",
+      "new_deduped_records": 12,
+      "source": "provider and query snapshot"
+    },
+    {
+      "seed_id": "S1",
+      "direction": "forward",
+      "status": "ZERO_HITS",
+      "new_deduped_records": 0,
+      "source": "provider and query snapshot"
+    }
+  ]
+}
+```
+
+运行审计：
+
+```bash
+python scripts/research.py seed-coverage --ledger audit/seed-ledger.json \
+  --out audit/seed-coverage.json
+```
+
+`COMPLETE`、`ZERO_HITS` 与 `FAILED` 是不同事实：成功查询后没有结果可以记录为零命中；请求失败
+或受限必须保留为失败，不能伪装成零命中。工具还会标出未运行的必需方向。判定为：
+
+- `PASS`：已核验种子均被找回，项目声明的必需引文链方向都有可见结果；
+- `CONTINUE`：仍缺项目要求的引文链方向；
+- `SEARCH_GAP`：至少一篇已核验种子未被当前检索找回；
+- `IDENTITY_REVIEW_REQUIRED`：种子身份尚未核验、错配或涉及撤稿状态；
+- `AUTHOR_ACTION_REQUIRED`：种子检索或引文链渠道失败，需要重试、更换来源或接受并记录限制。
+
+该命令只检查账本，不联网搜索、不判断纳入资格，也不验证文献是否支持稿件中的句子。通过仍要
+报告数据库、检索式、日期、分页/截断、版本去重和未覆盖限制，并继续执行引用身份/支持双检。
+
 ## 跨轮检索的收益账本与停止规则
 
 需要多轮扩展检索时，不能凭“感觉差不多了”停止，也不能用原始命中数制造进展。每轮在 JSON

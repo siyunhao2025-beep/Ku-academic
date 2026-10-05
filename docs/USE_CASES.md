@@ -490,3 +490,19 @@ quantitative/causal），跑 python scripts/access.py check <workspace>。
 转 AUTHOR_ACTION_REQUIRED，让我选择缩小范围、增加资源或接受覆盖限制。
 任何停止都要列出薄弱区域，不得声称穷尽文献。
 ```
+
+## 30. 种子文献与引文链：检索有没有漏掉已知关键研究
+
+```text
+使用 research-mother，加载 modules/literature.md。
+先把我提供的关键研究逐条做身份核验，记录 DOI/PMID/题名定位、
+identity_status 和当前检索是否找回；不要把题名相似候选自动当成同一篇。
+
+和我确认本项目是否要求 backward、forward 或双向引文链，写入
+required_chain_directions。每个渠道记录 COMPLETE、ZERO_HITS 或 FAILED，
+以及去重后的新增记录数和来源快照；失败不能写成零命中。
+
+用 scripts/research.py seed-coverage 生成审计。若已核验种子未找回，
+按 SEARCH_GAP 修订检索式/数据库后再筛选；若身份或渠道有问题，显式转人工。
+即使 PASS，也只说明这些种子与声明的渠道被覆盖，不得宣称穷尽文献。
+```

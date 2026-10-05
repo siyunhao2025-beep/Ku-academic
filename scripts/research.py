@@ -251,6 +251,139 @@ def search_progress(ledger, output, budget, patience, min_new):
     return result
 
 
+def assess_seed_coverage(payload):
+    """Audit known-study retrieval and declared citation-chain channels.
+
+    The caller decides which chain directions are required. This function
+    validates the ledger and distinguishes a successful zero-hit query from a
+    failed or missing query; it does not search, screen, or prove exhaustiveness.
+    """
+    if not isinstance(payload, dict):
+        raise ValueError("seed coverage ledger must be an object")
+    if "required_chain_directions" not in payload:
+        raise ValueError("required_chain_directions must be explicit, including []")
+    required_directions = payload["required_chain_directions"]
+    allowed_directions = {"backward", "forward"}
+    if (not isinstance(required_directions, list)
+            or any(direction not in allowed_directions for direction in required_directions)
+            or len(required_directions) != len(set(required_directions))):
+        raise ValueError("required_chain_directions must be a unique array of backward/forward")
+
+    seeds = payload.get("seeds")
+    if not isinstance(seeds, list) or not seeds:
+        raise ValueError("seeds must be a non-empty array")
+    allowed_identity = {"VERIFIED", "MISMATCH", "UNRESOLVED", "RETRACTED"}
+    allowed_search = {"FOUND", "NOT_FOUND", "FAILED"}
+    seed_ids = set()
+    for index, seed in enumerate(seeds):
+        if not isinstance(seed, dict):
+            raise ValueError(f"seed {index} must be an object")
+        ident = seed.get("id")
+        if not isinstance(ident, str) or not ident.strip():
+            raise ValueError(f"seed {index} needs a non-empty id")
+        if ident in seed_ids:
+            raise ValueError("duplicate seed id: " + ident)
+        seed_ids.add(ident)
+        if seed.get("identity_status") not in allowed_identity:
+            raise ValueError(f"seed {ident} has an invalid identity_status")
+        if seed.get("search_status") not in allowed_search:
+            raise ValueError(f"seed {ident} has an invalid search_status")
+        if not isinstance(seed.get("locator"), str) or not seed["locator"].strip():
+            raise ValueError(f"seed {ident} needs a DOI, PMID, title or other locator")
+
+    chains = payload.get("citation_chains")
+    if not isinstance(chains, list):
+        raise ValueError("citation_chains must be an array")
+    allowed_chain_status = {"COMPLETE", "ZERO_HITS", "FAILED"}
+    by_channel = {}
+    for index, chain in enumerate(chains):
+        if not isinstance(chain, dict):
+            raise ValueError(f"citation chain {index} must be an object")
+        seed_id = chain.get("seed_id")
+        direction = chain.get("direction")
+        status = chain.get("status")
+        count = chain.get("new_deduped_records")
+        if seed_id not in seed_ids:
+            raise ValueError(f"citation chain {index} references an unknown seed")
+        if direction not in allowed_directions:
+            raise ValueError(f"citation chain {index} has an invalid direction")
+        if status not in allowed_chain_status:
+            raise ValueError(f"citation chain {index} has an invalid status")
+        if isinstance(count, bool) or not isinstance(count, int) or count < 0:
+            raise ValueError(f"citation chain {index} needs a non-negative integer count")
+        if status == "ZERO_HITS" and count != 0:
+            raise ValueError("ZERO_HITS cannot report new records")
+        if not isinstance(chain.get("source"), str) or not chain["source"].strip():
+            raise ValueError(f"citation chain {index} needs a source")
+        key = (seed_id, direction)
+        if key in by_channel:
+            raise ValueError(f"duplicate citation-chain channel: {seed_id}/{direction}")
+        by_channel[key] = chain
+
+    verified_found = [seed["id"] for seed in seeds
+                      if seed["identity_status"] == "VERIFIED" and seed["search_status"] == "FOUND"]
+    missing_verified = [seed["id"] for seed in seeds
+                        if seed["identity_status"] == "VERIFIED" and seed["search_status"] == "NOT_FOUND"]
+    failed_seed_searches = [seed["id"] for seed in seeds if seed["search_status"] == "FAILED"]
+    identity_review = [seed["id"] for seed in seeds if seed["identity_status"] != "VERIFIED"]
+
+    failed_channels = []
+    zero_hit_channels = []
+    for (seed_id, direction), chain in by_channel.items():
+        item = {"seed_id": seed_id, "direction": direction}
+        if chain["status"] == "FAILED":
+            failed_channels.append(item)
+        elif chain["status"] == "ZERO_HITS":
+            zero_hit_channels.append(item)
+
+    missing_required = []
+    for seed_id in verified_found:
+        for direction in required_directions:
+            if (seed_id, direction) not in by_channel:
+                missing_required.append({"seed_id": seed_id, "direction": direction})
+
+    if failed_seed_searches or failed_channels:
+        decision = "AUTHOR_ACTION_REQUIRED"
+        reason = "one or more declared retrieval channels failed; retry, replace the source, or record an accepted limit"
+    elif identity_review:
+        decision = "IDENTITY_REVIEW_REQUIRED"
+        reason = "one or more seeds are not identity-verified"
+    elif missing_verified:
+        decision = "SEARCH_GAP"
+        reason = "the search did not retrieve one or more verified seed studies"
+    elif missing_required:
+        decision = "CONTINUE"
+        reason = "a project-required citation-chain direction has not been audited"
+    else:
+        decision = "PASS"
+        reason = "verified seeds were found and every declared required chain channel has a visible outcome"
+
+    return {
+        "decision": decision,
+        "reason": reason,
+        "scope": "seed_and_declared_citation_chain_audit",
+        "covered_verified_seeds": verified_found,
+        "missing_verified_seeds": missing_verified,
+        "failed_seed_searches": failed_seed_searches,
+        "identity_review_seeds": identity_review,
+        "failed_channels": failed_channels,
+        "zero_hit_channels": zero_hit_channels,
+        "missing_required_channels": missing_required,
+        "required_chain_directions": required_directions,
+        "exhaustiveness_claim_allowed": False,
+        "important_limit": "Seed recovery and declared citation-chain checks are sensitivity diagnostics; they do not prove exhaustive literature coverage or citation support.",
+    }
+
+
+def seed_coverage(ledger, output):
+    out = Path(output)
+    if out.exists():
+        raise FileExistsError("Use a new output path to preserve previous seed-coverage decisions")
+    result = assess_seed_coverage(read(ledger))
+    write(out, result)
+    return result
+
+
 def init_project(target, domain, kind):
     target = Path(target)
     if (target / "project.json").exists():
@@ -447,6 +580,9 @@ def main(argv=None):
     sp.add_argument("--budget", type=int, required=True)
     sp.add_argument("--patience", type=int, required=True)
     sp.add_argument("--min-new", type=int, required=True)
+    sc = sub.add_parser("seed-coverage")
+    sc.add_argument("--ledger", required=True)
+    sc.add_argument("--out", required=True)
     ch = sub.add_parser("checkpoint"); ch.add_argument("project"); ch.add_argument("stage")
     ch.add_argument("--inputs", nargs="+", required=True); ch.add_argument("--outputs", nargs="+", required=True)
     check = sub.add_parser("check"); check.add_argument("project")
@@ -469,6 +605,8 @@ def main(argv=None):
             result = search(args.query, args.since, args.until, args.out, args.pages, args.rows, args.mode)
         elif args.command == "search-progress":
             result = search_progress(args.ledger, args.out, args.budget, args.patience, args.min_new)
+        elif args.command == "seed-coverage":
+            result = seed_coverage(args.ledger, args.out)
         elif args.command == "checkpoint": result = checkpoint(args.project, args.stage, args.inputs, args.outputs)
         elif args.command == "check": result = check_project(args.project)
         elif args.command == "check-changes": result = validate_changes(read(args.changes), read(args.evidence))

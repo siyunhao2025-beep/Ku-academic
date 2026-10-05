@@ -219,6 +219,77 @@ class SearchProgressTests(unittest.TestCase):
             self.assertEqual(r.read(output)['decision'], 'STOP_SATURATED')
 
 
+class SeedCoverageTests(unittest.TestCase):
+    def payload(self):
+        return {
+            'required_chain_directions': ['backward', 'forward'],
+            'seeds': [
+                {'id': 'S1', 'identity_status': 'VERIFIED', 'search_status': 'FOUND',
+                 'locator': 'doi:10.0000/synthetic'},
+            ],
+            'citation_chains': [
+                {'seed_id': 'S1', 'direction': 'backward', 'status': 'COMPLETE',
+                 'new_deduped_records': 3, 'source': 'synthetic fixture'},
+                {'seed_id': 'S1', 'direction': 'forward', 'status': 'ZERO_HITS',
+                 'new_deduped_records': 0, 'source': 'synthetic fixture'},
+            ],
+        }
+
+    def test_verified_seed_and_completed_channels_pass(self):
+        out = r.assess_seed_coverage(self.payload())
+        self.assertEqual(out['decision'], 'PASS')
+        self.assertEqual(out['zero_hit_channels'], [{'seed_id': 'S1', 'direction': 'forward'}])
+        self.assertEqual(out['failed_channels'], [])
+        self.assertFalse(out['exhaustiveness_claim_allowed'])
+
+    def test_missing_verified_seed_is_a_search_gap(self):
+        payload = self.payload()
+        payload['seeds'][0]['search_status'] = 'NOT_FOUND'
+        out = r.assess_seed_coverage(payload)
+        self.assertEqual(out['decision'], 'SEARCH_GAP')
+        self.assertEqual(out['missing_verified_seeds'], ['S1'])
+
+    def test_identity_problem_is_not_counted_as_coverage(self):
+        payload = self.payload()
+        payload['seeds'][0]['identity_status'] = 'UNRESOLVED'
+        out = r.assess_seed_coverage(payload)
+        self.assertEqual(out['decision'], 'IDENTITY_REVIEW_REQUIRED')
+        self.assertEqual(out['identity_review_seeds'], ['S1'])
+
+    def test_failed_channel_is_distinct_from_zero_hits(self):
+        payload = self.payload()
+        payload['citation_chains'][0]['status'] = 'FAILED'
+        payload['citation_chains'][0]['new_deduped_records'] = 0
+        out = r.assess_seed_coverage(payload)
+        self.assertEqual(out['decision'], 'AUTHOR_ACTION_REQUIRED')
+        self.assertEqual(out['failed_channels'], [{'seed_id': 'S1', 'direction': 'backward'}])
+        self.assertEqual(out['zero_hit_channels'], [{'seed_id': 'S1', 'direction': 'forward'}])
+
+    def test_missing_required_direction_continues_search(self):
+        payload = self.payload()
+        payload['citation_chains'].pop()
+        out = r.assess_seed_coverage(payload)
+        self.assertEqual(out['decision'], 'CONTINUE')
+        self.assertEqual(out['missing_required_channels'], [{'seed_id': 'S1', 'direction': 'forward'}])
+
+    def test_invalid_and_duplicate_records_are_rejected(self):
+        payload = self.payload()
+        payload['seeds'].append(copy.deepcopy(payload['seeds'][0]))
+        with self.assertRaises(ValueError):
+            r.assess_seed_coverage(payload)
+
+    def test_cli_writes_a_new_audit_file(self):
+        with tempfile.TemporaryDirectory() as t:
+            root = Path(t)
+            ledger = root / 'seed-ledger.json'
+            output = root / 'seed-audit.json'
+            r.write(ledger, self.payload())
+            code = r.main(['seed-coverage', '--ledger', str(ledger), '--out', str(output)])
+            self.assertEqual(code, 0)
+            self.assertEqual(r.read(output)['decision'], 'PASS')
+            self.assertEqual(r.read(output)['scope'], 'seed_and_declared_citation_chain_audit')
+
+
 class ChangeTests(unittest.TestCase):
     def setUp(self):
         self.change = {'id': 'C', 'location': 'Discussion', 'before': 'old', 'after': 'new',

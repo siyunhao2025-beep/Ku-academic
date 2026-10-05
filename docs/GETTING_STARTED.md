@@ -99,6 +99,16 @@ python scripts/research.py search-progress --ledger audit/search-rounds.json --b
 只要仍有项目范围内的必需缺口，工具会要求继续或转人工，不会宣称检索已经穷尽。账本结构与
 五种判定见 [文献模块](../modules/literature.md)。
 
+如果团队有已知应被检索找回的关键研究，先在 `audit/seed-ledger.json` 登记经过 DOI、PMID 或
+题名核验的种子，以及本项目要求的向后/向前引文链结果，再运行：
+
+```bash
+python scripts/research.py seed-coverage --ledger audit/seed-ledger.json --out audit/seed-coverage.json
+```
+
+`SEARCH_GAP` 表示检索没有找回已核验种子；`ZERO_HITS` 只表示某次渠道请求成功但没有结果，
+不能代替 `FAILED`。通过该审计仍不等于穷尽文献，也不替代全文筛选或句子支持核验。
+
 PDF 下载、导入和阅读卡格式见 [文件接口](CONTRACTS.md)。全文阅读与期刊风格归纳需要模型实际执行，不能仅跑提取脚本。
 
 ## 7. 更新和维护
