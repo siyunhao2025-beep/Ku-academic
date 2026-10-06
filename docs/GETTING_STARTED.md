@@ -109,6 +109,16 @@ python scripts/research.py seed-coverage --ledger audit/seed-ledger.json --out a
 `SEARCH_GAP` 表示检索没有找回已核验种子；`ZERO_HITS` 只表示某次渠道请求成功但没有结果，
 不能代替 `FAILED`。通过该审计仍不等于穷尽文献，也不替代全文筛选或句子支持核验。
 
+对准备用作论据的文献，另行登记出版社文章页/通知的检查结果，再运行出版完整性契约检查：
+
+```bash
+python scripts/research.py citation-integrity audit/citation-integrity-input.json --out audit/citation-integrity-report.json
+```
+
+更正不自动等于撤稿；必须把 `correction_effect` 记为 `UNAFFECTED`、
+`AFFECTS_CITED_CONTENT` 或 `UNKNOWN`。命令只验证账本，不联网查询，也不把
+`NO_SIGNAL_FOUND` 解释成已证明记录干净。输入字段见 [文献真实性](../modules/evidence-integrity.md)。
+
 PDF 下载、导入和阅读卡格式见 [文件接口](CONTRACTS.md)。全文阅读与期刊风格归纳需要模型实际执行，不能仅跑提取脚本。
 
 ## 7. 更新和维护

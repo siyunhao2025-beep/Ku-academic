@@ -384,6 +384,152 @@ def seed_coverage(ledger, output):
     return result
 
 
+def _aware_datetime(value, field):
+    if isinstance(value, dt.datetime):
+        parsed = value
+    elif isinstance(value, str) and value.strip():
+        try:
+            parsed = dt.datetime.fromisoformat(value.strip().replace("Z", "+00:00"))
+        except ValueError as exc:
+            raise ValueError(f"{field} must be an ISO-8601 timestamp") from exc
+    else:
+        raise ValueError(f"{field} must be a non-empty ISO-8601 timestamp")
+    if parsed.tzinfo is None or parsed.utcoffset() is None:
+        raise ValueError(f"{field} must include a timezone offset")
+    return parsed.astimezone(dt.timezone.utc)
+
+
+def assess_citation_integrity(records, now=None, max_age_days=None):
+    """Audit publication-integrity signals independently of citation identity.
+
+    Inputs are support candidates, not papers mentioned only to discuss a
+    retraction. The function validates a recorded check; it does not contact a
+    publisher or infer that absence of a signal proves a clean record.
+    """
+    if not isinstance(records, list) or not records:
+        raise ValueError("citation integrity records must be a non-empty array")
+    if max_age_days is not None and (isinstance(max_age_days, bool)
+                                     or not isinstance(max_age_days, int)
+                                     or max_age_days < 1):
+        raise ValueError("max_age_days must be a positive integer when supplied")
+    checked_now = _aware_datetime(now, "now") if now is not None else dt.datetime.now(dt.timezone.utc)
+    allowed_identity = {"VERIFIED", "MISMATCH", "UNRESOLVED", "RETRACTED"}
+    allowed_integrity = {
+        "NO_SIGNAL_FOUND", "RETRACTED", "WITHDRAWN", "REMOVED",
+        "EXPRESSION_OF_CONCERN", "CORRECTED", "NOT_CHECKED",
+    }
+    fatal_integrity = {"RETRACTED", "WITHDRAWN", "REMOVED", "EXPRESSION_OF_CONCERN"}
+    allowed_effects = {"NOT_APPLICABLE", "UNAFFECTED", "AFFECTS_CITED_CONTENT", "UNKNOWN"}
+    seen, audited = set(), []
+    counts = {"pass": 0, "blocked": 0, "author_action": 0, "identity_review": 0}
+
+    for index, source in enumerate(records):
+        if not isinstance(source, dict):
+            raise ValueError(f"record {index} must be an object")
+        ident = source.get("id")
+        if not isinstance(ident, str) or not ident.strip():
+            raise ValueError(f"record {index} needs a non-empty id")
+        if ident in seen:
+            raise ValueError("duplicate citation integrity id: " + ident)
+        seen.add(ident)
+        identity = source.get("citation_verdict")
+        integrity = source.get("integrity_status")
+        effect = source.get("correction_effect")
+        if identity not in allowed_identity:
+            raise ValueError(f"record {ident} has an invalid citation_verdict")
+        if integrity not in allowed_integrity:
+            raise ValueError(f"record {ident} has an invalid integrity_status")
+        if effect not in allowed_effects:
+            raise ValueError(f"record {ident} has an invalid correction_effect")
+        if integrity == "CORRECTED" and effect not in {
+                "UNAFFECTED", "AFFECTS_CITED_CONTENT", "UNKNOWN"}:
+            raise ValueError(f"record {ident} must assess what the correction changes")
+        if integrity != "CORRECTED" and effect != "NOT_APPLICABLE":
+            raise ValueError(f"record {ident} may use correction_effect only for CORRECTED")
+
+        checked_at = None
+        stale = False
+        if integrity != "NOT_CHECKED":
+            parsed_url = urllib.parse.urlparse(str(source.get("integrity_source_url") or ""))
+            if parsed_url.scheme != "https" or not parsed_url.netloc:
+                raise ValueError(f"record {ident} needs an HTTPS integrity_source_url")
+            checked_at = _aware_datetime(source.get("integrity_checked_at"),
+                                         f"record {ident} integrity_checked_at")
+            if checked_at > checked_now:
+                raise ValueError(f"record {ident} integrity_checked_at is in the future")
+            stale = max_age_days is not None and (checked_now - checked_at).days >= max_age_days
+
+        if (identity == "RETRACTED" or integrity in fatal_integrity
+                or (integrity == "CORRECTED" and effect == "AFFECTS_CITED_CONTENT")):
+            decision = "DO_NOT_USE_AS_SUPPORT"
+            reason = "publication-integrity status blocks this record from supporting a claim"
+            bucket = "blocked"
+        elif identity != "VERIFIED":
+            decision = "VERIFY_IDENTITY"
+            reason = "bibliographic identity is not verified; integrity checking cannot replace identity checking"
+            bucket = "identity_review"
+        elif integrity == "NOT_CHECKED":
+            decision = "CHECK_PUBLICATION_INTEGRITY"
+            reason = "no publication-integrity check is recorded"
+            bucket = "author_action"
+        elif stale:
+            decision = "REFRESH_INTEGRITY_CHECK"
+            reason = "the recorded check is older than the project-supplied freshness policy"
+            bucket = "author_action"
+        elif integrity == "CORRECTED" and effect == "UNKNOWN":
+            decision = "REVIEW_CORRECTION"
+            reason = "the correction exists but its effect on the cited content is unresolved"
+            bucket = "author_action"
+        elif integrity == "CORRECTED":
+            decision = "USABLE_WITH_CORRECTION_DISCLOSED"
+            reason = "the correction was reviewed and does not affect the cited content"
+            bucket = "pass"
+        else:
+            decision = "USABLE_WITH_RECORDED_CHECK"
+            reason = "no integrity signal was found at the recorded source and time; this is not proof of a clean record"
+            bucket = "pass"
+        counts[bucket] += 1
+        audited.append({
+            "id": ident,
+            "citation_verdict": identity,
+            "integrity_status": integrity,
+            "correction_effect": effect,
+            "decision": decision,
+            "reason": reason,
+            "integrity_checked_at": checked_at.isoformat() if checked_at else None,
+            "integrity_source_url": source.get("integrity_source_url") or None,
+        })
+
+    if counts["blocked"]:
+        status = "BLOCKED"
+    elif counts["identity_review"]:
+        status = "IDENTITY_REVIEW_REQUIRED"
+    elif counts["author_action"]:
+        status = "AUTHOR_ACTION_REQUIRED"
+    else:
+        status = "PASS"
+    return {
+        "status": status,
+        "scope": "recorded_publication_integrity_signals_for_support_candidates",
+        "counts": counts,
+        "records": audited,
+        "freshness_policy_days": max_age_days,
+        "absence_of_signal_is_not_proof_of_clean_record": True,
+        "important_limit": "This audit validates recorded status, source, time, and correction handling; it does not query publishers or prove a clean publication record.",
+    }
+
+
+def citation_integrity(ledger, output, max_age_days=None):
+    out = Path(output)
+    if out.exists():
+        raise FileExistsError("Use a new output path to preserve previous citation-integrity decisions")
+    payload = read(ledger)
+    records = payload.get("records") if isinstance(payload, dict) else payload
+    result = assess_citation_integrity(records, max_age_days=max_age_days)
+    write(out, result)
+    return result
+
+
 def init_project(target, domain, kind):
     target = Path(target)
     if (target / "project.json").exists():
@@ -583,6 +729,10 @@ def main(argv=None):
     sc = sub.add_parser("seed-coverage")
     sc.add_argument("--ledger", required=True)
     sc.add_argument("--out", required=True)
+    ci = sub.add_parser("citation-integrity")
+    ci.add_argument("ledger")
+    ci.add_argument("--out", required=True)
+    ci.add_argument("--max-age-days", type=int)
     ch = sub.add_parser("checkpoint"); ch.add_argument("project"); ch.add_argument("stage")
     ch.add_argument("--inputs", nargs="+", required=True); ch.add_argument("--outputs", nargs="+", required=True)
     check = sub.add_parser("check"); check.add_argument("project")
@@ -607,6 +757,8 @@ def main(argv=None):
             result = search_progress(args.ledger, args.out, args.budget, args.patience, args.min_new)
         elif args.command == "seed-coverage":
             result = seed_coverage(args.ledger, args.out)
+        elif args.command == "citation-integrity":
+            result = citation_integrity(args.ledger, args.out, args.max_age_days)
         elif args.command == "checkpoint": result = checkpoint(args.project, args.stage, args.inputs, args.outputs)
         elif args.command == "check": result = check_project(args.project)
         elif args.command == "check-changes": result = validate_changes(read(args.changes), read(args.evidence))
@@ -618,7 +770,10 @@ def main(argv=None):
                       "scope": "lexical_overlap_only_not_plagiarism_or_AI_detection"}
         else: result = package(args.output)
         print(json.dumps(result, ensure_ascii=False, indent=2))
-        return 2 if result.get("status") in {"fail", "stale", "error"} else 0
+        return 2 if result.get("status") in {
+            "fail", "stale", "error", "BLOCKED", "AUTHOR_ACTION_REQUIRED",
+            "IDENTITY_REVIEW_REQUIRED",
+        } else 0
     except Exception as exc:
         print(json.dumps({"status": "error", "type": type(exc).__name__, "message": str(exc)}, ensure_ascii=False), file=sys.stderr)
         return 2

@@ -2,10 +2,11 @@
 
 [返回首页](../README.md) · [阶段总控](phases.md) · [同类对比来源](../docs/PEER_COMPARISON.md)
 
-**这一模块只做两件事，但两件都必须做。**
+**这一模块分开做三件事，三件都必须做。**
 
 第一件：这篇文献**真的存在吗**，出处对不对。
-第二件：这篇文献**真的支持我要用它说的那句话吗**。
+第二件：它当前是否有撤稿、撤回、移除、关注声明或更正等**出版完整性信号**。
+第三件：这篇文献**真的支持我要用它说的那句话吗**。
 
 很多人只做第一件，做完就说"引用已核验"。这是本模块要挡住的主要错误。DOI 能解析，只说明这个编号指向某个记录，**不说明这句话是对的**。
 
@@ -24,7 +25,7 @@
 | `VERIFIED` | 标题、作者、年份、期刊/会议、卷期页、DOI 全部与权威记录一致 | 可用 |
 | `MISMATCH` | 文献存在，但至少一个元数据字段对不上（年份错、作者漏、期刊写成会议、卷期页错） | 必须改正后才能用；改不动就删 |
 | `UNRESOLVED` | 查不到这条记录，或无法访问权威来源确认 | **按可能杜撰处理**，不得进入正文；标 `待确认` |
-| `RETRACTED` | 记录存在但已撤稿、更正或失效 | 不得作为支持证据；如必须提及，须显式说明撤稿状态 |
+| `RETRACTED` | 兼容旧账本：记录已确认撤稿、撤回或移除 | 不得作为支持证据；新记录还要填写下节独立的出版完整性状态 |
 
 补充标记 `CANONICAL_INSTANCE`：同一篇文献存在多个版本（预印本 / 正式版 / 会议版 / 更正版）时，标出哪个是应当引用的规范版本。
 
@@ -35,6 +36,9 @@
 3. 交叉核对：用第二个独立来源核对标题、作者、年份。两个来源一致才给 `VERIFIED`。
 4. 无 DOI 的条目（旧文献、书章、报告）：必须由人实际看到权威页面并确认，且获得作者明确批准后才纳入。**不要凭记忆补一个 DOI。**
 
+更正（correction/corrigendum/erratum）不等于撤稿。更正版的书目身份、原文的出版完整性状态和
+更正对当前引用内容的影响要分别登记，不能都塞进 `RETRACTED`。
+
 **绝对禁止**
 
 - 凭记忆重打元数据。要从来源复制，或让程序解析。记忆里的年份和卷期错得最多。
@@ -44,7 +48,63 @@
 
 ---
 
-## 二、支持核验：六类状态
+## 二、出版完整性：与书目身份分开的状态轴
+
+DOI、标题和作者都对，只证明找到了正确对象；它不能说明该对象没有后续出版通知。对作为论据的
+文献，另填 `integrity_status`：
+
+| 状态 | 含义 | 作为支持证据的处置 |
+|---|---|---|
+| `NO_SIGNAL_FOUND` | 在记录的来源与时间没有发现完整性信号 | 可继续核对支持关系，但不等于“已证明记录干净” |
+| `RETRACTED` | 出版方已撤稿 | 阻断 |
+| `WITHDRAWN` | 出版方已撤回 | 阻断 |
+| `REMOVED` | 出版方已移除或以移除通知替代 | 阻断 |
+| `EXPRESSION_OF_CONCERN` | 出版方发布关注声明 | 阻断作为正常支持证据，转人工判断 |
+| `CORRECTED` | 存在 correction/corrigendum/erratum | 继续判断更正是否影响被引用内容，不自动等同撤稿 |
+| `NOT_CHECKED` | 尚未执行或无法完成检查 | 不得默认通过，转作者处理 |
+
+`CORRECTED` 还必须填 `correction_effect`：
+
+- `UNAFFECTED`：更正不影响当前引用的内容；可保留，但在账本中关联更正并披露；
+- `AFFECTS_CITED_CONTENT`：更正改变当前引用的数值、方法或结论；旧内容不得继续作支持证据，
+  应改用修正后的内容并重做支持核验；
+- `UNKNOWN`：尚未读懂或无法取得更正；标 `待确认`，不能默认保留。
+
+检查优先看出版社文章页和正式通知，并记录 `integrity_source_url` 与带时区的
+`integrity_checked_at`。索引没有返回撤稿信号只能写 `NO_SIGNAL_FOUND`，**不能写“已证明无问题”**。
+对结论链中的关键来源应实际查看出版社通知；第三方数据库可作为发现渠道，不能覆盖出版社事实。
+
+`scripts/research.py citation-integrity` 只校验你已经登记的状态、来源、时间和更正处置，不联网替你
+查出版社。输入可以是记录数组，也可以是含 `records` 的对象：
+
+```json
+{
+  "records": [
+    {
+      "id": "C1",
+      "citation_verdict": "VERIFIED",
+      "integrity_status": "CORRECTED",
+      "integrity_checked_at": "2026-10-06T10:00:00+08:00",
+      "integrity_source_url": "https://publisher.example/article-or-notice",
+      "correction_effect": "UNAFFECTED"
+    }
+  ]
+}
+```
+
+```bash
+python scripts/research.py citation-integrity audit/citation-integrity-input.json \
+  --out audit/citation-integrity-report.json
+```
+
+如项目自行规定检查时效，可增加 `--max-age-days N`；该数字是项目策略，不是通用科研阈值。
+命令不会覆盖旧报告。`PASS` 只说明账本契约通过；`BLOCKED`、`IDENTITY_REVIEW_REQUIRED` 或
+`AUTHOR_ACTION_REQUIRED` 必须先处置。若只是为了讨论撤稿事件而引用某文献，不要把它放入本命令
+面向“作为论据”的输入；在正文中明确其撤稿语境。
+
+---
+
+## 三、支持核验：六类状态
 
 身份过了之后，判定这条文献对**当前这一句话**的支持程度。
 
@@ -148,7 +208,7 @@ python scripts/access.py check <workspace>
 
 ---
 
-## 三、六类高风险错配
+## 四、六类高风险错配
 
 以下六种是最常见、也最容易被审稿人抓到的错配。出现任何一种，直接按阻断处理。
 
@@ -163,7 +223,7 @@ python scripts/access.py check <workspace>
 
 ---
 
-## 四、`待确认` 标记怎么用
+## 五、`待确认` 标记怎么用
 
 无法核实的内容**必须显式标注**，不能默默略过，也不能写得像已经核实。
 
@@ -189,7 +249,7 @@ python scripts/access.py check <workspace>
 
 ---
 
-## 五、输出文件
+## 六、输出文件
 
 ### `audit/citation-provenance.json`
 
@@ -208,6 +268,10 @@ python scripts/access.py check <workspace>
       "volume_issue_pages": "从来源复制",
       "canonical_instance": "publisher version of record",
       "citation_verdict": "VERIFIED",
+      "integrity_status": "NO_SIGNAL_FOUND",
+      "integrity_checked_at": "2026-10-06T10:00:00+08:00",
+      "integrity_source_url": "https://publisher.example/article",
+      "correction_effect": "NOT_APPLICABLE",
       "sentence_tier": "quantitative",
       "access_level": "full_text",
       "locator": "p.4, Fig.2",
@@ -226,11 +290,13 @@ python scripts/access.py check <workspace>
 字段约束：
 
 - `citation_verdict` ∈ `{VERIFIED, MISMATCH, UNRESOLVED, RETRACTED}`
+- `integrity_status` ∈ `{NO_SIGNAL_FOUND, RETRACTED, WITHDRAWN, REMOVED, EXPRESSION_OF_CONCERN, CORRECTED, NOT_CHECKED}`，与书目身份分开记录
+- `correction_effect` ∈ `{NOT_APPLICABLE, UNAFFECTED, AFFECTS_CITED_CONTENT, UNKNOWN}`；只有 `CORRECTED` 使用后三种状态
 - `support_status` ∈ `{SUPPORTS, PARTIALLY_SUPPORTS, BACKGROUND_ONLY, CONTRADICTS, DOES_NOT_SUPPORT, CANNOT_VERIFY}`
 - `sentence_tier` ∈ `{background, method, quantitative, causal}`，决定该句最低访问深度（见第二节访问分级表）；缺省时脚本按最严的 `causal` 处理
 - `access_level` ∈ `{metadata_only, abstract_only, full_text, project_result}`，如实记录实际读到的深度；`quantitative`/`causal` 必须为 `full_text`/`project_result`
 - `locator`：`quantitative`/`causal` 句必填，定位到具体页/图/表（如 `p.4, Fig.2`）
-- `blockers` 里放所有 `CONTRADICTS` / `DOES_NOT_SUPPORT` / `RETRACTED` / `UNRESOLVED` 条目，以及访问级别不达句子强度的定量/机制句
+- `blockers` 里放所有 `CONTRADICTS` / `DOES_NOT_SUPPORT` / `RETRACTED` / `WITHDRAWN` / `REMOVED` / `EXPRESSION_OF_CONCERN` / `UNRESOLVED` 条目、影响当前引用内容的更正，以及访问级别不达句子强度的定量/机制句
 - `to_confirm` 里放所有 `待确认` 条目
 - 访问级别逐条校验与合法 OA 兜底由 `scripts/access.py check|resolve` 执行，报告写入 `audit/access-report.json`
 
@@ -240,11 +306,12 @@ python scripts/access.py check <workspace>
 
 ---
 
-## 六、验收纪律
+## 七、验收纪律
 
 下面几句话请当作硬规则记住，它们比任何技巧都重要。
 
 - **解析成功不代表引用正确。** DOI 能开，只过了第一关。
+- **元数据一致不代表出版记录干净。** 身份、出版完整性和句子支持是三个不同判断；没查到信号不等于证明没有信号。
 - **部分通过不等于通过（PARTIAL-PASS is not a PASS）。** `PARTIALLY_SUPPORTS` 必须改句，不是打个勾。
 - **不要让"没法检查"读成"检查干净"。** 说不清楚就说说不清楚。
 - **不要静默决定，不要静默删除。** 每条处置都要留记录。

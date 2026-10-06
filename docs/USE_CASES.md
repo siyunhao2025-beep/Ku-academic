@@ -106,7 +106,13 @@
 给出四态判定：VERIFIED / MISMATCH / UNRESOLVED / RETRACTED。
 UNRESOLVED 按可能杜撰处理，不得留在正文。
 
-第二遍查支持：这篇文献是否真的支持它所在的那句话。
+第二遍查出版完整性：查看出版社文章页和正式通知，独立登记 NO_SIGNAL_FOUND /
+RETRACTED / WITHDRAWN / REMOVED / EXPRESSION_OF_CONCERN / CORRECTED / NOT_CHECKED，
+以及来源 URL 和带时区的检查时间。CORRECTED 不是 RETRACTED；判断更正是否影响当前引用内容。
+可用 scripts/research.py citation-integrity 校验账本，但它不联网替我查出版社；
+NO_SIGNAL_FOUND 也不等于证明记录干净。
+
+第三遍查支持：这篇文献是否真的支持它所在的那句话。
 给出六类状态：SUPPORTS / PARTIALLY_SUPPORTS / BACKGROUND_ONLY /
 CONTRADICTS / DOES_NOT_SUPPORT / CANNOT_VERIFY。
 CONTRADICTS 和 DOES_NOT_SUPPORT 是硬阻断，必须删句或改句。

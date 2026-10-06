@@ -69,7 +69,8 @@ python scripts/research.py seed-coverage --ledger audit/seed-ledger.json \
 - `AUTHOR_ACTION_REQUIRED`：种子检索或引文链渠道失败，需要重试、更换来源或接受并记录限制。
 
 该命令只检查账本，不联网搜索、不判断纳入资格，也不验证文献是否支持稿件中的句子。通过仍要
-报告数据库、检索式、日期、分页/截断、版本去重和未覆盖限制，并继续执行引用身份/支持双检。
+报告数据库、检索式、日期、分页/截断、版本去重和未覆盖限制，并继续执行引用身份、出版完整性
+和句子支持核验。出版完整性账本与 `citation-integrity` 命令见 [文献真实性](evidence-integrity.md)。
 
 ## 跨轮检索的收益账本与停止规则
 
