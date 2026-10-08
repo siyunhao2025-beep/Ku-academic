@@ -290,6 +290,141 @@ class SeedCoverageTests(unittest.TestCase):
             self.assertEqual(r.read(output)['scope'], 'seed_and_declared_citation_chain_audit')
 
 
+class ScreeningRoundTests(unittest.TestCase):
+    def payload(self):
+        codebook_hash = 'a' * 64
+        source_manifest_hash = 'b' * 64
+        source_hash = 'c' * 64
+        ballot = lambda reviewer: {
+            'reviewer_id': reviewer,
+            'round_id': 'screen-v2',
+            'codebook_sha256': codebook_hash,
+            'source_sha256': source_hash,
+            'decision': 'INCLUDE',
+            'rationale': 'The full-text fixture satisfies the declared population and design rules.',
+            'evidence_locator': 'PDF p.4, Methods',
+            'review_mode': 'independent',
+        }
+        return {
+            'schema_version': '1.0',
+            'protocol_id': 'synthetic-review',
+            'codebook': {
+                'version': '2.0',
+                'sha256': codebook_hash,
+                'origin': 'human_led',
+                'provided_by': 'Synthetic review team',
+            },
+            'round': {
+                'id': 'screen-v2',
+                'mode': 'independent',
+                'minimum_reviewers': 2,
+                'source_manifest_sha256': source_manifest_hash,
+            },
+            'records': [{
+                'record_id': 'R1',
+                'source_sha256': source_hash,
+                'ballots': [ballot('reviewer-a'), ballot('reviewer-b')],
+            }],
+            'release': {
+                'human_authorized': True,
+                'authorized_by': 'Synthetic adjudicator',
+                'authorized_at': '2026-10-08T00:00:00Z',
+                'rationale': 'Synthetic contract fixture only.',
+                'round_id': 'screen-v2',
+                'codebook_sha256': codebook_hash,
+                'source_manifest_sha256': source_manifest_hash,
+            },
+        }
+
+    def test_bound_independent_concordance_and_human_release_pass(self):
+        out = r.assess_screening_round(self.payload())
+        self.assertEqual(out['decision'], 'PASS')
+        self.assertEqual(out['records'][0]['state'], 'CONCORDANT')
+        self.assertEqual(out['counts']['included'], 1)
+        self.assertFalse(out['scientific_correctness_implied'])
+
+    def test_disagreement_requires_adjudication_not_majority_vote(self):
+        payload = self.payload()
+        payload['records'][0]['ballots'][1].update(
+            decision='EXCLUDE', primary_reason_code='WRONG_DESIGN')
+        payload.pop('release')
+        out = r.assess_screening_round(payload)
+        self.assertEqual(out['decision'], 'AUTHOR_ACTION_REQUIRED')
+        self.assertEqual(out['records'][0]['state'], 'ADJUDICATION_REQUIRED')
+
+        payload['records'][0]['adjudication'] = {
+            'decision': 'EXCLUDE',
+            'primary_reason_code': 'WRONG_DESIGN',
+            'rationale': 'The full text uses an ineligible design.',
+            'evidence_locator': 'PDF p.4, Methods',
+            'human_authorized': True,
+            'authorized_by': 'Synthetic adjudicator',
+            'round_id': payload['round']['id'],
+            'codebook_sha256': payload['codebook']['sha256'],
+            'source_sha256': payload['records'][0]['source_sha256'],
+        }
+        payload['release'] = self.payload()['release']
+        out = r.assess_screening_round(payload)
+        self.assertEqual(out['decision'], 'PASS')
+        self.assertEqual(out['records'][0]['state'], 'ADJUDICATED')
+        self.assertEqual(out['counts']['excluded'], 1)
+
+    def test_source_or_codebook_drift_blocks_stale_ballots(self):
+        payload = self.payload()
+        payload['records'][0]['ballots'][0]['source_sha256'] = 'd' * 64
+        out = r.assess_screening_round(payload)
+        self.assertEqual(out['decision'], 'BLOCKED')
+        self.assertEqual(out['records'][0]['state'], 'STALE_RESCREEN_REQUIRED')
+
+    def test_coverage_is_project_defined_and_incomplete_round_continues(self):
+        payload = self.payload()
+        payload['records'][0]['ballots'].pop()
+        payload.pop('release')
+        out = r.assess_screening_round(payload)
+        self.assertEqual(out['decision'], 'CONTINUE')
+        self.assertEqual(out['records'][0]['state'], 'PENDING_COVERAGE')
+
+    def test_exclusion_needs_one_primary_reason_and_source_location(self):
+        payload = self.payload()
+        for ballot in payload['records'][0]['ballots']:
+            ballot['decision'] = 'EXCLUDE'
+            ballot.pop('evidence_locator')
+        with self.assertRaises(ValueError):
+            r.assess_screening_round(payload)
+
+        payload = self.payload()
+        for ballot in payload['records'][0]['ballots']:
+            ballot['decision'] = 'EXCLUDE'
+        with self.assertRaises(ValueError):
+            r.assess_screening_round(payload)
+
+    def test_release_is_bound_and_timestamped(self):
+        payload = self.payload()
+        payload['release']['source_manifest_sha256'] = 'd' * 64
+        out = r.assess_screening_round(payload)
+        self.assertEqual(out['decision'], 'BLOCKED')
+        self.assertTrue(out['release_errors'])
+
+        payload = self.payload()
+        payload['release']['authorized_at'] = '2026-10-08T00:00:00'
+        out = r.assess_screening_round(payload)
+        self.assertEqual(out['decision'], 'BLOCKED')
+        self.assertTrue(any('timezone' in item for item in out['release_errors']))
+
+    def test_cli_preserves_prior_screening_audit(self):
+        with tempfile.TemporaryDirectory() as t:
+            root = Path(t)
+            ledger = root / 'screening.json'
+            output = root / 'screening-audit.json'
+            r.write(ledger, self.payload())
+            self.assertEqual(r.main(['screening-round', '--ledger', str(ledger),
+                                     '--out', str(output)]), 0)
+            first = output.read_bytes()
+            self.assertEqual(r.main(['screening-round', '--ledger', str(ledger),
+                                     '--out', str(output)]), 2)
+            self.assertEqual(output.read_bytes(), first)
+
+
 class ChangeTests(unittest.TestCase):
     def setUp(self):
         self.change = {'id': 'C', 'location': 'Discussion', 'before': 'old', 'after': 'new',

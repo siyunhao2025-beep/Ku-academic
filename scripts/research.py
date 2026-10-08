@@ -384,6 +384,270 @@ def seed_coverage(ledger, output):
     return result
 
 
+def assess_screening_round(payload):
+    """Audit version-bound screening ballots, adjudication, and human release.
+
+    The project supplies its own codebook and reviewer minimum.  This function
+    checks provenance and workflow state only; it does not screen records,
+    replace human adjudication, or establish the correctness of a decision.
+    """
+    if not isinstance(payload, dict):
+        raise ValueError("screening ledger must be an object")
+    if payload.get("schema_version") != "1.0":
+        raise ValueError("schema_version must be 1.0")
+
+    def text(value, field):
+        if not isinstance(value, str) or not value.strip():
+            raise ValueError(field + " must be a non-empty string")
+        return value.strip()
+
+    def digest(value, field):
+        value = text(value, field)
+        if re.fullmatch(r"[a-f0-9]{64}", value) is None:
+            raise ValueError(field + " must be a lowercase SHA-256")
+        return value
+
+    protocol_id = text(payload.get("protocol_id"), "protocol_id")
+    codebook = payload.get("codebook")
+    if not isinstance(codebook, dict):
+        raise ValueError("codebook must be an object")
+    codebook_version = text(codebook.get("version"), "codebook.version")
+    codebook_hash = digest(codebook.get("sha256"), "codebook.sha256")
+    if codebook.get("origin") not in {"human_led", "human_developed"}:
+        raise ValueError("codebook.origin must be human_led or human_developed")
+    codebook_provider = text(codebook.get("provided_by"), "codebook.provided_by")
+
+    round_data = payload.get("round")
+    if not isinstance(round_data, dict):
+        raise ValueError("round must be an object")
+    round_id = text(round_data.get("id"), "round.id")
+    mode = round_data.get("mode")
+    if mode not in {"independent", "assisted"}:
+        raise ValueError("round.mode must be independent or assisted")
+    minimum_reviewers = round_data.get("minimum_reviewers")
+    if (isinstance(minimum_reviewers, bool) or not isinstance(minimum_reviewers, int)
+            or minimum_reviewers < 1):
+        raise ValueError("round.minimum_reviewers must be a project-defined positive integer")
+    manifest_hash = digest(
+        round_data.get("source_manifest_sha256"), "round.source_manifest_sha256"
+    )
+
+    records = payload.get("records")
+    if not isinstance(records, list) or not records:
+        raise ValueError("records must be a non-empty array")
+    seen_records = set()
+    audited_records = []
+    counts = {
+        "total": len(records),
+        "included": 0,
+        "excluded": 0,
+        "pending_coverage": 0,
+        "adjudication_required": 0,
+        "stale_rescreen_required": 0,
+    }
+
+    for index, record in enumerate(records):
+        if not isinstance(record, dict):
+            raise ValueError(f"record {index} must be an object")
+        record_id = text(record.get("record_id"), f"record {index}.record_id")
+        if record_id in seen_records:
+            raise ValueError("duplicate record_id: " + record_id)
+        seen_records.add(record_id)
+        source_hash = digest(record.get("source_sha256"), f"record {record_id}.source_sha256")
+        ballots = record.get("ballots")
+        if not isinstance(ballots, list):
+            raise ValueError(f"record {record_id}.ballots must be an array")
+
+        reviewer_ids = set()
+        stale_bindings = []
+        decisions = []
+        for ballot_index, ballot in enumerate(ballots):
+            if not isinstance(ballot, dict):
+                raise ValueError(f"record {record_id} ballot {ballot_index} must be an object")
+            reviewer = text(
+                ballot.get("reviewer_id"),
+                f"record {record_id} ballot {ballot_index}.reviewer_id",
+            )
+            if reviewer in reviewer_ids:
+                raise ValueError(f"record {record_id} has duplicate reviewer_id: {reviewer}")
+            reviewer_ids.add(reviewer)
+            decision = ballot.get("decision")
+            if decision not in {"INCLUDE", "EXCLUDE", "UNCLEAR"}:
+                raise ValueError(f"record {record_id} ballot {reviewer} has an invalid decision")
+            decisions.append(decision)
+            text(ballot.get("rationale"), f"record {record_id} ballot {reviewer}.rationale")
+            text(
+                ballot.get("evidence_locator"),
+                f"record {record_id} ballot {reviewer}.evidence_locator",
+            )
+            if decision == "EXCLUDE":
+                text(
+                    ballot.get("primary_reason_code"),
+                    f"record {record_id} ballot {reviewer}.primary_reason_code",
+                )
+            expected = {
+                "round_id": round_id,
+                "codebook_sha256": codebook_hash,
+                "source_sha256": source_hash,
+                "review_mode": mode,
+            }
+            for field, expected_value in expected.items():
+                if ballot.get(field) != expected_value:
+                    stale_bindings.append(f"{reviewer}:{field}")
+
+        output_record = {"record_id": record_id}
+        if stale_bindings:
+            output_record.update(
+                state="STALE_RESCREEN_REQUIRED",
+                stale_bindings=sorted(stale_bindings),
+            )
+            counts["stale_rescreen_required"] += 1
+        elif len(ballots) < minimum_reviewers:
+            output_record.update(
+                state="PENDING_COVERAGE",
+                completed_reviewers=len(ballots),
+                minimum_reviewers=minimum_reviewers,
+            )
+            counts["pending_coverage"] += 1
+        else:
+            needs_adjudication = "UNCLEAR" in decisions or len(set(decisions)) > 1
+            if needs_adjudication:
+                adjudication = record.get("adjudication")
+                if adjudication is None:
+                    output_record["state"] = "ADJUDICATION_REQUIRED"
+                    counts["adjudication_required"] += 1
+                else:
+                    if not isinstance(adjudication, dict):
+                        raise ValueError(f"record {record_id}.adjudication must be an object")
+                    final_decision = adjudication.get("decision")
+                    if final_decision not in {"INCLUDE", "EXCLUDE"}:
+                        raise ValueError(f"record {record_id} adjudication decision is invalid")
+                    text(adjudication.get("rationale"), f"record {record_id} adjudication.rationale")
+                    text(
+                        adjudication.get("evidence_locator"),
+                        f"record {record_id} adjudication.evidence_locator",
+                    )
+                    if adjudication.get("human_authorized") is not True:
+                        raise ValueError(f"record {record_id} adjudication must be human-authorized")
+                    text(
+                        adjudication.get("authorized_by"),
+                        f"record {record_id} adjudication.authorized_by",
+                    )
+                    if final_decision == "EXCLUDE":
+                        text(
+                            adjudication.get("primary_reason_code"),
+                            f"record {record_id} adjudication.primary_reason_code",
+                        )
+                    binding = {
+                        "round_id": round_id,
+                        "codebook_sha256": codebook_hash,
+                        "source_sha256": source_hash,
+                    }
+                    stale_adjudication = [
+                        field for field, expected in binding.items()
+                        if adjudication.get(field) != expected
+                    ]
+                    if stale_adjudication:
+                        output_record.update(
+                            state="STALE_RESCREEN_REQUIRED",
+                            stale_bindings=["adjudication:" + field for field in stale_adjudication],
+                        )
+                        counts["stale_rescreen_required"] += 1
+                    else:
+                        output_record.update(state="ADJUDICATED", final_decision=final_decision)
+                        counts["included" if final_decision == "INCLUDE" else "excluded"] += 1
+            else:
+                final_decision = decisions[0]
+                output_record.update(state="CONCORDANT", final_decision=final_decision)
+                counts["included" if final_decision == "INCLUDE" else "excluded"] += 1
+        audited_records.append(output_record)
+
+    release_errors = []
+    release = payload.get("release")
+    all_records_resolved = not any(
+        counts[key] for key in (
+            "pending_coverage", "adjudication_required", "stale_rescreen_required"
+        )
+    )
+    if all_records_resolved and release is not None:
+        if not isinstance(release, dict):
+            release_errors.append("release must be an object")
+        else:
+            for field in ("authorized_by", "authorized_at", "rationale"):
+                try:
+                    text(release.get(field), "release." + field)
+                except ValueError as exc:
+                    release_errors.append(str(exc))
+            if isinstance(release.get("authorized_at"), str) and release["authorized_at"].strip():
+                try:
+                    _aware_datetime(release["authorized_at"], "release.authorized_at")
+                except ValueError as exc:
+                    release_errors.append(str(exc))
+            if release.get("human_authorized") is not True:
+                release_errors.append("release.human_authorized must be true")
+            expected_release = {
+                "round_id": round_id,
+                "codebook_sha256": codebook_hash,
+                "source_manifest_sha256": manifest_hash,
+            }
+            for field, expected in expected_release.items():
+                if release.get(field) != expected:
+                    release_errors.append(f"release.{field} is stale or mismatched")
+
+    if counts["stale_rescreen_required"] or release_errors:
+        decision = "BLOCKED"
+        reason = "stale or mismatched version bindings require a new screening decision"
+    elif counts["pending_coverage"]:
+        decision = "CONTINUE"
+        reason = "one or more records have not reached the project-defined reviewer minimum"
+    elif counts["adjudication_required"]:
+        decision = "AUTHOR_ACTION_REQUIRED"
+        reason = "disagreement or uncertainty requires recorded human adjudication"
+    elif release is None:
+        decision = "AUTHOR_ACTION_REQUIRED"
+        reason = "all records are resolved but the screening round lacks human release"
+    else:
+        decision = "PASS"
+        reason = "all records are resolved under the bound codebook and the round has human release"
+
+    return {
+        "decision": decision,
+        "reason": reason,
+        "scope": "version_bound_human_led_screening_round",
+        "protocol_id": protocol_id,
+        "codebook": {
+            "version": codebook_version,
+            "sha256": codebook_hash,
+            "origin": codebook["origin"],
+            "provided_by": codebook_provider,
+        },
+        "round": {
+            "id": round_id,
+            "mode": mode,
+            "minimum_reviewers": minimum_reviewers,
+            "source_manifest_sha256": manifest_hash,
+        },
+        "records": audited_records,
+        "counts": counts,
+        "release_errors": release_errors,
+        "majority_vote_used": False,
+        "scientific_correctness_implied": False,
+        "important_limit": (
+            "This audit verifies declared screening workflow and version bindings; "
+            "it does not decide eligibility, prove review completeness, or replace human judgement."
+        ),
+    }
+
+
+def screening_round(ledger, output):
+    out = Path(output)
+    if out.exists():
+        raise FileExistsError("Use a new output path to preserve previous screening-round decisions")
+    result = assess_screening_round(read(ledger))
+    write(out, result)
+    return result
+
+
 def _aware_datetime(value, field):
     if isinstance(value, dt.datetime):
         parsed = value
@@ -729,6 +993,9 @@ def main(argv=None):
     sc = sub.add_parser("seed-coverage")
     sc.add_argument("--ledger", required=True)
     sc.add_argument("--out", required=True)
+    sr = sub.add_parser("screening-round")
+    sr.add_argument("--ledger", required=True)
+    sr.add_argument("--out", required=True)
     ci = sub.add_parser("citation-integrity")
     ci.add_argument("ledger")
     ci.add_argument("--out", required=True)
@@ -757,6 +1024,8 @@ def main(argv=None):
             result = search_progress(args.ledger, args.out, args.budget, args.patience, args.min_new)
         elif args.command == "seed-coverage":
             result = seed_coverage(args.ledger, args.out)
+        elif args.command == "screening-round":
+            result = screening_round(args.ledger, args.out)
         elif args.command == "citation-integrity":
             result = citation_integrity(args.ledger, args.out, args.max_age_days)
         elif args.command == "checkpoint": result = checkpoint(args.project, args.stage, args.inputs, args.outputs)
@@ -770,7 +1039,10 @@ def main(argv=None):
                       "scope": "lexical_overlap_only_not_plagiarism_or_AI_detection"}
         else: result = package(args.output)
         print(json.dumps(result, ensure_ascii=False, indent=2))
-        return 2 if result.get("status") in {
+        result_state = result.get("status")
+        if args.command == "screening-round":
+            result_state = result.get("decision")
+        return 2 if result_state in {
             "fail", "stale", "error", "BLOCKED", "AUTHOR_ACTION_REQUIRED",
             "IDENTITY_REVIEW_REQUIRED",
         } else 0

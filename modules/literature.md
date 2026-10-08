@@ -72,6 +72,33 @@ python scripts/research.py seed-coverage --ledger audit/seed-ledger.json \
 报告数据库、检索式、日期、分页/截断、版本去重和未覆盖限制，并继续执行引用身份、出版完整性
 和句子支持核验。出版完整性账本与 `citation-integrity` 命令见 [文献真实性](evidence-integrity.md)。
 
+## 版本化筛选轮次与人工裁决
+
+系统综述、范围综述或其他需要正式纳排的项目，不能只保存最终的“纳入/排除”标签。先由项目
+团队冻结人工制定的 codebook 版本和 SHA-256，再让每张 ballot 同时绑定筛选轮次、codebook、
+来源文件 SHA-256 与审阅模式。每个项目自行声明 `minimum_reviewers`；工具不把固定“双人筛选”
+伪装成所有研究设计的通用科学门槛。
+
+每张 ballot 必须包含审阅者 ID、`INCLUDE / EXCLUDE / UNCLEAR`、理由及全文定位；排除还要给出
+一个主理由代码。`UNCLEAR` 或审阅者分歧不会用多数票自动消解，必须留下带相同版本绑定的人工
+裁决。来源文件、codebook 或轮次改变后，旧 ballot 进入 `STALE_RESCREEN_REQUIRED`，不能继承
+旧结论。所有记录解决后，仍需与来源 manifest 和 codebook 绑定的人工 release：
+
+```bash
+python scripts/research.py screening-round --ledger audit/screening-ledger.json \
+  --out audit/screening-round.json
+```
+
+判定语义：
+
+- `PASS`：记录均达到项目自定覆盖、分歧已人工裁决，且本轮有人工签发的 release；
+- `CONTINUE`：至少一条记录尚未达到项目声明的审阅者数量；
+- `AUTHOR_ACTION_REQUIRED`：存在分歧/不确定性待裁决，或已解决但尚未人工 release；
+- `BLOCKED`：ballot、裁决或 release 与当前来源、codebook、轮次绑定不一致。
+
+这是一项流程与版本审计，不判断纳排标准是否科学、某篇文献是否应纳入，也不证明检索或综述
+完整。自动/辅助模式必须如实登记为 `assisted`，不得冒充独立人工判读。
+
 ## 跨轮检索的收益账本与停止规则
 
 需要多轮扩展检索时，不能凭“感觉差不多了”停止，也不能用原始命中数制造进展。每轮在 JSON
