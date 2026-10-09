@@ -87,6 +87,7 @@
     "scripts/upstream.py",
     "tests/test_access.py",
     "tests/test_boxes.py",
+    "tests/test_citation_integrity.py",
     "tests/test_distribution.py",
     "tests/test_figures.py",
     "tests/test_gates.py",

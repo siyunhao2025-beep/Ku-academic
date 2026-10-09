@@ -29,7 +29,7 @@
 |---|---|---|
 | 准备清单 `prep-checklist.md` | 全部勾选 | 工具/环境/数据访问/账号逐项落实，不是写了就算 |
 | 领域地图 `domain-map.md` | 实质内容（≥200 字） | 基于 3–5 篇综述梳理，不是空标题 |
-| 精读卡片 | ≥ 2 篇且字段完整 | 用 `reading.py check` 校验；没填卡片只算"下载过" |
+| 精读卡片 | ≥ 2 篇且字段完整 | `reading.py check` 要求实际全文、阅读范围及每条数字结果的页/节/图/表定位；摘要卡或无定位卡只算"下载过" |
 | 研究计划 `plan.md` | 含时间里程碑 | 3 个月计划，能说出第一个小结果什么时候出 |
 
 **Gate 0 不考知识量，只考"有没有带着地图和问题上路"。** 卡片可由 `reading.py card` 生成、`check` 校验、`sync` 同步进 evidence.json。
@@ -271,7 +271,7 @@
 
 `metadata_only` 只能支撑 `background`/`bibliographic` 层句子；用 `metadata_only`/`abstract_only` 写定量数字或机制因果属于不通过。达不到时只允许两条合法出路：获取合法全文（`scripts/access.py resolve` 走 Unpaywall 的出版社/机构库/作者自存档，禁用盗版），或把句子**显式降级并改写**。由 `scripts/access.py check` 逐条校验，报告写入 `audit/access-report.json`。
 
-**精读卡片联动**：三遍法精读的核心文献由 `scripts/reading.py sync` 写入，带 `is_core_reading: true`、`reading_card`（卡片路径）、`evidence_level: full_text`、`relation_to_my_work`（`SUPPORTS / CONTRADICTS_MY_HYPOTHESIS / CONDITION_MISMATCH / METHOD_REFERENCE`），`claim_level` 由卡片勾选的结论强度（观测事实/统计关联/机制假设）映射。**精读不等于核验**：同步后 `citation_verdict` 仍为 `UNRESOLVED`、`support_status` 为空，必须再跑身份与支持两道核验才能计入 Gate 2。
+**精读卡片联动**：三遍法精读的核心文献只有在显式记录 `access_level: full_text`、正文/附录/补充材料的实际 `read_scope`，并为每条关键数字提供页/节/图/表定位后，才由 `scripts/reading.py sync` 写入。条目带 `is_core_reading: true`、`reading_card`（卡片路径）、实际 `locator` / `result_locators`、`evidence_level: full_text`、`relation_to_my_work`（`SUPPORTS / CONTRADICTS_MY_HYPOTHESIS / CONDITION_MISMATCH / METHOD_REFERENCE`）；`claim_level` 由卡片勾选的结论强度映射。**精读不等于核验**：同步后 `citation_verdict` 仍为 `UNRESOLVED`、`support_status` 为空，必须再跑身份与支持两道核验才能计入 Gate 2。
 
 ### `design.json`（P3）
 

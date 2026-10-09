@@ -175,6 +175,256 @@ class SearchTests(unittest.TestCase):
             with self.assertRaises(FileExistsError): r.search('x', '2026-01-01', '2026-02-01', t)
 
 
+class SearchProgressTests(unittest.TestCase):
+    def round(self, number, matrix_changing, gaps=None):
+        return {'round': number, 'queries': [f'fixture-{number}'],
+                'new_deduped_records': matrix_changing + 2,
+                'admitted_sources': matrix_changing,
+                'matrix_changing_sources': matrix_changing,
+                'open_required_gaps': gaps or []}
+
+    def test_stops_after_configured_dry_streak(self):
+        rounds = [self.round(0, 5), self.round(1, 1), self.round(2, 0)]
+        out = r.assess_search_progress(rounds, budget=6, patience=2, min_new=2)
+        self.assertEqual(out['decision'], 'STOP_SATURATED')
+        self.assertEqual(out['dry_streak'], 2)
+        self.assertEqual(out['trajectory'], [5, 1, 0])
+        self.assertFalse(out['exhaustiveness_claim_allowed'])
+
+    def test_required_gap_prevents_false_saturation(self):
+        rounds = [self.round(0, 1), self.round(1, 0, ['undercovered population'])]
+        out = r.assess_search_progress(rounds, budget=4, patience=2, min_new=2)
+        self.assertEqual(out['decision'], 'CONTINUE_FOR_COVERAGE')
+
+    def test_budget_with_required_gap_needs_human_decision(self):
+        rounds = [self.round(0, 3), self.round(1, 0, ['missing comparator'])]
+        out = r.assess_search_progress(rounds, budget=2, patience=2, min_new=2)
+        self.assertEqual(out['decision'], 'AUTHOR_ACTION_REQUIRED')
+
+    def test_invalid_ledger_is_rejected(self):
+        bad = [self.round(0, 1)]
+        bad[0]['queries'] = []
+        with self.assertRaises(ValueError):
+            r.assess_search_progress(bad, budget=3, patience=2, min_new=1)
+
+    def test_cli_writes_an_auditable_decision(self):
+        with tempfile.TemporaryDirectory() as t:
+            root = Path(t)
+            ledger = root / 'rounds.json'
+            output = root / 'progress.json'
+            r.write(ledger, {'rounds': [self.round(0, 4), self.round(1, 0)]})
+            code = r.main(['search-progress', '--ledger', str(ledger), '--out', str(output),
+                           '--budget', '5', '--patience', '1', '--min-new', '2'])
+            self.assertEqual(code, 0)
+            self.assertEqual(r.read(output)['decision'], 'STOP_SATURATED')
+
+
+class SeedCoverageTests(unittest.TestCase):
+    def payload(self):
+        return {
+            'required_chain_directions': ['backward', 'forward'],
+            'seeds': [
+                {'id': 'S1', 'identity_status': 'VERIFIED', 'search_status': 'FOUND',
+                 'locator': 'doi:10.0000/synthetic'},
+            ],
+            'citation_chains': [
+                {'seed_id': 'S1', 'direction': 'backward', 'status': 'COMPLETE',
+                 'new_deduped_records': 3, 'source': 'synthetic fixture'},
+                {'seed_id': 'S1', 'direction': 'forward', 'status': 'ZERO_HITS',
+                 'new_deduped_records': 0, 'source': 'synthetic fixture'},
+            ],
+        }
+
+    def test_verified_seed_and_completed_channels_pass(self):
+        out = r.assess_seed_coverage(self.payload())
+        self.assertEqual(out['decision'], 'PASS')
+        self.assertEqual(out['zero_hit_channels'], [{'seed_id': 'S1', 'direction': 'forward'}])
+        self.assertEqual(out['failed_channels'], [])
+        self.assertFalse(out['exhaustiveness_claim_allowed'])
+
+    def test_missing_verified_seed_is_a_search_gap(self):
+        payload = self.payload()
+        payload['seeds'][0]['search_status'] = 'NOT_FOUND'
+        out = r.assess_seed_coverage(payload)
+        self.assertEqual(out['decision'], 'SEARCH_GAP')
+        self.assertEqual(out['missing_verified_seeds'], ['S1'])
+
+    def test_identity_problem_is_not_counted_as_coverage(self):
+        payload = self.payload()
+        payload['seeds'][0]['identity_status'] = 'UNRESOLVED'
+        out = r.assess_seed_coverage(payload)
+        self.assertEqual(out['decision'], 'IDENTITY_REVIEW_REQUIRED')
+        self.assertEqual(out['identity_review_seeds'], ['S1'])
+
+    def test_failed_channel_is_distinct_from_zero_hits(self):
+        payload = self.payload()
+        payload['citation_chains'][0]['status'] = 'FAILED'
+        payload['citation_chains'][0]['new_deduped_records'] = 0
+        out = r.assess_seed_coverage(payload)
+        self.assertEqual(out['decision'], 'AUTHOR_ACTION_REQUIRED')
+        self.assertEqual(out['failed_channels'], [{'seed_id': 'S1', 'direction': 'backward'}])
+        self.assertEqual(out['zero_hit_channels'], [{'seed_id': 'S1', 'direction': 'forward'}])
+
+    def test_missing_required_direction_continues_search(self):
+        payload = self.payload()
+        payload['citation_chains'].pop()
+        out = r.assess_seed_coverage(payload)
+        self.assertEqual(out['decision'], 'CONTINUE')
+        self.assertEqual(out['missing_required_channels'], [{'seed_id': 'S1', 'direction': 'forward'}])
+
+    def test_invalid_and_duplicate_records_are_rejected(self):
+        payload = self.payload()
+        payload['seeds'].append(copy.deepcopy(payload['seeds'][0]))
+        with self.assertRaises(ValueError):
+            r.assess_seed_coverage(payload)
+
+    def test_cli_writes_a_new_audit_file(self):
+        with tempfile.TemporaryDirectory() as t:
+            root = Path(t)
+            ledger = root / 'seed-ledger.json'
+            output = root / 'seed-audit.json'
+            r.write(ledger, self.payload())
+            code = r.main(['seed-coverage', '--ledger', str(ledger), '--out', str(output)])
+            self.assertEqual(code, 0)
+            self.assertEqual(r.read(output)['decision'], 'PASS')
+            self.assertEqual(r.read(output)['scope'], 'seed_and_declared_citation_chain_audit')
+
+
+class ScreeningRoundTests(unittest.TestCase):
+    def payload(self):
+        codebook_hash = 'a' * 64
+        source_manifest_hash = 'b' * 64
+        source_hash = 'c' * 64
+        ballot = lambda reviewer: {
+            'reviewer_id': reviewer,
+            'round_id': 'screen-v2',
+            'codebook_sha256': codebook_hash,
+            'source_sha256': source_hash,
+            'decision': 'INCLUDE',
+            'rationale': 'The full-text fixture satisfies the declared population and design rules.',
+            'evidence_locator': 'PDF p.4, Methods',
+            'review_mode': 'independent',
+        }
+        return {
+            'schema_version': '1.0',
+            'protocol_id': 'synthetic-review',
+            'codebook': {
+                'version': '2.0',
+                'sha256': codebook_hash,
+                'origin': 'human_led',
+                'provided_by': 'Synthetic review team',
+            },
+            'round': {
+                'id': 'screen-v2',
+                'mode': 'independent',
+                'minimum_reviewers': 2,
+                'source_manifest_sha256': source_manifest_hash,
+            },
+            'records': [{
+                'record_id': 'R1',
+                'source_sha256': source_hash,
+                'ballots': [ballot('reviewer-a'), ballot('reviewer-b')],
+            }],
+            'release': {
+                'human_authorized': True,
+                'authorized_by': 'Synthetic adjudicator',
+                'authorized_at': '2026-10-08T00:00:00Z',
+                'rationale': 'Synthetic contract fixture only.',
+                'round_id': 'screen-v2',
+                'codebook_sha256': codebook_hash,
+                'source_manifest_sha256': source_manifest_hash,
+            },
+        }
+
+    def test_bound_independent_concordance_and_human_release_pass(self):
+        out = r.assess_screening_round(self.payload())
+        self.assertEqual(out['decision'], 'PASS')
+        self.assertEqual(out['records'][0]['state'], 'CONCORDANT')
+        self.assertEqual(out['counts']['included'], 1)
+        self.assertFalse(out['scientific_correctness_implied'])
+
+    def test_disagreement_requires_adjudication_not_majority_vote(self):
+        payload = self.payload()
+        payload['records'][0]['ballots'][1].update(
+            decision='EXCLUDE', primary_reason_code='WRONG_DESIGN')
+        payload.pop('release')
+        out = r.assess_screening_round(payload)
+        self.assertEqual(out['decision'], 'AUTHOR_ACTION_REQUIRED')
+        self.assertEqual(out['records'][0]['state'], 'ADJUDICATION_REQUIRED')
+
+        payload['records'][0]['adjudication'] = {
+            'decision': 'EXCLUDE',
+            'primary_reason_code': 'WRONG_DESIGN',
+            'rationale': 'The full text uses an ineligible design.',
+            'evidence_locator': 'PDF p.4, Methods',
+            'human_authorized': True,
+            'authorized_by': 'Synthetic adjudicator',
+            'round_id': payload['round']['id'],
+            'codebook_sha256': payload['codebook']['sha256'],
+            'source_sha256': payload['records'][0]['source_sha256'],
+        }
+        payload['release'] = self.payload()['release']
+        out = r.assess_screening_round(payload)
+        self.assertEqual(out['decision'], 'PASS')
+        self.assertEqual(out['records'][0]['state'], 'ADJUDICATED')
+        self.assertEqual(out['counts']['excluded'], 1)
+
+    def test_source_or_codebook_drift_blocks_stale_ballots(self):
+        payload = self.payload()
+        payload['records'][0]['ballots'][0]['source_sha256'] = 'd' * 64
+        out = r.assess_screening_round(payload)
+        self.assertEqual(out['decision'], 'BLOCKED')
+        self.assertEqual(out['records'][0]['state'], 'STALE_RESCREEN_REQUIRED')
+
+    def test_coverage_is_project_defined_and_incomplete_round_continues(self):
+        payload = self.payload()
+        payload['records'][0]['ballots'].pop()
+        payload.pop('release')
+        out = r.assess_screening_round(payload)
+        self.assertEqual(out['decision'], 'CONTINUE')
+        self.assertEqual(out['records'][0]['state'], 'PENDING_COVERAGE')
+
+    def test_exclusion_needs_one_primary_reason_and_source_location(self):
+        payload = self.payload()
+        for ballot in payload['records'][0]['ballots']:
+            ballot['decision'] = 'EXCLUDE'
+            ballot.pop('evidence_locator')
+        with self.assertRaises(ValueError):
+            r.assess_screening_round(payload)
+
+        payload = self.payload()
+        for ballot in payload['records'][0]['ballots']:
+            ballot['decision'] = 'EXCLUDE'
+        with self.assertRaises(ValueError):
+            r.assess_screening_round(payload)
+
+    def test_release_is_bound_and_timestamped(self):
+        payload = self.payload()
+        payload['release']['source_manifest_sha256'] = 'd' * 64
+        out = r.assess_screening_round(payload)
+        self.assertEqual(out['decision'], 'BLOCKED')
+        self.assertTrue(out['release_errors'])
+
+        payload = self.payload()
+        payload['release']['authorized_at'] = '2026-10-08T00:00:00'
+        out = r.assess_screening_round(payload)
+        self.assertEqual(out['decision'], 'BLOCKED')
+        self.assertTrue(any('timezone' in item for item in out['release_errors']))
+
+    def test_cli_preserves_prior_screening_audit(self):
+        with tempfile.TemporaryDirectory() as t:
+            root = Path(t)
+            ledger = root / 'screening.json'
+            output = root / 'screening-audit.json'
+            r.write(ledger, self.payload())
+            self.assertEqual(r.main(['screening-round', '--ledger', str(ledger),
+                                     '--out', str(output)]), 0)
+            first = output.read_bytes()
+            self.assertEqual(r.main(['screening-round', '--ledger', str(ledger),
+                                     '--out', str(output)]), 2)
+            self.assertEqual(output.read_bytes(), first)
+
+
 class ChangeTests(unittest.TestCase):
     def setUp(self):
         self.change = {'id': 'C', 'location': 'Discussion', 'before': 'old', 'after': 'new',

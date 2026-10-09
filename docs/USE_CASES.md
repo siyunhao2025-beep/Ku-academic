@@ -106,7 +106,13 @@
 给出四态判定：VERIFIED / MISMATCH / UNRESOLVED / RETRACTED。
 UNRESOLVED 按可能杜撰处理，不得留在正文。
 
-第二遍查支持：这篇文献是否真的支持它所在的那句话。
+第二遍查出版完整性：查看出版社文章页和正式通知，独立登记 NO_SIGNAL_FOUND /
+RETRACTED / WITHDRAWN / REMOVED / EXPRESSION_OF_CONCERN / CORRECTED / NOT_CHECKED，
+以及来源 URL 和带时区的检查时间。CORRECTED 不是 RETRACTED；判断更正是否影响当前引用内容。
+可用 scripts/research.py citation-integrity 校验账本，但它不联网替我查出版社；
+NO_SIGNAL_FOUND 也不等于证明记录干净。
+
+第三遍查支持：这篇文献是否真的支持它所在的那句话。
 给出六类状态：SUPPORTS / PARTIALLY_SUPPORTS / BACKGROUND_ONLY /
 CONTRADICTS / DOES_NOT_SUPPORT / CANNOT_VERIFY。
 CONTRADICTS 和 DOES_NOT_SUPPORT 是硬阻断，必须删句或改句。
@@ -161,15 +167,14 @@ PARTIALLY_SUPPORTS 必须把句子收窄到文献真正覆盖的范围，不是�
 如果为了读起来更自信把"suggests"改成"proves"，那不是降 AI，是过度声称。
 先跑字符级 diff，逐个人工确认数字没有被动过。
 
-语言层按这条主线改：句式节奏是单项收益最大的干预。
-找连续三个以上长度接近的句子，重组其中一到两句。
-不要只删副词——实测只删词不重组会让 AI 分数变差。
+语言层先说明本轮具体的清晰度或论证问题；不存在问题的句子不因长度相近而改写。
+拆句、合句或删副词都不是默认动作，必须保持术语、命题、引用与证据强度。
 
-中文硬约束：每段 AI 高频词 ≤2、段末总结套话全文 ≤1、三元排比每段 ≤1、
-加粗全文 ≤5、模糊结尾 0、无出处归因 0、破折号同段 <4。
-每千字保留 2–3 处轻度特征，不要全清干净。
+中文表达先查主语、对象、比较项、条件与指代，再决定是否拆句、合句或删重复总结。
+套话、排比、标点和加粗只作定位信号，不设跨作者通用配额；无出处归因仍是证据阻断项。
+不为检测器分数、句长方差或所谓“噪声预算”改文，所有调整都要能说明清晰度或论证收益。
 
-输出：修订稿 + 五层自查记录（证据完整性 / 文献核验 / 图件 / 语言节奏 / 冷读）。
+输出：修订稿 + 五层自查记录（证据完整性 / 文献核验 / 图件 / 语言清晰度与模式复查 / 冷读）。
 不承诺通过任何 AI 检测工具，不提供绕过检测的方法。
 ```
 
@@ -474,6 +479,36 @@ quantitative/causal），跑 python scripts/access.py check <workspace>。
 无网络时如实报错，不要伪造可访问性。
 ```
 
+## 29. 多轮检索：什么时候该停，什么时候不能停
 
+```text
+使用 research-mother，加载 modules/literature.md。
+围绕[研究问题]执行多轮扩展检索，每轮记录完整查询、去重后的新记录、
+实际纳入证据矩阵的来源、真正改变支持/反驳/限定/缺口判断的来源数，
+以及当前项目范围内仍必须覆盖的缺口。
 
+开始前和我确认本项目的最大轮数 budget、连续低收益容忍 patience、
+最低矩阵变化来源数 min_new；这些是成本控制参数，不是科学充分性阈值。
+用 scripts/research.py search-progress 生成判定与收益轨迹。
 
+重复命中、只补元数据或未读全文的机制主张不能算 matrix-changing。
+若低收益但仍有必需覆盖缺口，继续定向补查；若预算耗尽仍有缺口，
+转 AUTHOR_ACTION_REQUIRED，让我选择缩小范围、增加资源或接受覆盖限制。
+任何停止都要列出薄弱区域，不得声称穷尽文献。
+```
+
+## 30. 种子文献与引文链：检索有没有漏掉已知关键研究
+
+```text
+使用 research-mother，加载 modules/literature.md。
+先把我提供的关键研究逐条做身份核验，记录 DOI/PMID/题名定位、
+identity_status 和当前检索是否找回；不要把题名相似候选自动当成同一篇。
+
+和我确认本项目是否要求 backward、forward 或双向引文链，写入
+required_chain_directions。每个渠道记录 COMPLETE、ZERO_HITS 或 FAILED，
+以及去重后的新增记录数和来源快照；失败不能写成零命中。
+
+用 scripts/research.py seed-coverage 生成审计。若已核验种子未找回，
+按 SEARCH_GAP 修订检索式/数据库后再筛选；若身份或渠道有问题，显式转人工。
+即使 PASS，也只说明这些种子与声明的渠道被覆盖，不得宣称穷尽文献。
+```
