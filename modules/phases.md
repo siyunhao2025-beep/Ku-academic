@@ -41,7 +41,7 @@
 1. **能力盘点**：列出你已掌握的方法、工具、数据；列出你还缺什么；缺的东西哪些能补、哪些补不了。
 2. **工具链确认**：文献管理（Zotero/EndNote/NoteExpress）、笔记方法、代码环境、数据存储，逐项确认能用。
 3. **领域地图初建**：找 3-5 篇该领域的高被引综述，画出领域的核心问题、主要学派、常用方法、关键争议点。
-4. **文献阅读方法校准**：用 `modules/paper-reading-guide.md` 的结构化方法精读 2 篇代表作。用 `python scripts/reading.py card <workspace> --title "..." --author ... --year ... --doi ...` 生成三遍法卡片，填完跑 `python scripts/reading.py check <workspace>`——必填字段为空会被判为"只下载过、没读过"。确认你真的读懂了，而不是只看懂了摘要。
+4. **文献阅读方法校准**：用 `modules/paper-reading-guide.md` 的结构化方法精读 2 篇代表作。用 `python scripts/reading.py card <workspace> --title "..." --author ... --year ... --doi ...` 生成三遍法卡片，填完跑 `python scripts/reading.py check <workspace>`——必须明确实际读到全文、读了正文/附录/补充材料中的哪些部分，并为每条数字结果填写页/节/图/表定位；只看摘要或没有定位会被判为"只下载过、没完成核心精读"。
 5. **导师沟通准备**：准备一页纸的"我想做什么、我为什么觉得可行、我需要什么支持"，先和导师对齐再开工。
 6. **研究计划草拟**：3 个月里程碑、每周时间块、风险预案，写在 `plan.md` 里。
 7. **硬闸门判定能否进 P1**：跑 `python scripts/progress.py gate <workspace> P1`。退出码非 0 就按它列出的缺失项补齐，不允许口头宣布通过、不允许删检查项强行过闸。准备清单全勾、领域地图有实质内容、≥2 张完整精读卡片、3 个月计划缺一不可。
@@ -161,7 +161,7 @@
 - [ ] 每个缺口都有至少 3 条证据，不是"我觉得没人做过"。
 - [ ] 没有出现"研究表明/专家认为"这类没有具体出处的归因。
 - [ ] 无法核实的条目已显式标为 `待确认`，并说明卡在哪一步。
-- [ ] 核心文献都有完整精读卡片（`reading.py check` 通过、`sync` 进 evidence.json），且同步后已跑完两道引用核验。
+- [ ] 核心文献都有完整精读卡片（实际全文、阅读范围、每条数字结果定位均由 `reading.py check` 通过并 `sync` 进 evidence.json），且同步后已跑完两道引用核验。
 - [ ] **过闸**：`python scripts/progress.py gate <workspace> P3` 退出码为 0（纳入文献数、≥3 个缺口且每个 ≥3 证据、VERIFIED 比例 100%、无未处理阻断项）。
 
 ---
