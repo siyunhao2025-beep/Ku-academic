@@ -13,6 +13,39 @@ class WritingRevisionContractTests(unittest.TestCase):
         self.assertIn("location | function | disposition", text)
         self.assertIn("隐藏不利结果", text)
 
+    def test_press_conference_revision_is_passage_level_and_evidence_bound(self):
+        text = (ROOT / "modules" / "writing-review.md").read_text(encoding="utf-8")
+        for diagnostic_class in (
+            "工作日志式叙述",
+            "修辞性自我削弱",
+            "笼统失败结论",
+            "失焦指标框架",
+            "优势埋没",
+            "无论证职责实验",
+            "弱开场",
+            "自我否定式结论",
+            "必要学术谨慎",
+        ):
+            self.assertIn(diagnostic_class, text)
+        self.assertIn("问题 → 缺口 → 思路 → 最硬结果", text)
+        self.assertIn(
+            "claim_id | scientific question | comparator | result | argumentative duty | destination",
+            text,
+        )
+        self.assertIn(
+            "location | original | diagnosis | argumentative duty | disposition | proposed rewrite",
+            text,
+        )
+        self.assertIn("预注册主指标", text)
+        self.assertIn("安全性或公平性结果", text)
+        self.assertIn("不得把事后选择包装成预先设计", text)
+        self.assertIn("覆盖说明", text)
+
+    def test_skill_routes_explicit_defensive_writing_audits(self):
+        text = (ROOT / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("逐处审计防御性写作", text)
+        self.assertIn("modules/writing-review.md", text)
+
     def test_humanizing_is_not_driven_by_detector_quotas(self):
         active_paths = (
             ROOT / "modules" / "deai-writing.md",

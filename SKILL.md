@@ -1,7 +1,7 @@
 ---
 name: research-mother
 description: >-
-  Orchestrate evidence-grounded research with replaceable domain packs across seven explicit phases (onboarding/preparation, topic and paper investigation, literature review, experiment design, computation, figures and manuscript writing, conclusion and revision): literature discovery and reviews, study design, real analysis, research roadmaps and schematic figures, genuine citation provenance and claim-support verification, evidence-preserving academic style revision, methods, manuscript development, contribution-driven supplementation, journal-corpus style learning and scientific editing. Use when a researcher asks to build or run a research workflow, distill a field or journal, write a review or paper from evidence, verify whether references actually exist and actually support the sentence, produce research diagrams, reduce formulaic or AI-like phrasing by improving clarity and natural academic voice without targeting AI-detector scores, or revise a manuscript without defensive boilerplate.
+  Orchestrate evidence-grounded research with replaceable domain packs across seven explicit phases (P0–P6): literature discovery and review, study design, real analysis, figures, manuscript writing, revision, journal adaptation and submission readiness. Preserve citation provenance, claim-support checks, facts, quantities and change propagation. Use when a researcher asks to start or run a research workflow, distill a field or journal, search or review literature, design or analyze a study, write or revise a paper, verify whether references exist and support a sentence, create research diagrams, improve formulaic or AI-like academic prose without targeting AI-detector scores, or audit every defensive passage and reorganize a manuscript around its strongest supported contribution without hiding required results.
 license: MIT
 metadata:
   version: "0.5.0"
@@ -108,6 +108,7 @@ An upstream phase's deliverables are a downstream phase's inputs. Do not start a
 | Explain the workflow to a non-expert user | assets/plain-language-prompts.md | plain-language guidance, one next action per reply |
 | Save tokens without losing function | modules/lean-mode.md + docs/TOKEN_ACCOUNTING.md | named ledger entries with basis and method labelled |
 | Polish or review | modules/writing-review.md | revised prose, numerical/causal checks, focused audit |
+| 逐处审计防御性写作 / 按“发布会原则”重构 | modules/writing-review.md | 覆盖说明、逐处原文与改法、实验论证职责、事实锁回归 |
 | Compare against peer academic skills | docs/PEER_COMPARISON.md | per-repository pros/cons and where each rule came from |
 | Install/adapt upstream projects | docs/UPSTREAM.md and config/upstream.lock.json | pinned source status; verified host installation separately |
 
