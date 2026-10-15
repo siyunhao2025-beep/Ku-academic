@@ -429,14 +429,18 @@ python scripts/boxes.py export <ws> --out export/full.md --provenance export/pro
 使用 research-mother，加载 modules/figures.md。
 先跑 python scripts/figures.py init <workspace> 生成 manifest 骨架，
 我把每张图（roadmap/schematic/data）的源数据、绘图脚本、坐标轴、掩膜、
-配色、系列数、冗余通道、不确定度、图注、输出文件、人眼审查署名填进去。
+配色、系列数、冗余通道、不确定度、图注、输出文件填进去；同时记录
+source_data/script/outputs 的 SHA-256、最终槽位与毫米尺寸、交付可编辑性类别，
+并在真实最终容器下完成人眼审查与署名。
 
 然后跑 python scripts/figures.py check <workspace>，按阻断项逐条修：
 数据图只用无障碍色板（okabe-ito/tol/viridis/cividis 等），禁用 jet/rainbow；
 多系列必须有形状/线型/纹理/直接标注的冗余通道；超过 6 个系列拆图；
 每张图至少一个矢量输出；source_data→script→outputs 文件真实存在；
+任一源数据、脚本或输出文件哈希变化都必须重建并重新复核，不能只刷新哈希；
+SVG/PDF 不自动等于完全可编辑，轮廓文字、嵌入位图和混合交付要如实标注；
 示意图必须标 conceptual 与“概念示意/Conceptual”；
-visual_review=passed 必须有 reviewed_by 和 reviewed_at。
+visual_review=passed 必须有 reviewed_by/reviewed_at，且复核尺寸与 final_size 一致。
 
 脚本通过只代表文件链和审查证据齐全，图是否科学、美观、数字一致，
 仍由我逐张人眼核对，不要用脚本通过替代看图。
@@ -491,5 +495,4 @@ quantitative/causal），跑 python scripts/access.py check <workspace>。
 要么把句子显式降级改写，不要硬写、不要静默降级，也不要使用盗版来源；
 无网络时如实报错，不要伪造可访问性。
 ```
-
 

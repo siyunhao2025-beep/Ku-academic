@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "checked_at": "2026-09-24",
+  "checked_at": "2026-10-15",
   "status": "registered_pinned_not_host_installed",
   "sources": [
     {
@@ -65,6 +65,16 @@
       "local_skill": "skills/scientific-figure-making/SKILL.md",
       "local_license": "skills/scientific-figure-making/LICENSE",
       "local_profile": "modules/figures4papers-profile.md"
+    },
+    {
+      "id": "polish-sci-figures",
+      "repository": "zhoy0409-debug/polish-sci-figures",
+      "commit": "bc777f283b2e32d678fc93976ddf901fdf74383a",
+      "declared_license": "MIT",
+      "entrypoint": "polish-sci-figures/SKILL.md",
+      "status": "pinned_source_not_installed",
+      "review_scope": "LICENSE, three SKILL entrypoints, and first-level references for provenance, final-size review, and editability; no scripts, installers, Studio, services, templates, images, or runtime execution",
+      "source_url": "https://github.com/zhoy0409-debug/polish-sci-figures"
     }
   ]
 }

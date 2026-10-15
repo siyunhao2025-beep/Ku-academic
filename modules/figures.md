@@ -355,20 +355,39 @@ python scripts/figures.py check <workspace>     # 校验全部图件，有阻断
 |---|---|---|
 | 三类图齐全 | 必须有 roadmap 与 data；schematic 缺失时除非在 `schematic_not_needed_reason` 写明理由否则阻断 | 阻断 |
 | 数据图可复现链 | `source_data → script → outputs` 指向的文件必须真实存在，source_data 须在结果/输入登记目录 | 阻断 |
+| 发布依赖锁 | contract 2.0 清单逐项核对源数据、生成脚本和输出文件 SHA-256；任一变化即视为过期 | 阻断 |
 | 矢量输出 | 每张图 outputs 至少一个 `.pdf/.svg/.eps` | 阻断 |
 | 无障碍配色 | palette 必须在登记名单（okabe-ito / tol-* / viridis / cividis / magma / plasma / inferno）；`jet/rainbow/hsv/gist_rainbow` 直接阻断 | 阻断 |
 | 冗余通道 | 系列数 >1 时 `colors.redundant_encoding` 必须是 marker shape / line style / hatching / direct label 之一 | 阻断 |
 | 系列数上限 | n_series > 6 判为应拆图 | 阻断 |
 | 示意图诚实性 | schematic 必须 `conceptual=true` 且图注/notes 含"概念示意/Conceptual" | 阻断 |
 | 人眼审查证据 | `visual_review.status=passed` 必须同时有 `reviewed_by` 与 `reviewed_at`，且输出文件存在 | 阻断 |
+| 最终尺寸复核 | `visual_review` 的毫米宽高必须与 `final_size` 一致，并记录最终容器 | 阻断 |
+| 可编辑性诚实标注 | `editability.class` 只能是 live-vector-text / outlined-text / embedded-raster / mixed，且复核人确认检查过 | 阻断 |
 | 数据来源可疑 | source_data 不在 `analysis/results`、`inputs`、`evidence`、`private-corpus` 下 | 建议 |
 | roadmap 版本 | 未标 planned/actual | 建议 |
 
-**`visual_review` 字段结构（脚本只查证据，不替你看图）：**
+**contract 2.0 发布字段（脚本只查证据，不替你看图）：**
 
 ```json
-"visual_review": {"status": "passed", "reviewed_by": "署名", "reviewed_at": "ISO时间", "notes": "看到了什么/问题"}
+{
+  "provenance": {
+    "source_data": {"analysis/results/result.csv": "<sha256>"},
+    "script": "<sha256>",
+    "outputs": {"figures/fig1.svg": "<sha256>"}
+  },
+  "final_size": {"slot_class": "single-column", "width_mm": 85, "height_mm": 60},
+  "editability": {"class": "live-vector-text", "notes": "文字与图元可编辑"},
+  "visual_review": {
+    "status": "passed", "reviewed_by": "署名", "reviewed_at": "ISO时间",
+    "at_width_mm": 85, "at_height_mm": 60,
+    "container": "manuscript single-column slot", "editability_checked": true,
+    "notes": "看到了什么/问题"
+  }
+}
 ```
+
+新建清单自动声明 `contract_version: "2.0"` 并启用上述发布锁。旧清单继续读取，但会提示其尚未启用依赖哈希、最终尺寸和可编辑性检查；升级必须重新生成、核对并人眼复核，不能只补字段或刷新哈希。“有 SVG/PDF”不等于完全可编辑：转轮廓文字、嵌入位图和混合交付必须如实分类。
 
 **脚本明确不判的事**：图好不好看、坐标轴标得对不对、误差条含义是否恰当、图上数字与正文是否一致、有没有截轴夸大、箭头关系通不通——这些必须由人按本模块的检查清单逐项看过。脚本通过只代表"文件链完整、审查留有署名记录"，不代表图在科学上正确。P5 阶段还会被 `scripts/progress.py gate <workspace> P6` 复核（所有图 visual_review=passed、roadmap/schematic 齐全）。
 

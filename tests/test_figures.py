@@ -1,6 +1,7 @@
 """Tests for the figure guardrail (scripts/figures.py). No network.
 Synthetic manifests and temp files only."""
 import json
+import hashlib
 import os
 import subprocess
 import sys
@@ -39,6 +40,38 @@ def make_workspace():
     for n in ("fig1.pdf", "fig1.png"):
         (ws / "figures" / n).write_text("x", encoding="utf-8")
     return tmp, ws
+
+
+def _digest(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def with_release_contract(ws, fig):
+    fig = dict(fig)
+    sources = fig.get("source_data") or []
+    outputs = fig.get("outputs") or []
+    fig["provenance"] = {
+        "source_data": {rel: _digest(ws / rel) for rel in sources},
+        "script": _digest(ws / fig["script"]),
+        "outputs": {rel: _digest(ws / rel) for rel in outputs},
+    }
+    fig["final_size"] = {
+        "slot_class": "single-column",
+        "width_mm": 85.0,
+        "height_mm": 60.0,
+    }
+    fig["editability"] = {
+        "class": "live-vector-text",
+        "notes": "Vector marks and text remain editable.",
+    }
+    fig["visual_review"] = {
+        **fig["visual_review"],
+        "at_width_mm": 85.0,
+        "at_height_mm": 60.0,
+        "container": "manuscript single-column slot",
+        "editability_checked": True,
+    }
+    return fig
 
 
 class PaletteTests(unittest.TestCase):
@@ -107,6 +140,25 @@ class DataFigureRuleTests(unittest.TestCase):
         fig["visual_review"] = {"status": "pending"}
         errors, _ = figures.check_one(self.ws, fig)
         self.assertTrue(any("人眼视觉审查" in e for e in errors))
+
+    def test_release_contract_accepts_current_dependencies_and_final_size_review(self):
+        fig = with_release_contract(self.ws, base_data_figure())
+        errors, _ = figures.check_one(self.ws, fig, require_release_provenance=True)
+        self.assertEqual(errors, [], errors)
+
+    def test_release_contract_rejects_stale_source_hash(self):
+        fig = with_release_contract(self.ws, base_data_figure())
+        (self.ws / "analysis/results/r.csv").write_text("x,y\n1,3\n", encoding="utf-8")
+        errors, _ = figures.check_one(self.ws, fig, require_release_provenance=True)
+        self.assertTrue(any("source_data SHA-256" in e for e in errors), errors)
+
+    def test_release_contract_rejects_unknown_editability_and_wrong_review_size(self):
+        fig = with_release_contract(self.ws, base_data_figure())
+        fig["editability"]["class"] = "fully-editable-somehow"
+        fig["visual_review"]["at_width_mm"] = 170.0
+        errors, _ = figures.check_one(self.ws, fig, require_release_provenance=True)
+        self.assertTrue(any("editability.class" in e for e in errors), errors)
+        self.assertTrue(any("最终宽度" in e for e in errors), errors)
 
 
 class SchematicRuleTests(unittest.TestCase):

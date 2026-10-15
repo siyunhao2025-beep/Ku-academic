@@ -95,6 +95,15 @@ python scripts/research.py search --query "your key construct your method" --sin
 
 PDF 下载、导入和阅读卡格式见 [文件接口](CONTRACTS.md)。全文阅读与期刊风格归纳需要模型实际执行，不能仅跑提取脚本。
 
+图件进入 P5 后，先建立并填写发布清单：
+
+```bash
+python scripts/figures.py init runs/my-study
+python scripts/figures.py check runs/my-study
+```
+
+新清单会锁定每张图的源数据、生成脚本和输出文件 SHA-256，并要求在真实目标容器与毫米尺寸下记录人眼复核及交付可编辑性。文件变化后应重建并重新复核，不能只刷新哈希；脚本通过也不代表图件在科学上正确。
+
 ## 7. 更新和维护
 
 源码方式可在保存自己修改后 git pull。已安装或上传到会话的副本不会因 GitHub 更新自动替换，应重新下载并按宿主界面更新，保留旧版项目数据。
