@@ -22,3 +22,7 @@ SOFTWARE.
 
 This license covers this package's original files only. Third-party sources
 and paper corpora retain their own licenses; see docs/UPSTREAM.md.
+
+In particular, skills/scientific-figure-making/ is distributed separately
+under CC BY-NC 4.0 as stated in that directory's LICENSE and SOURCE.md. This
+root MIT license does not relicense, supersede, or remove those terms.

@@ -8,4 +8,6 @@
 
 保存绘图源数据和脚本、参数、轴与色条范围、掩膜/缺测、图注、PNG 与矢量格式。固定比较图范围是否合理由任务决定，不通过调轴、隐藏异常或插值掩盖缺测来强化结论。示意图必须标为概念示意，不能冒充观测结果；不要求每篇文章硬加 AI 图。
 
+若用户要求 figures4papers 风格，加载独立安装的 [`scientific-figure-making` Skill](../skills/scientific-figure-making/SKILL.md)，再按 [`figures4papers-profile.md`](figures4papers-profile.md) 选择版式与图型，但不得改变统计口径。把 `source_data -> plot_script -> outputs -> caption_or_explanation` 写进图件清单，并记录锁定的上游提交；本模块与 `modules/figures.md` 的追溯、无障碍、坐标诚信和 CC BY-NC 许可门优先。
+
 图表检验包括：数字与正文一致、单位和坐标明确、标签不重叠、缺测不连接、统计口径一致。需要视觉审查，不能仅凭文件存在报告“图件检查通过”。

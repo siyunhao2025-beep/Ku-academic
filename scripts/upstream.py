@@ -55,7 +55,7 @@ def stage(entry, target):
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--out", required=True)
-    p.add_argument("--source", help="One registry ID; omit to stage all five")
+    p.add_argument("--source", help="One registry ID; omit to stage all registered sources")
     a = p.parse_args()
     entries = read(ROOT / "config/upstream.lock.json")["sources"]
     if a.source:

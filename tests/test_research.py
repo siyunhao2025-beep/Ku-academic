@@ -112,10 +112,19 @@ class CoreTests(unittest.TestCase):
 
     def test_registry_pins(self):
         sources = r.read(r.ROOT / 'config/upstream.lock.json')['sources']
-        self.assertEqual(len(sources), 5)
+        self.assertEqual(len(sources), 8)
         for source in sources:
             self.assertRegex(source['commit'], r'^[a-f0-9]{40}$')
             self.assertNotIn(source['status'], ['installed', 'verified'])
+        figures = next(source for source in sources if source['id'] == 'figures4papers')
+        self.assertEqual(figures['commit'], '3c181f85e82c6f24948fcaaf3be6696102b41d8d')
+        self.assertEqual(figures['declared_license'], 'CC BY-NC 4.0')
+        polish = next(source for source in sources if source['id'] == 'polish-sci-figures')
+        self.assertEqual(polish['commit'], 'bc777f283b2e32d678fc93976ddf901fdf74383a')
+        self.assertEqual(polish['declared_license'], 'MIT')
+        easyviz = next(source for source in sources if source['id'] == 'easyviz')
+        self.assertEqual(easyviz['commit'], '9dd42a987fe09a0330a686cee8be0e83ee4c6eec')
+        self.assertEqual(easyviz['declared_license'], 'MIT')
 
     def test_domain_not_event_hardcoded(self):
         domain = r.read(r.ROOT / 'domains/example-domain/domain.json')

@@ -1,6 +1,7 @@
 """Tests for the hard-guardrail scripts: progress gates, topic scoring,
 reading cards. No network. Synthetic fixtures in temp dirs only."""
 import json
+import os
 import sys
 import tempfile
 import unittest
@@ -272,28 +273,47 @@ class ReadingCardTests(unittest.TestCase):
     def test_card_then_check_then_sync_end_to_end(self):
         import subprocess
         repo = Path(__file__).resolve().parents[1]
+        emoji_ws = self.ws / "workspace-🧪"
+        emoji_ws.mkdir()
         def run(*args):
-            return subprocess.run([sys.executable, str(repo / "scripts" / "reading.py"),
-                                   *args], cwd=repo, capture_output=True, text=True)
-        r = run("card", str(self.ws), "--title", "Test paper", "--author", "Lei",
+            env = os.environ.copy()
+            env["PYTHONIOENCODING"] = "gbk"
+            completed = subprocess.run(
+                [sys.executable, str(repo / "scripts" / "reading.py"), *args],
+                cwd=repo, capture_output=True, text=True, encoding="gbk", env=env,
+            )
+            # Windows Chinese terminals commonly use GBK. Every user-facing
+            # status emitted by the full command chain must remain encodable.
+            (completed.stdout + completed.stderr).encode("gbk")
+            return completed
+        r = run("card", str(emoji_ws), "--title", "Test 🧪 paper", "--author", "Lei🧪",
                 "--year", "2024", "--doi", "10.1/x")
         self.assertEqual(r.returncode, 0, r.stderr)
+        r = run("list", str(emoji_ws))
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         # Incomplete card must block the check.
-        r = run("check", str(self.ws))
+        r = run("check", str(emoji_ws))
         self.assertEqual(r.returncode, 1)
         # Fill the card by writing a fully populated meta + body.
-        card = next((self.ws / "reading-cards").glob("*.md"))
+        card = next((emoji_ws / "reading-cards").glob("*.md"))
+        self.assertNotIn("❗", card.read_text(encoding="utf-8"))
         meta = self._full_meta()
-        meta.update({"title": "Test paper", "first_author": "Lei", "year": "2024",
+        meta.update({"title": "Test 🧪 paper", "first_author": "Lei🧪", "year": "2024",
                      "doi": "10.1/x", "synced": False})
         body = ("# 精读卡片\n<!-- META\n" + json.dumps(meta, ensure_ascii=False)
                 + "\n-->\n")
         card.write_text(body, encoding="utf-8")
-        r = run("check", str(self.ws))
+        r = run("check", str(emoji_ws))
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
-        r = run("sync", str(self.ws))
+        r = run("sync", str(emoji_ws))
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
-        ev = json.loads((self.ws / "evidence.json").read_text(encoding="utf-8"))
+        # Exercise the warning path as part of the same GBK regression.
+        (emoji_ws / "reading-cards" / "broken.md").write_text(
+            "<!-- META\nnot-json\n-->\n", encoding="utf-8",
+        )
+        r = run("list", str(emoji_ws))
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        ev = json.loads((emoji_ws / "evidence.json").read_text(encoding="utf-8"))
         rec = ev["evidence"][0]
         self.assertEqual(rec["evidence_level"], "full_text")
         self.assertTrue(rec["is_core_reading"])
