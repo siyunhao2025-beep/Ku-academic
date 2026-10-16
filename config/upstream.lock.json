@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "checked_at": "2026-10-15",
+  "checked_at": "2026-10-16",
   "status": "registered_pinned_not_host_installed",
   "sources": [
     {
@@ -75,6 +75,16 @@
       "status": "pinned_source_not_installed",
       "review_scope": "LICENSE, three SKILL entrypoints, and first-level references for provenance, final-size review, and editability; no scripts, installers, Studio, services, templates, images, or runtime execution",
       "source_url": "https://github.com/zhoy0409-debug/polish-sci-figures"
+    },
+    {
+      "id": "easyviz",
+      "repository": "idealstarry/EasyViz",
+      "commit": "9dd42a987fe09a0330a686cee8be0e83ee4c6eec",
+      "declared_license": "MIT",
+      "entrypoint": "skills/easyviz/SKILL.md",
+      "status": "pinned_source_not_installed",
+      "review_scope": "LICENSE, main SKILL, evidence-first-create first-level reference, and input-output collision tests; no scripts, installers, services, rendering, specifications, or runtime execution",
+      "source_url": "https://github.com/idealstarry/EasyViz"
     }
   ]
 }

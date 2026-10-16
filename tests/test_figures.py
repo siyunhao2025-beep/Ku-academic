@@ -152,6 +152,25 @@ class DataFigureRuleTests(unittest.TestCase):
         errors, _ = figures.check_one(self.ws, fig, require_release_provenance=True)
         self.assertTrue(any("source_data SHA-256" in e for e in errors), errors)
 
+    def test_release_contract_rejects_output_that_is_the_source_file(self):
+        source_rel = "analysis/results/source.svg"
+        (self.ws / source_rel).write_text("<svg/>\n", encoding="utf-8")
+        fig = with_release_contract(self.ws, base_data_figure(
+            source_data=[source_rel], outputs=[source_rel]))
+
+        errors, _ = figures.check_one(self.ws, fig, require_release_provenance=True)
+
+        self.assertTrue(any("与输入 source_data 指向同一文件" in e for e in errors), errors)
+
+    def test_release_contract_rejects_output_hardlink_alias_of_script(self):
+        alias_rel = "figures/script-alias.pdf"
+        os.link(self.ws / "figures/plot.py", self.ws / alias_rel)
+        fig = with_release_contract(self.ws, base_data_figure(outputs=[alias_rel]))
+
+        errors, _ = figures.check_one(self.ws, fig, require_release_provenance=True)
+
+        self.assertTrue(any("与输入 script 指向同一文件" in e for e in errors), errors)
+
     def test_release_contract_rejects_unknown_editability_and_wrong_review_size(self):
         fig = with_release_contract(self.ws, base_data_figure())
         fig["editability"]["class"] = "fully-editable-somehow"

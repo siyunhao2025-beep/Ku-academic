@@ -10,6 +10,7 @@
 | yusufkaraaslan/Skill_Seekers | 大语料导入/知识资产准备的可选工具 | 转换成功不等于理解成功；本版不执行它的环境安装或外部模型调用 |
 | ChenLiu-1996/figures4papers | 独立 `skills/scientific-figure-making/` + 本地 `modules/figures4papers-profile.md` | 锁定提交与 CC BY-NC 4.0；安装真实主 Skill、五个 references、完整许可与来源记录，本地科研护栏优先；不复制 demo 脚本、数据、图片或 PDF |
 | zhoy0409-debug/polish-sci-figures | `scripts/figures.py` contract 2.0 + `modules/figures.md` | 锁定 MIT 提交，只独立实现依赖哈希、最终尺寸复核和可编辑性分类；不复制代码、提示词、模板、图像或 Studio |
+| idealstarry/EasyViz | `scripts/figures.py` 输入—输出隔离检查 | 锁定 MIT 提交，只独立实现同路径/硬链接/符号链接别名的覆盖防护；不复制绘图运行时、提示词、规格、分析伴随文件或渲染功能 |
 
 原始入口由 config/upstream.lock.json 的仓库、提交和路径定位。该清单会分别标明“仅登记”“仓库内安装”和“宿主安装”，三者不能混称。当前母 Skill 的调度/契约是本项目原创；`skills/scientific-figure-making/` 是明确列出的例外，它以 CC BY-NC 4.0 独立分发，没有被根 MIT 重新授权，也不代表已经安装到用户的全局 Codex 账户。
 
@@ -34,6 +35,12 @@
 2026-10-15 锁定 `zhoy0409-debug/polish-sci-figures` 提交 `bc777f283b2e32d678fc93976ddf901fdf74383a`，根许可证为 MIT。只读审计了许可证、三份 Skill 入口及其与来源追踪、最终尺寸审查和交付可编辑性直接相关的一层引用；未运行第三方安装器、脚本、Studio 或网络服务。
 
 本项目独立实现源数据—脚本—输出 SHA-256 发布锁、真实目标容器/物理尺寸复核和四类交付可编辑性声明。没有复制上游实现、提示词、模板、图像、桌面/移动端 Studio，也未增加运行时依赖。该机制只补强 P5 图件工件契约，不能覆盖 P0–P6 硬闸门、事实锁、引用双检、变更传播或人工科学判断。
+
+### EasyViz 的输入—输出冲突审计边界
+
+2026-10-16 锁定 `idealstarry/EasyViz` 提交 `9dd42a987fe09a0330a686cee8be0e83ee4c6eec`，根许可证为 MIT。只读检查许可证、主 Skill、直接引用的 evidence-first create 契约和相关冲突测试；没有执行第三方代码、安装器或服务。
+
+本项目独立实现一个更窄的 P5 检查：发布契约拒绝 outputs 与 source_data/script 具有相同规范路径或底层文件身份，覆盖字面同路径、符号链接与硬链接别名。没有复制上游代码、提示词、规格、绘图运行时或分析伴随文件，也没有新增依赖。它只防止输出覆盖证据输入，不改变 research-mother、P0–P6、硬闸门、可替换领域包、引用双检、事实锁或变更传播。
 
 ## 源码获取
 python scripts/upstream.py --out vendor-cache

@@ -355,6 +355,7 @@ python scripts/figures.py check <workspace>     # 校验全部图件，有阻断
 |---|---|---|
 | 三类图齐全 | 必须有 roadmap 与 data；schematic 缺失时除非在 `schematic_not_needed_reason` 写明理由否则阻断 | 阻断 |
 | 数据图可复现链 | `source_data → script → outputs` 指向的文件必须真实存在，source_data 须在结果/输入登记目录 | 阻断 |
+| 输入—输出隔离 | outputs 不得与 source_data 或 script 指向同一规范路径/文件身份；硬链接与符号链接别名同样阻断 | 阻断 |
 | 发布依赖锁 | contract 2.0 清单逐项核对源数据、生成脚本和输出文件 SHA-256；任一变化即视为过期 | 阻断 |
 | 矢量输出 | 每张图 outputs 至少一个 `.pdf/.svg/.eps` | 阻断 |
 | 无障碍配色 | palette 必须在登记名单（okabe-ito / tol-* / viridis / cividis / magma / plasma / inferno）；`jet/rainbow/hsv/gist_rainbow` 直接阻断 | 阻断 |

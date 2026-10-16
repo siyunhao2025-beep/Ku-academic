@@ -23,6 +23,7 @@ import argparse
 import hashlib
 import json
 import math
+import os
 import sys
 from pathlib import Path
 
@@ -121,6 +122,25 @@ def _check_declared_hash(ws, rel, expected, label, fid, errors):
         return
     if sha256_file(path).lower() != expected.lower():
         errors.append(f"[{fid}] {label} SHA-256 不匹配：{rel!r}；图件依赖已过期")
+
+
+def _same_workspace_file(ws, left, right):
+    """判断两个安全的工作区路径是否指向同一个文件。"""
+    if not isinstance(left, str) or not left.strip() or not isinstance(right, str) or not right.strip():
+        return False
+    try:
+        root = ws.resolve()
+        left_path = (ws / left).resolve()
+        right_path = (ws / right).resolve()
+        if Path(left).is_absolute() or Path(right).is_absolute():
+            return False
+        if not left_path.is_relative_to(root) or not right_path.is_relative_to(root):
+            return False
+        if left_path == right_path:
+            return True
+        return left_path.is_file() and right_path.is_file() and os.path.samefile(left_path, right_path)
+    except (OSError, ValueError):
+        return False
 
 
 def cmd_palettes(_):
@@ -298,6 +318,16 @@ def check_one(ws, fig, require_release_provenance=False):
     if require_release_provenance:
         sources = fig.get("source_data") or []
         script = fig.get("script")
+        inputs = [("source_data", rel) for rel in sources]
+        if isinstance(script, str) and script.strip():
+            inputs.append(("script", script))
+        for output_rel in outputs:
+            for input_label, input_rel in inputs:
+                if _same_workspace_file(ws, output_rel, input_rel):
+                    errors.append(
+                        f"[{fid}] output {output_rel!r} 与输入 {input_label} 指向同一文件 "
+                        f"({input_rel!r})；渲染输出不得覆盖证据输入"
+                    )
         provenance = fig.get("provenance") or {}
         source_hashes = provenance.get("source_data") if isinstance(provenance, dict) else {}
         output_hashes = provenance.get("outputs") if isinstance(provenance, dict) else {}
