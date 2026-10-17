@@ -320,6 +320,16 @@ def check_p6(ws: Path, thr):
     sub = read_text(ws / "submission-checklist.md")
     d, t = count_checkboxes(sub)
     r.append((t > 0 and d == t, "投稿自查清单全部勾选", f"{d}/{t}" if t else "缺失"))
+
+    availability = load_json(ws / "audit" / "availability.json")
+    if isinstance(availability, dict):
+        blockers = availability.get("blockers", [])
+        passed = availability.get("status") == "PASS" and isinstance(blockers, list) and not blockers
+        detail = "PASS" if passed else f"{len(blockers) if isinstance(blockers, list) else '?'} 个阻断"
+    else:
+        passed = False
+        detail = "availability.json 缺失"
+    r.append((passed, "数据/代码可用性审计通过", detail))
     return r
 
 

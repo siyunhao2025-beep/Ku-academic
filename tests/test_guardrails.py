@@ -244,6 +244,9 @@ class ReadingCardTests(unittest.TestCase):
             "core_conclusion": "夜侧增幅达1.8倍",
             "data_methods": "SABER，120次磁暴，叠加纪元",
             "key_results": ["夜侧增幅1.8倍", "日侧1.2倍"],
+            "key_result_locators": ["p.5, Table 2", "p.8, Fig.4"],
+            "access_level": "full_text",
+            "read_scope": "正文与附录；未提供补充材料",
             "claim_strength": "观测事实",
             "relation": "支持我的假设",
             "doubts": "未区分磁暴强度",
@@ -251,7 +254,7 @@ class ReadingCardTests(unittest.TestCase):
 
     def test_empty_meta_misses_every_required_field(self):
         miss = reading.completeness({})
-        self.assertEqual(len(miss), 7)
+        self.assertEqual(len(miss), 10)
 
     def test_full_meta_is_complete(self):
         self.assertEqual(reading.completeness(self._full_meta()), [])
@@ -260,6 +263,43 @@ class ReadingCardTests(unittest.TestCase):
         m = self._full_meta()
         m["key_results"] = ["结果不错"]
         self.assertIn("关键结果必须带具体数字", reading.completeness(m))
+
+        m = self._full_meta()
+        m["key_results"] = ["夜侧增幅1.8倍", "日侧明显增加"]
+        self.assertIn("关键结果必须带具体数字", reading.completeness(m))
+
+    def test_each_key_result_needs_its_own_source_locator(self):
+        m = self._full_meta()
+        m["key_result_locators"] = ["p.5, Table 2"]
+        self.assertIn("每条关键结果必须有一一对应的页/节/图/表定位",
+                      reading.completeness(m))
+
+        m["key_result_locators"] = ["全文", "精读卡片"]
+        self.assertIn("关键结果定位不能只写“全文”或“精读卡片”",
+                      reading.completeness(m))
+
+    def test_abstract_only_reading_cannot_be_promoted_to_core_full_text(self):
+        m = self._full_meta()
+        m["access_level"] = "abstract_only"
+        self.assertIn("核心精读必须明确记录 access_level=full_text",
+                      reading.completeness(m))
+
+    def test_visible_result_locator_pairs_are_parsed_together(self):
+        card = self.ws / "paired.md"
+        meta = self._full_meta()
+        meta["key_results"] = []
+        meta["key_result_locators"] = []
+        body = ("# 精读卡片\n<!-- META\n" + json.dumps(meta, ensure_ascii=False)
+                + "\n-->\n- **关键结果**：\n"
+                  "  1. 结果：密度增幅2.1倍\n"
+                  "     - 定位：p.9, Fig.3\n")
+        card.write_text(body, encoding="utf-8")
+
+        parsed = reading.parse_card(card)
+
+        self.assertEqual(parsed["key_results"], ["密度增幅2.1倍"])
+        self.assertEqual(parsed["key_result_locators"], ["p.9, Fig.3"])
+        self.assertEqual(reading.completeness(parsed), [])
 
     def test_strength_and_relation_mapping(self):
         self.assertEqual(reading.STRENGTH_MAP["观测事实"], "observation")
@@ -296,6 +336,9 @@ class ReadingCardTests(unittest.TestCase):
         ev = json.loads((self.ws / "evidence.json").read_text(encoding="utf-8"))
         rec = ev["evidence"][0]
         self.assertEqual(rec["evidence_level"], "full_text")
+        self.assertEqual(rec["locator"], "p.5, Table 2; p.8, Fig.4")
+        self.assertEqual(rec["result_locators"], ["p.5, Table 2", "p.8, Fig.4"])
+        self.assertEqual(rec["read_scope"], "正文与附录；未提供补充材料")
         self.assertTrue(rec["is_core_reading"])
         self.assertEqual(rec["claim_level"], "observation")
         # Close reading must NOT be treated as citation verification.
@@ -303,6 +346,20 @@ class ReadingCardTests(unittest.TestCase):
         self.assertIsNone(rec["support_status"])
         # Path stored with forward slashes even on Windows.
         self.assertNotIn("\\", rec["reading_card"])
+
+
+class FieldDistillationContractTests(unittest.TestCase):
+    def test_method_lineage_keeps_mechanism_and_evidence_guards(self):
+        root = Path(__file__).resolve().parents[1]
+        module = (root / "modules" / "field-distillation.md").read_text(encoding="utf-8")
+        for term in ("假设变化", "实现机制", "新增代价", "适用条件", "失效条件"):
+            self.assertIn(term, module)
+        for channel in ("引用链", "局限反推", "问题框架"):
+            self.assertIn(channel, module)
+        self.assertIn("claimed / demonstrated / inferred", module)
+        self.assertIn("检索失败不等于零命中", module)
+        self.assertIn("引用身份/支持双检", module)
+        self.assertIn("full_text", module)
 
 
 if __name__ == "__main__":

@@ -176,6 +176,624 @@ def search(query, since, until, output, pages=2, rows=50, mode="published", fetc
     return report
 
 
+def assess_search_progress(rounds, budget, patience, min_new):
+    """Apply a bounded, evidence-matrix-aware stopping rule to search rounds.
+
+    This is an engineering control for search effort. It never establishes that
+    the literature is exhaustive or that admitted sources support a claim.
+    """
+    if not isinstance(rounds, list) or not rounds:
+        raise ValueError("rounds must be a non-empty array")
+    if not all(isinstance(x, int) and x >= 1 for x in (budget, patience, min_new)):
+        raise ValueError("budget, patience and min_new must be positive integers")
+
+    required = {"round", "queries", "new_deduped_records", "admitted_sources",
+                "matrix_changing_sources", "open_required_gaps"}
+    trajectory = []
+    for index, entry in enumerate(rounds):
+        if not isinstance(entry, dict) or not required.issubset(entry):
+            raise ValueError(f"round {index} is missing required fields")
+        if entry["round"] != index:
+            raise ValueError("round identifiers must be contiguous and start at 0")
+        if not isinstance(entry["queries"], list) or not entry["queries"] or not all(
+                isinstance(query, str) and query.strip() for query in entry["queries"]):
+            raise ValueError(f"round {index} needs at least one non-empty query")
+        counts = [entry["new_deduped_records"], entry["admitted_sources"],
+                  entry["matrix_changing_sources"]]
+        if not all(isinstance(value, int) and value >= 0 for value in counts):
+            raise ValueError(f"round {index} counts must be non-negative integers")
+        if entry["matrix_changing_sources"] > entry["admitted_sources"]:
+            raise ValueError(f"round {index} cannot change the matrix with more sources than it admitted")
+        if not isinstance(entry["open_required_gaps"], list) or not all(
+                isinstance(gap, str) and gap.strip() for gap in entry["open_required_gaps"]):
+            raise ValueError(f"round {index} open_required_gaps must be an array of non-empty strings")
+        trajectory.append(entry["matrix_changing_sources"])
+
+    dry_streak = 0
+    for count in reversed(trajectory):
+        if count >= min_new:
+            break
+        dry_streak += 1
+    open_gaps = list(dict.fromkeys(rounds[-1]["open_required_gaps"]))
+    budget_reached = len(rounds) >= budget
+    if budget_reached and open_gaps:
+        decision = "AUTHOR_ACTION_REQUIRED"
+        reason = "budget reached while required coverage gaps remain"
+    elif budget_reached:
+        decision = "STOP_BUDGET"
+        reason = "configured search-round budget reached"
+    elif dry_streak >= patience and open_gaps:
+        decision = "CONTINUE_FOR_COVERAGE"
+        reason = "yield is dry but required coverage gaps remain"
+    elif dry_streak >= patience:
+        decision = "STOP_SATURATED"
+        reason = "matrix-changing yield stayed below the configured minimum for the configured patience"
+    else:
+        decision = "CONTINUE"
+        reason = "neither the saturation nor budget stop is met"
+
+    return {"decision": decision, "reason": reason, "rounds_completed": len(rounds),
+            "budget": budget, "patience": patience, "min_new": min_new,
+            "dry_streak": dry_streak, "trajectory": trajectory,
+            "open_required_gaps": open_gaps, "coverage_note_required": True,
+            "exhaustiveness_claim_allowed": False,
+            "important_limit": "This stopping rule limits search effort; it does not prove exhaustive coverage or citation support."}
+
+
+def search_progress(ledger, output, budget, patience, min_new):
+    out = Path(output)
+    if out.exists():
+        raise FileExistsError("Use a new output path to preserve previous progress decisions")
+    payload = read(ledger)
+    result = assess_search_progress(payload.get("rounds") if isinstance(payload, dict) else None,
+                                    budget, patience, min_new)
+    write(out, result)
+    return result
+
+
+def assess_seed_coverage(payload):
+    """Audit known-study retrieval and declared citation-chain channels.
+
+    The caller decides which chain directions are required. This function
+    validates the ledger and distinguishes a successful zero-hit query from a
+    failed or missing query; it does not search, screen, or prove exhaustiveness.
+    """
+    if not isinstance(payload, dict):
+        raise ValueError("seed coverage ledger must be an object")
+    if "required_chain_directions" not in payload:
+        raise ValueError("required_chain_directions must be explicit, including []")
+    required_directions = payload["required_chain_directions"]
+    allowed_directions = {"backward", "forward"}
+    if (not isinstance(required_directions, list)
+            or any(direction not in allowed_directions for direction in required_directions)
+            or len(required_directions) != len(set(required_directions))):
+        raise ValueError("required_chain_directions must be a unique array of backward/forward")
+
+    seeds = payload.get("seeds")
+    if not isinstance(seeds, list) or not seeds:
+        raise ValueError("seeds must be a non-empty array")
+    allowed_identity = {"VERIFIED", "MISMATCH", "UNRESOLVED", "RETRACTED"}
+    allowed_search = {"FOUND", "NOT_FOUND", "FAILED"}
+    seed_ids = set()
+    for index, seed in enumerate(seeds):
+        if not isinstance(seed, dict):
+            raise ValueError(f"seed {index} must be an object")
+        ident = seed.get("id")
+        if not isinstance(ident, str) or not ident.strip():
+            raise ValueError(f"seed {index} needs a non-empty id")
+        if ident in seed_ids:
+            raise ValueError("duplicate seed id: " + ident)
+        seed_ids.add(ident)
+        if seed.get("identity_status") not in allowed_identity:
+            raise ValueError(f"seed {ident} has an invalid identity_status")
+        if seed.get("search_status") not in allowed_search:
+            raise ValueError(f"seed {ident} has an invalid search_status")
+        if not isinstance(seed.get("locator"), str) or not seed["locator"].strip():
+            raise ValueError(f"seed {ident} needs a DOI, PMID, title or other locator")
+
+    chains = payload.get("citation_chains")
+    if not isinstance(chains, list):
+        raise ValueError("citation_chains must be an array")
+    allowed_chain_status = {"COMPLETE", "ZERO_HITS", "FAILED"}
+    by_channel = {}
+    for index, chain in enumerate(chains):
+        if not isinstance(chain, dict):
+            raise ValueError(f"citation chain {index} must be an object")
+        seed_id = chain.get("seed_id")
+        direction = chain.get("direction")
+        status = chain.get("status")
+        count = chain.get("new_deduped_records")
+        if seed_id not in seed_ids:
+            raise ValueError(f"citation chain {index} references an unknown seed")
+        if direction not in allowed_directions:
+            raise ValueError(f"citation chain {index} has an invalid direction")
+        if status not in allowed_chain_status:
+            raise ValueError(f"citation chain {index} has an invalid status")
+        if isinstance(count, bool) or not isinstance(count, int) or count < 0:
+            raise ValueError(f"citation chain {index} needs a non-negative integer count")
+        if status == "ZERO_HITS" and count != 0:
+            raise ValueError("ZERO_HITS cannot report new records")
+        if not isinstance(chain.get("source"), str) or not chain["source"].strip():
+            raise ValueError(f"citation chain {index} needs a source")
+        key = (seed_id, direction)
+        if key in by_channel:
+            raise ValueError(f"duplicate citation-chain channel: {seed_id}/{direction}")
+        by_channel[key] = chain
+
+    verified_found = [seed["id"] for seed in seeds
+                      if seed["identity_status"] == "VERIFIED" and seed["search_status"] == "FOUND"]
+    missing_verified = [seed["id"] for seed in seeds
+                        if seed["identity_status"] == "VERIFIED" and seed["search_status"] == "NOT_FOUND"]
+    failed_seed_searches = [seed["id"] for seed in seeds if seed["search_status"] == "FAILED"]
+    identity_review = [seed["id"] for seed in seeds if seed["identity_status"] != "VERIFIED"]
+
+    failed_channels = []
+    zero_hit_channels = []
+    for (seed_id, direction), chain in by_channel.items():
+        item = {"seed_id": seed_id, "direction": direction}
+        if chain["status"] == "FAILED":
+            failed_channels.append(item)
+        elif chain["status"] == "ZERO_HITS":
+            zero_hit_channels.append(item)
+
+    missing_required = []
+    for seed_id in verified_found:
+        for direction in required_directions:
+            if (seed_id, direction) not in by_channel:
+                missing_required.append({"seed_id": seed_id, "direction": direction})
+
+    if failed_seed_searches or failed_channels:
+        decision = "AUTHOR_ACTION_REQUIRED"
+        reason = "one or more declared retrieval channels failed; retry, replace the source, or record an accepted limit"
+    elif identity_review:
+        decision = "IDENTITY_REVIEW_REQUIRED"
+        reason = "one or more seeds are not identity-verified"
+    elif missing_verified:
+        decision = "SEARCH_GAP"
+        reason = "the search did not retrieve one or more verified seed studies"
+    elif missing_required:
+        decision = "CONTINUE"
+        reason = "a project-required citation-chain direction has not been audited"
+    else:
+        decision = "PASS"
+        reason = "verified seeds were found and every declared required chain channel has a visible outcome"
+
+    return {
+        "decision": decision,
+        "reason": reason,
+        "scope": "seed_and_declared_citation_chain_audit",
+        "covered_verified_seeds": verified_found,
+        "missing_verified_seeds": missing_verified,
+        "failed_seed_searches": failed_seed_searches,
+        "identity_review_seeds": identity_review,
+        "failed_channels": failed_channels,
+        "zero_hit_channels": zero_hit_channels,
+        "missing_required_channels": missing_required,
+        "required_chain_directions": required_directions,
+        "exhaustiveness_claim_allowed": False,
+        "important_limit": "Seed recovery and declared citation-chain checks are sensitivity diagnostics; they do not prove exhaustive literature coverage or citation support.",
+    }
+
+
+def seed_coverage(ledger, output):
+    out = Path(output)
+    if out.exists():
+        raise FileExistsError("Use a new output path to preserve previous seed-coverage decisions")
+    result = assess_seed_coverage(read(ledger))
+    write(out, result)
+    return result
+
+
+def assess_screening_round(payload):
+    """Audit version-bound screening ballots, adjudication, and human release.
+
+    The project supplies its own codebook and reviewer minimum.  This function
+    checks provenance and workflow state only; it does not screen records,
+    replace human adjudication, or establish the correctness of a decision.
+    """
+    if not isinstance(payload, dict):
+        raise ValueError("screening ledger must be an object")
+    if payload.get("schema_version") != "1.0":
+        raise ValueError("schema_version must be 1.0")
+
+    def text(value, field):
+        if not isinstance(value, str) or not value.strip():
+            raise ValueError(field + " must be a non-empty string")
+        return value.strip()
+
+    def digest(value, field):
+        value = text(value, field)
+        if re.fullmatch(r"[a-f0-9]{64}", value) is None:
+            raise ValueError(field + " must be a lowercase SHA-256")
+        return value
+
+    protocol_id = text(payload.get("protocol_id"), "protocol_id")
+    codebook = payload.get("codebook")
+    if not isinstance(codebook, dict):
+        raise ValueError("codebook must be an object")
+    codebook_version = text(codebook.get("version"), "codebook.version")
+    codebook_hash = digest(codebook.get("sha256"), "codebook.sha256")
+    if codebook.get("origin") not in {"human_led", "human_developed"}:
+        raise ValueError("codebook.origin must be human_led or human_developed")
+    codebook_provider = text(codebook.get("provided_by"), "codebook.provided_by")
+
+    round_data = payload.get("round")
+    if not isinstance(round_data, dict):
+        raise ValueError("round must be an object")
+    round_id = text(round_data.get("id"), "round.id")
+    mode = round_data.get("mode")
+    if mode not in {"independent", "assisted"}:
+        raise ValueError("round.mode must be independent or assisted")
+    minimum_reviewers = round_data.get("minimum_reviewers")
+    if (isinstance(minimum_reviewers, bool) or not isinstance(minimum_reviewers, int)
+            or minimum_reviewers < 1):
+        raise ValueError("round.minimum_reviewers must be a project-defined positive integer")
+    manifest_hash = digest(
+        round_data.get("source_manifest_sha256"), "round.source_manifest_sha256"
+    )
+
+    records = payload.get("records")
+    if not isinstance(records, list) or not records:
+        raise ValueError("records must be a non-empty array")
+    seen_records = set()
+    audited_records = []
+    counts = {
+        "total": len(records),
+        "included": 0,
+        "excluded": 0,
+        "pending_coverage": 0,
+        "adjudication_required": 0,
+        "stale_rescreen_required": 0,
+    }
+
+    for index, record in enumerate(records):
+        if not isinstance(record, dict):
+            raise ValueError(f"record {index} must be an object")
+        record_id = text(record.get("record_id"), f"record {index}.record_id")
+        if record_id in seen_records:
+            raise ValueError("duplicate record_id: " + record_id)
+        seen_records.add(record_id)
+        source_hash = digest(record.get("source_sha256"), f"record {record_id}.source_sha256")
+        ballots = record.get("ballots")
+        if not isinstance(ballots, list):
+            raise ValueError(f"record {record_id}.ballots must be an array")
+
+        reviewer_ids = set()
+        stale_bindings = []
+        decisions = []
+        for ballot_index, ballot in enumerate(ballots):
+            if not isinstance(ballot, dict):
+                raise ValueError(f"record {record_id} ballot {ballot_index} must be an object")
+            reviewer = text(
+                ballot.get("reviewer_id"),
+                f"record {record_id} ballot {ballot_index}.reviewer_id",
+            )
+            if reviewer in reviewer_ids:
+                raise ValueError(f"record {record_id} has duplicate reviewer_id: {reviewer}")
+            reviewer_ids.add(reviewer)
+            decision = ballot.get("decision")
+            if decision not in {"INCLUDE", "EXCLUDE", "UNCLEAR"}:
+                raise ValueError(f"record {record_id} ballot {reviewer} has an invalid decision")
+            decisions.append(decision)
+            text(ballot.get("rationale"), f"record {record_id} ballot {reviewer}.rationale")
+            text(
+                ballot.get("evidence_locator"),
+                f"record {record_id} ballot {reviewer}.evidence_locator",
+            )
+            if decision == "EXCLUDE":
+                text(
+                    ballot.get("primary_reason_code"),
+                    f"record {record_id} ballot {reviewer}.primary_reason_code",
+                )
+            expected = {
+                "round_id": round_id,
+                "codebook_sha256": codebook_hash,
+                "source_sha256": source_hash,
+                "review_mode": mode,
+            }
+            for field, expected_value in expected.items():
+                if ballot.get(field) != expected_value:
+                    stale_bindings.append(f"{reviewer}:{field}")
+
+        output_record = {"record_id": record_id}
+        if stale_bindings:
+            output_record.update(
+                state="STALE_RESCREEN_REQUIRED",
+                stale_bindings=sorted(stale_bindings),
+            )
+            counts["stale_rescreen_required"] += 1
+        elif len(ballots) < minimum_reviewers:
+            output_record.update(
+                state="PENDING_COVERAGE",
+                completed_reviewers=len(ballots),
+                minimum_reviewers=minimum_reviewers,
+            )
+            counts["pending_coverage"] += 1
+        else:
+            needs_adjudication = "UNCLEAR" in decisions or len(set(decisions)) > 1
+            if needs_adjudication:
+                adjudication = record.get("adjudication")
+                if adjudication is None:
+                    output_record["state"] = "ADJUDICATION_REQUIRED"
+                    counts["adjudication_required"] += 1
+                else:
+                    if not isinstance(adjudication, dict):
+                        raise ValueError(f"record {record_id}.adjudication must be an object")
+                    final_decision = adjudication.get("decision")
+                    if final_decision not in {"INCLUDE", "EXCLUDE"}:
+                        raise ValueError(f"record {record_id} adjudication decision is invalid")
+                    text(adjudication.get("rationale"), f"record {record_id} adjudication.rationale")
+                    text(
+                        adjudication.get("evidence_locator"),
+                        f"record {record_id} adjudication.evidence_locator",
+                    )
+                    if adjudication.get("human_authorized") is not True:
+                        raise ValueError(f"record {record_id} adjudication must be human-authorized")
+                    text(
+                        adjudication.get("authorized_by"),
+                        f"record {record_id} adjudication.authorized_by",
+                    )
+                    if final_decision == "EXCLUDE":
+                        text(
+                            adjudication.get("primary_reason_code"),
+                            f"record {record_id} adjudication.primary_reason_code",
+                        )
+                    binding = {
+                        "round_id": round_id,
+                        "codebook_sha256": codebook_hash,
+                        "source_sha256": source_hash,
+                    }
+                    stale_adjudication = [
+                        field for field, expected in binding.items()
+                        if adjudication.get(field) != expected
+                    ]
+                    if stale_adjudication:
+                        output_record.update(
+                            state="STALE_RESCREEN_REQUIRED",
+                            stale_bindings=["adjudication:" + field for field in stale_adjudication],
+                        )
+                        counts["stale_rescreen_required"] += 1
+                    else:
+                        output_record.update(state="ADJUDICATED", final_decision=final_decision)
+                        counts["included" if final_decision == "INCLUDE" else "excluded"] += 1
+            else:
+                final_decision = decisions[0]
+                output_record.update(state="CONCORDANT", final_decision=final_decision)
+                counts["included" if final_decision == "INCLUDE" else "excluded"] += 1
+        audited_records.append(output_record)
+
+    release_errors = []
+    release = payload.get("release")
+    all_records_resolved = not any(
+        counts[key] for key in (
+            "pending_coverage", "adjudication_required", "stale_rescreen_required"
+        )
+    )
+    if all_records_resolved and release is not None:
+        if not isinstance(release, dict):
+            release_errors.append("release must be an object")
+        else:
+            for field in ("authorized_by", "authorized_at", "rationale"):
+                try:
+                    text(release.get(field), "release." + field)
+                except ValueError as exc:
+                    release_errors.append(str(exc))
+            if isinstance(release.get("authorized_at"), str) and release["authorized_at"].strip():
+                try:
+                    _aware_datetime(release["authorized_at"], "release.authorized_at")
+                except ValueError as exc:
+                    release_errors.append(str(exc))
+            if release.get("human_authorized") is not True:
+                release_errors.append("release.human_authorized must be true")
+            expected_release = {
+                "round_id": round_id,
+                "codebook_sha256": codebook_hash,
+                "source_manifest_sha256": manifest_hash,
+            }
+            for field, expected in expected_release.items():
+                if release.get(field) != expected:
+                    release_errors.append(f"release.{field} is stale or mismatched")
+
+    if counts["stale_rescreen_required"] or release_errors:
+        decision = "BLOCKED"
+        reason = "stale or mismatched version bindings require a new screening decision"
+    elif counts["pending_coverage"]:
+        decision = "CONTINUE"
+        reason = "one or more records have not reached the project-defined reviewer minimum"
+    elif counts["adjudication_required"]:
+        decision = "AUTHOR_ACTION_REQUIRED"
+        reason = "disagreement or uncertainty requires recorded human adjudication"
+    elif release is None:
+        decision = "AUTHOR_ACTION_REQUIRED"
+        reason = "all records are resolved but the screening round lacks human release"
+    else:
+        decision = "PASS"
+        reason = "all records are resolved under the bound codebook and the round has human release"
+
+    return {
+        "decision": decision,
+        "reason": reason,
+        "scope": "version_bound_human_led_screening_round",
+        "protocol_id": protocol_id,
+        "codebook": {
+            "version": codebook_version,
+            "sha256": codebook_hash,
+            "origin": codebook["origin"],
+            "provided_by": codebook_provider,
+        },
+        "round": {
+            "id": round_id,
+            "mode": mode,
+            "minimum_reviewers": minimum_reviewers,
+            "source_manifest_sha256": manifest_hash,
+        },
+        "records": audited_records,
+        "counts": counts,
+        "release_errors": release_errors,
+        "majority_vote_used": False,
+        "scientific_correctness_implied": False,
+        "important_limit": (
+            "This audit verifies declared screening workflow and version bindings; "
+            "it does not decide eligibility, prove review completeness, or replace human judgement."
+        ),
+    }
+
+
+def screening_round(ledger, output):
+    out = Path(output)
+    if out.exists():
+        raise FileExistsError("Use a new output path to preserve previous screening-round decisions")
+    result = assess_screening_round(read(ledger))
+    write(out, result)
+    return result
+
+
+def _aware_datetime(value, field):
+    if isinstance(value, dt.datetime):
+        parsed = value
+    elif isinstance(value, str) and value.strip():
+        try:
+            parsed = dt.datetime.fromisoformat(value.strip().replace("Z", "+00:00"))
+        except ValueError as exc:
+            raise ValueError(f"{field} must be an ISO-8601 timestamp") from exc
+    else:
+        raise ValueError(f"{field} must be a non-empty ISO-8601 timestamp")
+    if parsed.tzinfo is None or parsed.utcoffset() is None:
+        raise ValueError(f"{field} must include a timezone offset")
+    return parsed.astimezone(dt.timezone.utc)
+
+
+def assess_citation_integrity(records, now=None, max_age_days=None):
+    """Audit publication-integrity signals independently of citation identity.
+
+    Inputs are support candidates, not papers mentioned only to discuss a
+    retraction. The function validates a recorded check; it does not contact a
+    publisher or infer that absence of a signal proves a clean record.
+    """
+    if not isinstance(records, list) or not records:
+        raise ValueError("citation integrity records must be a non-empty array")
+    if max_age_days is not None and (isinstance(max_age_days, bool)
+                                     or not isinstance(max_age_days, int)
+                                     or max_age_days < 1):
+        raise ValueError("max_age_days must be a positive integer when supplied")
+    checked_now = _aware_datetime(now, "now") if now is not None else dt.datetime.now(dt.timezone.utc)
+    allowed_identity = {"VERIFIED", "MISMATCH", "UNRESOLVED", "RETRACTED"}
+    allowed_integrity = {
+        "NO_SIGNAL_FOUND", "RETRACTED", "WITHDRAWN", "REMOVED",
+        "EXPRESSION_OF_CONCERN", "CORRECTED", "NOT_CHECKED",
+    }
+    fatal_integrity = {"RETRACTED", "WITHDRAWN", "REMOVED", "EXPRESSION_OF_CONCERN"}
+    allowed_effects = {"NOT_APPLICABLE", "UNAFFECTED", "AFFECTS_CITED_CONTENT", "UNKNOWN"}
+    seen, audited = set(), []
+    counts = {"pass": 0, "blocked": 0, "author_action": 0, "identity_review": 0}
+
+    for index, source in enumerate(records):
+        if not isinstance(source, dict):
+            raise ValueError(f"record {index} must be an object")
+        ident = source.get("id")
+        if not isinstance(ident, str) or not ident.strip():
+            raise ValueError(f"record {index} needs a non-empty id")
+        if ident in seen:
+            raise ValueError("duplicate citation integrity id: " + ident)
+        seen.add(ident)
+        identity = source.get("citation_verdict")
+        integrity = source.get("integrity_status")
+        effect = source.get("correction_effect")
+        if identity not in allowed_identity:
+            raise ValueError(f"record {ident} has an invalid citation_verdict")
+        if integrity not in allowed_integrity:
+            raise ValueError(f"record {ident} has an invalid integrity_status")
+        if effect not in allowed_effects:
+            raise ValueError(f"record {ident} has an invalid correction_effect")
+        if integrity == "CORRECTED" and effect not in {
+                "UNAFFECTED", "AFFECTS_CITED_CONTENT", "UNKNOWN"}:
+            raise ValueError(f"record {ident} must assess what the correction changes")
+        if integrity != "CORRECTED" and effect != "NOT_APPLICABLE":
+            raise ValueError(f"record {ident} may use correction_effect only for CORRECTED")
+
+        checked_at = None
+        stale = False
+        if integrity != "NOT_CHECKED":
+            parsed_url = urllib.parse.urlparse(str(source.get("integrity_source_url") or ""))
+            if parsed_url.scheme != "https" or not parsed_url.netloc:
+                raise ValueError(f"record {ident} needs an HTTPS integrity_source_url")
+            checked_at = _aware_datetime(source.get("integrity_checked_at"),
+                                         f"record {ident} integrity_checked_at")
+            if checked_at > checked_now:
+                raise ValueError(f"record {ident} integrity_checked_at is in the future")
+            stale = max_age_days is not None and (checked_now - checked_at).days >= max_age_days
+
+        if (identity == "RETRACTED" or integrity in fatal_integrity
+                or (integrity == "CORRECTED" and effect == "AFFECTS_CITED_CONTENT")):
+            decision = "DO_NOT_USE_AS_SUPPORT"
+            reason = "publication-integrity status blocks this record from supporting a claim"
+            bucket = "blocked"
+        elif identity != "VERIFIED":
+            decision = "VERIFY_IDENTITY"
+            reason = "bibliographic identity is not verified; integrity checking cannot replace identity checking"
+            bucket = "identity_review"
+        elif integrity == "NOT_CHECKED":
+            decision = "CHECK_PUBLICATION_INTEGRITY"
+            reason = "no publication-integrity check is recorded"
+            bucket = "author_action"
+        elif stale:
+            decision = "REFRESH_INTEGRITY_CHECK"
+            reason = "the recorded check is older than the project-supplied freshness policy"
+            bucket = "author_action"
+        elif integrity == "CORRECTED" and effect == "UNKNOWN":
+            decision = "REVIEW_CORRECTION"
+            reason = "the correction exists but its effect on the cited content is unresolved"
+            bucket = "author_action"
+        elif integrity == "CORRECTED":
+            decision = "USABLE_WITH_CORRECTION_DISCLOSED"
+            reason = "the correction was reviewed and does not affect the cited content"
+            bucket = "pass"
+        else:
+            decision = "USABLE_WITH_RECORDED_CHECK"
+            reason = "no integrity signal was found at the recorded source and time; this is not proof of a clean record"
+            bucket = "pass"
+        counts[bucket] += 1
+        audited.append({
+            "id": ident,
+            "citation_verdict": identity,
+            "integrity_status": integrity,
+            "correction_effect": effect,
+            "decision": decision,
+            "reason": reason,
+            "integrity_checked_at": checked_at.isoformat() if checked_at else None,
+            "integrity_source_url": source.get("integrity_source_url") or None,
+        })
+
+    if counts["blocked"]:
+        status = "BLOCKED"
+    elif counts["identity_review"]:
+        status = "IDENTITY_REVIEW_REQUIRED"
+    elif counts["author_action"]:
+        status = "AUTHOR_ACTION_REQUIRED"
+    else:
+        status = "PASS"
+    return {
+        "status": status,
+        "scope": "recorded_publication_integrity_signals_for_support_candidates",
+        "counts": counts,
+        "records": audited,
+        "freshness_policy_days": max_age_days,
+        "absence_of_signal_is_not_proof_of_clean_record": True,
+        "important_limit": "This audit validates recorded status, source, time, and correction handling; it does not query publishers or prove a clean publication record.",
+    }
+
+
+def citation_integrity(ledger, output, max_age_days=None):
+    out = Path(output)
+    if out.exists():
+        raise FileExistsError("Use a new output path to preserve previous citation-integrity decisions")
+    payload = read(ledger)
+    records = payload.get("records") if isinstance(payload, dict) else payload
+    result = assess_citation_integrity(records, max_age_days=max_age_days)
+    write(out, result)
+    return result
+
+
 def init_project(target, domain, kind):
     target = Path(target)
     if (target / "project.json").exists():
@@ -366,6 +984,22 @@ def main(argv=None):
     s.add_argument("--until", default=dt.date.today().isoformat()); s.add_argument("--out", required=True)
     s.add_argument("--pages", type=int, default=2); s.add_argument("--rows", type=int, default=50)
     s.add_argument("--mode", choices=["published", "indexed"], default="published")
+    sp = sub.add_parser("search-progress")
+    sp.add_argument("--ledger", required=True)
+    sp.add_argument("--out", required=True)
+    sp.add_argument("--budget", type=int, required=True)
+    sp.add_argument("--patience", type=int, required=True)
+    sp.add_argument("--min-new", type=int, required=True)
+    sc = sub.add_parser("seed-coverage")
+    sc.add_argument("--ledger", required=True)
+    sc.add_argument("--out", required=True)
+    sr = sub.add_parser("screening-round")
+    sr.add_argument("--ledger", required=True)
+    sr.add_argument("--out", required=True)
+    ci = sub.add_parser("citation-integrity")
+    ci.add_argument("ledger")
+    ci.add_argument("--out", required=True)
+    ci.add_argument("--max-age-days", type=int)
     ch = sub.add_parser("checkpoint"); ch.add_argument("project"); ch.add_argument("stage")
     ch.add_argument("--inputs", nargs="+", required=True); ch.add_argument("--outputs", nargs="+", required=True)
     check = sub.add_parser("check"); check.add_argument("project")
@@ -386,6 +1020,14 @@ def main(argv=None):
         elif args.command == "init": result = init_project(args.target, args.domain, args.kind)
         elif args.command == "search":
             result = search(args.query, args.since, args.until, args.out, args.pages, args.rows, args.mode)
+        elif args.command == "search-progress":
+            result = search_progress(args.ledger, args.out, args.budget, args.patience, args.min_new)
+        elif args.command == "seed-coverage":
+            result = seed_coverage(args.ledger, args.out)
+        elif args.command == "screening-round":
+            result = screening_round(args.ledger, args.out)
+        elif args.command == "citation-integrity":
+            result = citation_integrity(args.ledger, args.out, args.max_age_days)
         elif args.command == "checkpoint": result = checkpoint(args.project, args.stage, args.inputs, args.outputs)
         elif args.command == "check": result = check_project(args.project)
         elif args.command == "check-changes": result = validate_changes(read(args.changes), read(args.evidence))
@@ -397,7 +1039,13 @@ def main(argv=None):
                       "scope": "lexical_overlap_only_not_plagiarism_or_AI_detection"}
         else: result = package(args.output)
         print(json.dumps(result, ensure_ascii=False, indent=2))
-        return 2 if result.get("status") in {"fail", "stale", "error"} else 0
+        result_state = result.get("status")
+        if args.command == "screening-round":
+            result_state = result.get("decision")
+        return 2 if result_state in {
+            "fail", "stale", "error", "BLOCKED", "AUTHOR_ACTION_REQUIRED",
+            "IDENTITY_REVIEW_REQUIRED",
+        } else 0
     except Exception as exc:
         print(json.dumps({"status": "error", "type": type(exc).__name__, "message": str(exc)}, ensure_ascii=False), file=sys.stderr)
         return 2
