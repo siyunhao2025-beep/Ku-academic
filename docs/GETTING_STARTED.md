@@ -109,6 +109,16 @@ python scripts/research.py seed-coverage --ledger audit/seed-ledger.json --out a
 `SEARCH_GAP` 表示检索没有找回已核验种子；`ZERO_HITS` 只表示某次渠道请求成功但没有结果，
 不能代替 `FAILED`。通过该审计仍不等于穷尽文献，也不替代全文筛选或句子支持核验。
 
+到 P6 准备投稿时，为数据与代码建立可用性清单并生成审计：
+
+```bash
+python scripts/availability.py init runs/my-study/availability-manifest.json
+python scripts/availability.py check runs/my-study/availability-manifest.json --out runs/my-study/audit/availability.json
+```
+
+公开入口要由作者或获授权人员在未登录状态实际检查；受限材料要写明原因、申请路径和条件。
+这个审计检查记录是否完整，不替代目标期刊当前官方政策，也不证明研究已经被独立复现。
+
 对准备用作论据的文献，另行登记出版社文章页/通知的检查结果，再运行出版完整性契约检查：
 
 ```bash

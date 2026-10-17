@@ -43,3 +43,14 @@ python scripts/research.py checkpoint runs/my-study analysis --inputs inputs/dat
 python scripts/research.py check runs/my-study
 ```
 原始文件、参数或结果发生变化会标 stale，并传播到消费这些输出的后续阶段。检查的是已登记依赖；未登记依赖不能被自动发现，科学逻辑是否正确仍需审查。
+
+## 投稿材料可用性（P6）
+
+`availability-manifest.json` 分别为 data 和 code 选择 `public`、`restricted`、`in_manuscript` 或 `not_applicable`。公开路线必须给出具体定位、持久标识、访问条件与真实的未登录检查记录；受限路线必须给出限制原因、申请路径、访问条件与路径检查记录。代码公开路线还要绑定论文所用 release、tag、commit 或归档版本。
+
+```bash
+python scripts/availability.py init runs/my-study/availability-manifest.json
+python scripts/availability.py check runs/my-study/availability-manifest.json --out runs/my-study/audit/availability.json
+```
+
+字段、主张上限和四条路线见 `modules/submission-availability.md`。输出 `PASS` 只说明记录合同完整，不证明链接内容、再分发权、科学有效性或可复现性。

@@ -362,6 +362,12 @@
 - `visual_review` 是对象而非字符串：`status=passed` 必须同时有 `reviewed_by` 与 `reviewed_at`。**人眼确认不能由文件存在推断**；脚本只校验审查证据是否齐全，不替代看图。
 - 上述机器可判项由 `python scripts/figures.py check <workspace>` 硬执行（规则全文见 `modules/figures.md` 第八节）。
 
+### `audit/availability.json`（P6）
+
+先用 `scripts/availability.py init` 建清单，填入真实的数据与代码路线，再用 `check` 生成审计。P6 只接受 `status=PASS` 且 `blockers=[]`。公开材料必须有具体定位、持久标识、访问条件和带执行者/时区的未登录检查；受限材料必须有原因、申请路径、条件和路径检查；文内材料必须有精确位置；不适用必须有具体理由。
+
+`claims_fully_reproducible=true` 还要求非作者独立复跑记录。脚本只校验所声明的记录，不联网证明入口、许可、文件内容或科学复现。详细契约见 `modules/submission-availability.md`。
+
 ---
 
 ## 九、阈值在哪里改
