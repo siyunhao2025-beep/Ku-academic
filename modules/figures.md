@@ -358,17 +358,30 @@ python scripts/figures.py check <workspace>     # 校验全部图件，有阻断
 | 冗余通道 | 系列数 >1 时 `colors.redundant_encoding` 必须是 marker shape / line style / hatching / direct label 之一 | 阻断 |
 | 系列数上限 | n_series > 6 判为应拆图 | 阻断 |
 | 示意图诚实性 | schematic 必须 `conceptual=true` 且图注/notes 含"概念示意/Conceptual" | 阻断 |
-| 人眼审查证据 | `visual_review.status=passed` 必须同时有 `reviewed_by` 与 `reviewed_at`，且输出文件存在 | 阻断 |
+| 人眼审查证据 | `visual_review.status=passed` 必须同时有 `reviewed_by`、`reviewed_at`，并在 `output_sha256` 中绑定每个当前输出文件；文件变化后旧审查失效 | 阻断 |
 | 数据来源可疑 | source_data 不在 `analysis/results`、`inputs`、`evidence`、`private-corpus` 下 | 建议 |
 | roadmap 版本 | 未标 planned/actual | 建议 |
 
 **`visual_review` 字段结构（脚本只查证据，不替你看图）：**
 
 ```json
-"visual_review": {"status": "passed", "reviewed_by": "署名", "reviewed_at": "ISO时间", "notes": "看到了什么/问题"}
+"visual_review": {
+  "status": "passed",
+  "reviewed_by": "署名",
+  "reviewed_at": "ISO时间",
+  "output_sha256": {
+    "figures/fig1.pdf": "64位 lowercase SHA-256",
+    "figures/fig1.png": "64位 lowercase SHA-256"
+  },
+  "notes": "看到了什么/问题"
+}
 ```
 
-**脚本明确不判的事**：图好不好看、坐标轴标得对不对、误差条含义是否恰当、图上数字与正文是否一致、有没有截轴夸大、箭头关系通不通——这些必须由人按本模块的检查清单逐项看过。脚本通过只代表"文件链完整、审查留有署名记录"，不代表图在科学上正确。P5 阶段还会被 `scripts/progress.py gate <workspace> P6` 复核（所有图 visual_review=passed、roadmap/schematic 齐全）。
+`output_sha256` 要在人实际打开最终导出文件、完成逐图检查后计算。重新渲染、后期加字、压缩或
+替换任一输出都会改变文件哈希并阻断旧签名；此时必须重新审图并更新哈希，不能把旧的
+`reviewed_by/reviewed_at` 沿用到新文件。
+
+**脚本明确不判的事**：图好不好看、坐标轴标得对不对、误差条含义是否恰当、图上数字与正文是否一致、有没有截轴夸大、箭头关系通不通——这些必须由人按本模块的检查清单逐项看过。脚本通过只代表"文件链完整、审查记录绑定当前文件"，不代表图在科学上正确。P5 阶段还会被 `scripts/progress.py gate <workspace> P6` 复核（所有图 visual_review=passed、roadmap/schematic 齐全）。
 
 ---
 

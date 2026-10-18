@@ -12,13 +12,14 @@
   - 数据图只用无障碍色板，禁止 jet/rainbow；多系列必须有颜色之外的冗余通道
   - 系列数 >6 判为应拆图；示意图必须标 conceptual + “概念示意/Conceptual”
   - source_data / script / outputs 文件真实存在，且至少一个矢量输出
-  - visual_review 必须给出 reviewed_by + reviewed_at；脚本不替代人眼，只校验审查证据
+  - visual_review 必须给出 reviewed_by + reviewed_at，并绑定每个当前输出的 SHA-256
   - 数据图必须形成 source_data(结果目录) -> script -> outputs 的可复现链
 
 它不检查什么（明确边界）：
   - 不能判断图好不好看、坐标轴标得对不对、数字与正文是否一致——这些必须人眼过。
 """
 import argparse
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -80,20 +81,23 @@ def cmd_init(ws):
         return
     skeleton = {
         "_说明": "每张图一条；type∈roadmap/schematic/data；outputs 至少一个矢量(pdf/svg/eps)；"
-                "visual_review 必须人看后填 reviewed_by/reviewed_at，脚本只查证据不替你看。",
+                "visual_review 必须人看后填 reviewed_by/reviewed_at，并把当时每个输出的 SHA-256 "
+                "填入 output_sha256；脚本只查证据与当前文件绑定，不替你看图。",
         "schematic_not_needed_reason": None,
         "figures": [
             {"id": "fig-roadmap", "type": "roadmap", "title": "", "version": "planned",
              "source_data": [], "script": "", "axes": {}, "colors": {},
              "caption": "", "conceptual": False, "outputs": [],
              "visual_review": {"status": "pending", "reviewed_by": None,
-                               "reviewed_at": None, "notes": None}, "notes": ""},
+                               "reviewed_at": None, "output_sha256": {},
+                               "notes": None}, "notes": ""},
             {"id": "fig-schematic", "type": "schematic", "title": "",
              "source_data": [], "script": "", "axes": {}, "colors": {},
              "caption": "概念示意（Conceptual illustration），非观测结果。",
              "conceptual": True, "outputs": [],
              "visual_review": {"status": "pending", "reviewed_by": None,
-                               "reviewed_at": None, "notes": None}, "notes": ""},
+                               "reviewed_at": None, "output_sha256": {},
+                               "notes": None}, "notes": ""},
             {"id": "fig1", "type": "data", "title": "",
              "source_data": ["analysis/results/<your-result>.csv"],
              "script": "figures/plot_fig1.py",
@@ -105,7 +109,8 @@ def cmd_init(ws):
              "caption": "", "conceptual": False,
              "outputs": ["figures/fig1.pdf", "figures/fig1.png"],
              "visual_review": {"status": "pending", "reviewed_by": None,
-                               "reviewed_at": None, "notes": None}, "notes": ""},
+                               "reviewed_at": None, "output_sha256": {},
+                               "notes": None}, "notes": ""},
         ],
     }
     save(target, skeleton)
@@ -119,8 +124,34 @@ def _exists(ws, rel):
     try:
         p = (ws / rel).resolve()
         return p.is_relative_to(ws.resolve()) and p.exists()
-    except (ValueError, OSError):
+    except (TypeError, ValueError, OSError):
         return False
+
+
+def _resolved_file(ws, rel):
+    if not rel:
+        return None
+    try:
+        path = (ws / rel).resolve()
+        if path.is_relative_to(ws.resolve()) and path.is_file():
+            return path
+    except (TypeError, ValueError, OSError):
+        pass
+    return None
+
+
+def _sha256(path):
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _is_sha256(value):
+    return (isinstance(value, str) and len(value) == 64
+            and value == value.lower()
+            and all(char in "0123456789abcdef" for char in value))
 
 
 def check_one(ws, fig):
@@ -154,6 +185,26 @@ def check_one(ws, fig):
             if not vr.get("reviewed_by") or not vr.get("reviewed_at"):
                 errors.append(f"[{fid}] visual_review=passed 但缺 reviewed_by/reviewed_at"
                               "（不许凭文件存在填 passed）")
+            output_hashes = vr.get("output_sha256")
+            if not isinstance(output_hashes, dict):
+                errors.append(f"[{fid}] visual_review=passed 但缺 output_sha256 对象"
+                              "（审查必须绑定当前输出文件）")
+                output_hashes = {}
+            declared_outputs = {o for o in outputs if isinstance(o, str) and o}
+            for output in outputs:
+                if not isinstance(output, str) or not output:
+                    continue
+                path = _resolved_file(ws, output)
+                if path is None:
+                    continue
+                expected = output_hashes.get(output)
+                if not _is_sha256(expected):
+                    errors.append(f"[{fid}] {output} 缺人眼审查时记录的 lowercase SHA-256")
+                elif expected != _sha256(path):
+                    errors.append(f"[{fid}] {output} 在人眼审查后已变化，必须重新审查并更新哈希")
+            extras = sorted(str(key) for key in output_hashes if key not in declared_outputs)
+            if extras:
+                warnings.append(f"[{fid}] visual_review 含未声明输出的哈希：{extras}")
         elif status != "pending":
             warnings.append(f"[{fid}] visual_review.status 建议为 pending/passed，当前 {status!r}")
         if status != "passed":

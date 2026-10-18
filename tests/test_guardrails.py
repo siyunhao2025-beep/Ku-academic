@@ -1,6 +1,7 @@
 """Tests for the hard-guardrail scripts: progress gates, topic scoring,
 reading cards. No network. Synthetic fixtures in temp dirs only."""
 import json
+import hashlib
 import sys
 import tempfile
 import unittest
@@ -77,23 +78,27 @@ class ProgressP5GuardTests(unittest.TestCase):
     def tearDown(self):
         self.tmp.cleanup()
 
-    def _reviewed(self):
+    def _reviewed(self, *outputs):
         return {"status": "passed", "reviewed_by": "导师A",
-                "reviewed_at": "2026-09-18T10:00:00Z", "notes": "已逐张核对"}
+                "reviewed_at": "2026-09-18T10:00:00Z",
+                "output_sha256": {
+                    output: hashlib.sha256(b"x").hexdigest() for output in outputs
+                },
+                "notes": "已逐张核对"}
 
     def _legal_figures(self, include_schematic=True):
         figs = [
             {"id": "fig-roadmap", "type": "roadmap", "title": "线路图",
              "version": "actual", "caption": "从数据到结论的科研线路图",
              "source_data": [], "script": "", "outputs": ["figures/roadmap.pdf"],
-             "visual_review": self._reviewed()},
+             "visual_review": self._reviewed("figures/roadmap.pdf")},
         ]
         if include_schematic:
             figs.append(
                 {"id": "fig-schematic", "type": "schematic", "title": "机制示意",
                  "caption": "概念示意（Conceptual illustration），非观测结果。",
                  "conceptual": True, "outputs": ["figures/schematic.pdf"],
-                 "visual_review": self._reviewed()})
+                 "visual_review": self._reviewed("figures/schematic.pdf")})
         figs.append(
             {"id": "fig1", "type": "data", "title": "主结果",
              "caption": "响应幅度随地方时变化",
@@ -103,7 +108,7 @@ class ProgressP5GuardTests(unittest.TestCase):
              "colors": {"palette": "okabe-ito", "n_series": 2,
                         "redundant_encoding": "marker shape"},
              "uncertainty": {"type": "SD", "sampling_unit": "per storm event"},
-             "visual_review": self._reviewed()})
+             "visual_review": self._reviewed("figures/fig1.pdf", "figures/fig1.png")})
         return figs
 
     def _materialise(self, figs, manifest_extra=None):

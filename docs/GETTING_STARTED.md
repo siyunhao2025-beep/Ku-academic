@@ -119,6 +119,16 @@ python scripts/availability.py check runs/my-study/availability-manifest.json --
 公开入口要由作者或获授权人员在未登录状态实际检查；受限材料要写明原因、申请路径和条件。
 这个审计检查记录是否完整，不替代目标期刊当前官方政策，也不证明研究已经被独立复现。
 
+P5 图件完成后，必须先实际打开最终导出的 PDF/SVG/PNG 逐张检查，再在
+`figures/manifest.json` 的 `visual_review.output_sha256` 中记录每个输出文件的 SHA-256：
+
+```bash
+python scripts/figures.py check runs/my-study
+```
+
+重新渲染、加字、压缩或替换图件都会使旧审查签名失效；重新看图并更新哈希后再过 P6。
+哈希只证明审查记录对应当前文件，不证明图件科学正确，坐标、数值、图注和正文仍须人工核对。
+
 对准备用作论据的文献，另行登记出版社文章页/通知的检查结果，再运行出版完整性契约检查：
 
 ```bash
