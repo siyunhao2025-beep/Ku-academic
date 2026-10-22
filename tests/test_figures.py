@@ -22,9 +22,11 @@ def base_data_figure(**over):
                    "redundant_encoding": "marker shape"},
         "uncertainty": {"type": "SD", "sampling_unit": "per event"},
         "caption": "结果图。", "conceptual": False,
+        "target_width_mm": 85.0,
         "outputs": ["figures/fig1.pdf", "figures/fig1.png"],
         "visual_review": {"status": "passed", "reviewed_by": "Zhang",
                           "reviewed_at": "2026-09-18T00:00:00Z",
+                          "reviewed_width_mm": 85.0,
                           "output_sha256": {
                               "figures/fig1.pdf": HASH_X,
                               "figures/fig1.png": HASH_X,
@@ -53,6 +55,18 @@ class PaletteTests(unittest.TestCase):
     def test_jet_and_rainbow_are_forbidden(self):
         self.assertIn("jet", figures.FORBIDDEN_PALETTES)
         self.assertIn("rainbow", figures.FORBIDDEN_PALETTES)
+
+
+class InitManifestTests(unittest.TestCase):
+    def test_init_exposes_final_size_review_fields(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            ws = Path(temp_dir)
+            figures.cmd_init(ws)
+            manifest = json.loads((ws / "figures/manifest.json").read_text(encoding="utf-8"))
+
+        for fig in manifest["figures"]:
+            self.assertIn("target_width_mm", fig)
+            self.assertIn("reviewed_width_mm", fig["visual_review"])
 
 
 class DataFigureRuleTests(unittest.TestCase):
@@ -113,6 +127,13 @@ class DataFigureRuleTests(unittest.TestCase):
         errors, _ = figures.check_one(self.ws, fig)
         self.assertTrue(any("output_sha256" in e for e in errors))
 
+    def test_review_width_must_match_target_placement_width(self):
+        fig = base_data_figure()
+        fig["visual_review"]["reviewed_width_mm"] = 178.0
+        errors, _ = figures.check_one(self.ws, fig)
+        self.assertTrue(any("reviewed_width_mm" in e and "target_width_mm" in e
+                            for e in errors))
+
     def test_pending_review_blocks(self):
         fig = base_data_figure()
         fig["visual_review"] = {"status": "pending"}
@@ -150,9 +171,11 @@ class SchematicRuleTests(unittest.TestCase):
     def _sch(self, conceptual, caption):
         return {"id": "s", "type": "schematic", "conceptual": conceptual,
                 "caption": caption, "script": "figures/plot.py",
+                "target_width_mm": 85.0,
                 "outputs": ["figures/sch.pdf"],
                 "visual_review": {"status": "passed", "reviewed_by": "Z",
                                   "reviewed_at": "2026-09-18T00:00:00Z",
+                                  "reviewed_width_mm": 85.0,
                                   "output_sha256": {"figures/sch.pdf": HASH_X}}}
 
     def test_schematic_must_be_flagged_conceptual(self):

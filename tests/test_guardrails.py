@@ -81,6 +81,7 @@ class ProgressP5GuardTests(unittest.TestCase):
     def _reviewed(self, *outputs):
         return {"status": "passed", "reviewed_by": "导师A",
                 "reviewed_at": "2026-09-18T10:00:00Z",
+                "reviewed_width_mm": 85.0,
                 "output_sha256": {
                     output: hashlib.sha256(b"x").hexdigest() for output in outputs
                 },
@@ -91,6 +92,7 @@ class ProgressP5GuardTests(unittest.TestCase):
             {"id": "fig-roadmap", "type": "roadmap", "title": "线路图",
              "version": "actual", "caption": "从数据到结论的科研线路图",
              "source_data": [], "script": "", "outputs": ["figures/roadmap.pdf"],
+             "target_width_mm": 85.0,
              "visual_review": self._reviewed("figures/roadmap.pdf")},
         ]
         if include_schematic:
@@ -98,6 +100,7 @@ class ProgressP5GuardTests(unittest.TestCase):
                 {"id": "fig-schematic", "type": "schematic", "title": "机制示意",
                  "caption": "概念示意（Conceptual illustration），非观测结果。",
                  "conceptual": True, "outputs": ["figures/schematic.pdf"],
+                 "target_width_mm": 85.0,
                  "visual_review": self._reviewed("figures/schematic.pdf")})
         figs.append(
             {"id": "fig1", "type": "data", "title": "主结果",
@@ -105,6 +108,7 @@ class ProgressP5GuardTests(unittest.TestCase):
              "source_data": ["analysis/results/r.csv"],
              "script": "figures/plot_fig1.py",
              "outputs": ["figures/fig1.pdf", "figures/fig1.png"],
+             "target_width_mm": 85.0,
              "colors": {"palette": "okabe-ito", "n_series": 2,
                         "redundant_encoding": "marker shape"},
              "uncertainty": {"type": "SD", "sampling_unit": "per storm event"},

@@ -132,7 +132,7 @@
 - [ ] 高风险错配数量为 0
 - [ ] 定量/机制句访问级别达标（`scripts/access.py check` 无阻断，`audit/access-report.json` 留档）
 - [ ] 线路图与示意图已产出（或已在 `schematic_not_needed_reason` 说明为何不需要）
-- [ ] 数据图全部经人工视觉审查（`scripts/figures.py check` 无阻断，每张图 `visual_review.status=passed` 且有署名/时间）
+- [ ] 数据图全部经人工视觉审查（`scripts/figures.py check` 无阻断，每张图 `visual_review.status=passed` 且有署名/时间，审阅宽度与稿件最终排版宽度一致）
 - [ ] 若中途改过上一阶段产物，`scripts/impact.py analyze` 的受影响下游均已重做并重过闸门
 - [ ] 降 AI 自查第一层全过（见 `assets/deai-checklist.md`）
 - [ ] AI 辅助披露已按期刊要求处理
@@ -348,9 +348,13 @@
       "uncertainty": {"type": "SD", "sampling_unit": "per <independent unit>"},
       "caption": "...",
       "conceptual": false,
+      "target_width_mm": 85.0,
       "outputs": ["figures/fig1.pdf", "figures/fig1.png"],
       "visual_review": {"status": "passed", "reviewed_by": "署名",
-                        "reviewed_at": "ISO-8601", "notes": "..."},
+                        "reviewed_at": "ISO-8601", "reviewed_width_mm": 85.0,
+                        "output_sha256": {"figures/fig1.pdf": "<sha256>",
+                                          "figures/fig1.png": "<sha256>"},
+                        "notes": "..."},
       "notes": ""
     }
   ]
@@ -359,7 +363,7 @@
 
 - `type` ∈ `{roadmap, schematic, data}`；roadmap 与 data 必须有，schematic 缺失时 `schematic_not_needed_reason` 必须写明理由。
 - 数据图 `colors.palette` 必须在无障碍名单（okabe-ito / tol-* / viridis / cividis / magma / plasma / inferno），禁用 jet/rainbow；`n_series>1` 必须有 `redundant_encoding`，`n_series>6` 判拆图；schematic 必须 `conceptual=true` 且图注含"概念示意/Conceptual"。
-- `visual_review` 是对象而非字符串：`status=passed` 必须同时有 `reviewed_by` 与 `reviewed_at`。**人眼确认不能由文件存在推断**；脚本只校验审查证据是否齐全，不替代看图。
+- `visual_review` 是对象而非字符串：`status=passed` 必须同时有 `reviewed_by` 与 `reviewed_at`；正数 `reviewed_width_mm` 必须与图件正数 `target_width_mm` 在 0.1 mm 内一致，并用 `output_sha256` 绑定当前文件。**人眼确认不能由文件存在推断**；脚本不测量真实物理尺寸，也不替代最终尺寸下的逐图检查。
 - 上述机器可判项由 `python scripts/figures.py check <workspace>` 硬执行（规则全文见 `modules/figures.md` 第八节）。
 
 ### `audit/availability.json`（P6）

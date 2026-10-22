@@ -445,9 +445,10 @@ python scripts/boxes.py export <ws> --out export/full.md --provenance export/pro
 多系列必须有形状/线型/纹理/直接标注的冗余通道；超过 6 个系列拆图；
 每张图至少一个矢量输出；source_data→script→outputs 文件真实存在；
 示意图必须标 conceptual 与“概念示意/Conceptual”；
-visual_review=passed 必须有 reviewed_by、reviewed_at，并在 output_sha256 中记录
-每个当前输出文件在人眼审查时的 lowercase SHA-256。任何输出变化都会让旧审查失效，
-需要重新打开最终文件、逐张检查并更新哈希。
+每张图先填稿件最终排版 target_width_mm；visual_review=passed 必须有 reviewed_by、
+reviewed_at、与目标宽度一致的 reviewed_width_mm，并在 output_sha256 中记录每个当前输出文件
+在人眼审查时的 lowercase SHA-256。任何输出或目标宽度变化都会让旧审查失效，需要按新的
+最终物理尺寸重新打开文件、逐张检查并更新记录。
 
 脚本通过只代表文件链齐全且审查记录绑定当前文件，图是否科学、美观、数字一致，
 仍由我逐张人眼核对，不要用脚本通过替代看图。
