@@ -1,6 +1,7 @@
 """Tests for the figure guardrail (scripts/figures.py). No network.
 Synthetic manifests and temp files only."""
 import json
+import hashlib
 import sys
 import tempfile
 import unittest
@@ -8,6 +9,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
 import figures  # noqa: E402
+
+HASH_X = hashlib.sha256(b"x").hexdigest()
 
 
 def base_data_figure(**over):
@@ -19,9 +22,15 @@ def base_data_figure(**over):
                    "redundant_encoding": "marker shape"},
         "uncertainty": {"type": "SD", "sampling_unit": "per event"},
         "caption": "结果图。", "conceptual": False,
+        "target_width_mm": 85.0,
         "outputs": ["figures/fig1.pdf", "figures/fig1.png"],
         "visual_review": {"status": "passed", "reviewed_by": "Zhang",
-                          "reviewed_at": "2026-09-18T00:00:00Z", "notes": ""},
+                          "reviewed_at": "2026-09-18T00:00:00Z",
+                          "reviewed_width_mm": 85.0,
+                          "output_sha256": {
+                              "figures/fig1.pdf": HASH_X,
+                              "figures/fig1.png": HASH_X,
+                          }, "notes": ""},
     }
     fig.update(over)
     return fig
@@ -46,6 +55,18 @@ class PaletteTests(unittest.TestCase):
     def test_jet_and_rainbow_are_forbidden(self):
         self.assertIn("jet", figures.FORBIDDEN_PALETTES)
         self.assertIn("rainbow", figures.FORBIDDEN_PALETTES)
+
+
+class InitManifestTests(unittest.TestCase):
+    def test_init_exposes_final_size_review_fields(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            ws = Path(temp_dir)
+            figures.cmd_init(ws)
+            manifest = json.loads((ws / "figures/manifest.json").read_text(encoding="utf-8"))
+
+        for fig in manifest["figures"]:
+            self.assertIn("target_width_mm", fig)
+            self.assertIn("reviewed_width_mm", fig["visual_review"])
 
 
 class DataFigureRuleTests(unittest.TestCase):
@@ -100,11 +121,43 @@ class DataFigureRuleTests(unittest.TestCase):
         errors, _ = figures.check_one(self.ws, fig)
         self.assertTrue(any("reviewed_by" in e for e in errors))
 
+    def test_passed_review_needs_current_output_hashes(self):
+        fig = base_data_figure()
+        fig["visual_review"].pop("output_sha256")
+        errors, _ = figures.check_one(self.ws, fig)
+        self.assertTrue(any("output_sha256" in e for e in errors))
+
+    def test_review_width_must_match_target_placement_width(self):
+        fig = base_data_figure()
+        fig["visual_review"]["reviewed_width_mm"] = 178.0
+        errors, _ = figures.check_one(self.ws, fig)
+        self.assertTrue(any("reviewed_width_mm" in e and "target_width_mm" in e
+                            for e in errors))
+
     def test_pending_review_blocks(self):
         fig = base_data_figure()
         fig["visual_review"] = {"status": "pending"}
         errors, _ = figures.check_one(self.ws, fig)
         self.assertTrue(any("人眼视觉审查" in e for e in errors))
+
+    def test_changed_output_invalidates_visual_review(self):
+        reviewed = hashlib.sha256(b"reviewed version").hexdigest()
+        fig = base_data_figure()
+        fig["visual_review"]["output_sha256"] = {
+            "figures/fig1.pdf": reviewed,
+            "figures/fig1.png": reviewed,
+        }
+        for name in ("fig1.pdf", "fig1.png"):
+            (self.ws / "figures" / name).write_bytes(b"changed after review")
+
+        errors, _ = figures.check_one(self.ws, fig)
+        self.assertTrue(any("审查后已变化" in e for e in errors))
+
+    def test_malformed_output_entry_is_reported_without_crashing_hash_check(self):
+        fig = base_data_figure(outputs=[{"unexpected": "object"}, "figures/fig1.pdf"])
+        fig["visual_review"]["output_sha256"] = {"figures/fig1.pdf": HASH_X}
+        errors, _ = figures.check_one(self.ws, fig)
+        self.assertTrue(any("输出文件不存在" in e for e in errors))
 
 
 class SchematicRuleTests(unittest.TestCase):
@@ -118,9 +171,12 @@ class SchematicRuleTests(unittest.TestCase):
     def _sch(self, conceptual, caption):
         return {"id": "s", "type": "schematic", "conceptual": conceptual,
                 "caption": caption, "script": "figures/plot.py",
+                "target_width_mm": 85.0,
                 "outputs": ["figures/sch.pdf"],
                 "visual_review": {"status": "passed", "reviewed_by": "Z",
-                                  "reviewed_at": "2026-09-18T00:00:00Z"}}
+                                  "reviewed_at": "2026-09-18T00:00:00Z",
+                                  "reviewed_width_mm": 85.0,
+                                  "output_sha256": {"figures/sch.pdf": HASH_X}}}
 
     def test_schematic_must_be_flagged_conceptual(self):
         errors, _ = figures.check_one(self.ws, self._sch(False, "机制图"))

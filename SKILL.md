@@ -1,6 +1,7 @@
 ---
 name: research-mother
-description: Orchestrate evidence-grounded research with replaceable domain packs across seven explicit phases (onboarding/preparation, topic and paper investigation, literature review, experiment design, computation, figures and manuscript writing, conclusion and revision): literature discovery and reviews, study design, real analysis, research roadmaps and schematic figures, genuine citation provenance and claim-support verification, de-AI writing, methods, manuscript development, contribution-driven supplementation, journal-corpus style learning and scientific editing. Use when a researcher asks to build or run a research workflow, distill a field or journal, write a review or paper from evidence, verify whether references actually exist and actually support the sentence, produce research diagrams, reduce AI traces in academic prose, or improve a manuscript without defensive boilerplate.
+description: >-
+  Orchestrate evidence-grounded research with replaceable domain packs across seven explicit phases (P0–P6): literature discovery and review, study design, real analysis, figures, manuscript writing, revision, journal adaptation and submission readiness. Preserve citation provenance, claim-support checks, facts, quantities and change propagation. Use when a researcher asks to start or run a research workflow, distill a field or journal, search or review literature, design or analyze a study, write or revise a paper, verify whether references exist and support a sentence, create research diagrams, improve formulaic or AI-like academic prose without targeting AI-detector scores, or audit every defensive passage and reorganize a manuscript around its strongest supported contribution without hiding required results.
 license: MIT
 metadata:
   version: "0.5.0"
@@ -49,7 +50,7 @@ The neutral blank domain pack is `domains/example-domain/SKILL.md`; `domains/sam
 - Proceed autonomously through supported, reversible stages. Do not ask for permission at every step. Missing evidence blocks only dependent claims; continue independent work and report precise gaps.
 - No synthetic scientific results, invented references, invented sample counts or claims of reading inaccessible full text.
 - A reference must pass two independent checks before it may support a sentence: bibliographic identity (does it exist, are the metadata right) and claim support (does it actually say this). A resolvable DOI is not a verified claim.
-- Never state a number the evidence cannot support, and never strengthen a hedged finding while editing language. Reducing AI traces must not manufacture over-claiming.
+- Never state a number the evidence cannot support, and never strengthen a hedged finding while editing language. Style revision must not chase detector scores or manufacture over-claiming.
 - Do not turn absence of a key explanatory or confounding variable into generic defensive paragraphs. Calibrate the specific mechanism claim to the variables actually observed, preserve each material limitation once, and keep the argument moving. (Which variable is "key" is defined by the active domain pack, not hard-coded to any field.)
 - Language editing preserves physics, quantities, units and evidence strength. It does not promise acceptance or evasion of AI detectors.
 - Express uncertainty honestly. When something cannot be verified, mark it `待确认` with what was checked and what is still needed. Never let "could not check" read as "clean".
@@ -94,6 +95,7 @@ An upstream phase's deliverables are a downstream phase's inputs. Do not start a
 | Learn a target journal from PDFs | modules/journal-distillation.md | per-paper cards, train/held-out corpus, evaluated style profile |
 | Get the target journal's newest papers as writing references | modules/journal-sourcing.md | sourcing plan, tracked per-item status, manual-download fallback checklist |
 | Review a finished manuscript with 3-5 reviewers | modules/reviewer-panel.md | independent per-reviewer scores, findings, a non-averaged panel verdict |
+| Audit data/code availability or a reproducibility claim before submission | modules/submission-availability.md | actionable public/restricted routes, logged-out checks, bounded reproducibility wording |
 | Produce a Word explainer for a non-expert reader | modules/explainer-docx.md | a real .docx built with stdlib only, numbers matching the paper |
 | Make a poster (asks size, language, output first) | modules/poster.md | print-ready SVG at exact physical size, or a one-slide .pptx |
 | Make slides / edit a PPTX | skills/ppt/SKILL.md | deck built or edited per that skill; read skills/ppt/MISSING_DEPENDENCIES.md first |
@@ -103,10 +105,11 @@ An upstream phase's deliverables are a downstream phase's inputs. Do not start a
 | An upstream artifact changed / rework or revision — what downstream must be redone and where to roll back | modules/change-management.md | change severity (L0–L4), `impact.py` impact report, rollback SOP |
 | A citation is behind a paywall — which sentences still stand / how to get full text legally | modules/evidence-integrity.md §访问分级 | sentence-tier gating via `scripts/access.py`, legal Unpaywall fallback |
 | Produce a 2.5D isometric graphical abstract / opening hero figure | modules/figures.md §七 | blueprint → author review → render → four-axis check; conceptual illustration only |
-| Reduce AI traces in academic prose | modules/deai-writing.md + assets/deai-checklist.md | revised prose with an executed evidence-first self-check |
+| Improve formulaic or AI-like academic prose without targeting detectors | modules/deai-writing.md + assets/deai-checklist.md | revised prose with an executed evidence-first self-check |
 | Explain the workflow to a non-expert user | assets/plain-language-prompts.md | plain-language guidance, one next action per reply |
 | Save tokens without losing function | modules/lean-mode.md + docs/TOKEN_ACCOUNTING.md | named ledger entries with basis and method labelled |
 | Polish or review | modules/writing-review.md | revised prose, numerical/causal checks, focused audit |
+| 逐处审计防御性写作 / 按“发布会原则”重构 | modules/writing-review.md | 覆盖说明、逐处原文与改法、实验论证职责、事实锁回归 |
 | Compare against peer academic skills | docs/PEER_COMPARISON.md | per-repository pros/cons and where each rule came from |
 | Install/adapt upstream projects | docs/UPSTREAM.md and config/upstream.lock.json | pinned source status; verified host installation separately |
 
@@ -121,10 +124,11 @@ References must genuinely exist and be traceable: title, authors, year, journal/
 `python scripts/research.py init <workspace>` creates an empty project, not a paper.
 `python scripts/progress.py <workspace>` shows content-gated progress per phase (it inspects what is inside artifacts, not merely whether files exist) and what to do next.
 `python scripts/progress.py gate <workspace> <P0..P6>` is the hard phase gate: it exits non-zero and lists every unmet upstream item before a later phase may start. Do not bypass it; thresholds mirror docs/PHASE_GATES.md and may be overridden only via domain.json `gates`.
+`python scripts/availability.py init|check` creates and validates the P6 data/code availability contract; a schema PASS is not proof that an artifact is accessible or reproducible.
 `python scripts/topic_score.py init <workspace> [--names "A,B"]` creates the five-dimension topic scoring worksheet; `... score <workspace>` computes objective scores from search data, refuses to rank while risk/resource scores (which need the advisor) are missing, then ranks and applies the <3.0 elimination rule.
 `python scripts/research.py search --query "..." --since YYYY-MM-DD --out <new-search-dir>` performs bounded Crossref discovery.
 `python scripts/corpus.py ingest <manifest.json> <new-corpus-dir>` extracts page text, but does not mark it read.
-`python scripts/reading.py card <workspace> --title "..." [--author --year --doi --file]` creates a three-pass close-reading card; `list`/`check` enforce the required fields (a card with empty required fields is "downloaded", not "read"); `sync` writes complete cards into evidence.json as full_text core readings with claim_level mapped from the stated strength, while leaving citation_verdict=UNRESOLVED for the two citation checks.
+`python scripts/reading.py card <workspace> --title "..." [--author --year --doi --file]` creates a three-pass close-reading card; `list`/`check` require an explicit `full_text` access declaration, the actual body/appendix/supplement read scope, and one page/section/figure/table locator per numeric key result (an abstract-only or unlocated card is "downloaded", not a core reading); `sync` preserves those locators in evidence.json and maps the stated claim strength, while leaving citation_verdict=UNRESOLVED for the two citation checks.
 `python scripts/research.py journal <cards.json> --journal "..." --article-type "research-article" --out <profile.json>` compiles reviewed cards; semantic reading is performed by the agent.
 `python scripts/research.py check-changes <changes.json> <evidence.json>` checks contracts, not scientific truth.
 `python scripts/research.py checkpoint <workspace> <stage> --inputs ... --outputs ...` records artifacts.
