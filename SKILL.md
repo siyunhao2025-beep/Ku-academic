@@ -92,6 +92,7 @@ An upstream phase's deliverables are a downstream phase's inputs. Do not start a
 | Distill a field or methods | modules/field-distillation.md | source-linked capability cards and tests |
 | Latest papers / refresh references | modules/literature.md | dated search log, screened candidates, change decisions |
 | Verify that references exist and actually support the sentence | modules/evidence-integrity.md | four-state identity verdicts, six-state support status, blockers, 待确认 list |
+| Choose a target journal from this manuscript | modules/journal-matching.md | evidence-banded shortlist, official scope/article-type checks, author-constraint conflicts |
 | Learn a target journal from PDFs | modules/journal-distillation.md | per-paper cards, train/held-out corpus, evaluated style profile |
 | Get the target journal's newest papers as writing references | modules/journal-sourcing.md | sourcing plan, tracked per-item status, manual-download fallback checklist |
 | Review a finished manuscript with 3-5 reviewers | modules/reviewer-panel.md | independent per-reviewer scores, findings, a non-averaged panel verdict |
@@ -125,6 +126,7 @@ References must genuinely exist and be traceable: title, authors, year, journal/
 `python scripts/progress.py <workspace>` shows content-gated progress per phase (it inspects what is inside artifacts, not merely whether files exist) and what to do next.
 `python scripts/progress.py gate <workspace> <P0..P6>` is the hard phase gate: it exits non-zero and lists every unmet upstream item before a later phase may start. Do not bypass it; thresholds mirror docs/PHASE_GATES.md and may be overridden only via domain.json `gates`.
 `python scripts/availability.py init|check` creates and validates the P6 data/code availability contract; a schema PASS is not proof that an artifact is accessible or reproducible.
+`python scripts/journal_match.py init|check` creates and validates an evidence-banded target-journal shortlist; it does not search journals, estimate acceptance or replace author/editor judgment.
 `python scripts/topic_score.py init <workspace> [--names "A,B"]` creates the five-dimension topic scoring worksheet; `... score <workspace>` computes objective scores from search data, refuses to rank while risk/resource scores (which need the advisor) are missing, then ranks and applies the <3.0 elimination rule.
 `python scripts/research.py search --query "..." --since YYYY-MM-DD --out <new-search-dir>` performs bounded Crossref discovery.
 `python scripts/corpus.py ingest <manifest.json> <new-corpus-dir>` extracts page text, but does not mark it read.

@@ -519,3 +519,24 @@ required_chain_directions。每个渠道记录 COMPLETE、ZERO_HITS 或 FAILED�
 按 SEARCH_GAP 修订检索式/数据库后再筛选；若身份或渠道有问题，显式转人工。
 即使 PASS，也只说明这些种子与声明的渠道被覆盖，不得宣称穷尽文献。
 ```
+
+## 31. 稿件已有、目标期刊未定：建立可审查短名单
+
+```text
+使用 research-mother，加载 modules/journal-matching.md。
+读取我的稿件或结构化摘要，先提取文章类型、主题、方法、最强结果和作者约束；
+没有稿件信息时先列缺口，不要直接报一串名刊。
+
+从稿件参考文献、近期相似论文和核心文献引文邻居建立候选池，记录每条查询的
+来源、时间、上限和命中数。对每个候选回到期刊官网核验 scope、文章类型，
+以及我声明的开放获取、费用、篇幅、周期或预印本政策约束。
+
+先运行：
+python scripts/journal_match.py init journal-match.json
+填写账本后运行：
+python scripts/journal_match.py check journal-match.json --out audit/journal-match.json
+
+按 strong_fit / plausible / stretch / blocked 交付，逐刊说明稿件特征对应的论文证据、
+官网事实、冲突和待确认项。只主动推荐 strong_fit；没有 strong 时告诉我需要补查什么。
+不要给录用概率，不要用影响因子或总排名替代适配判断，不要把检查器 PASS 写成“期刊适投”。
+```
