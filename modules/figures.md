@@ -354,6 +354,7 @@ python scripts/figures.py check <workspace>     # 校验全部图件，有阻断
 | 三类图齐全 | 必须有 roadmap 与 data；schematic 缺失时除非在 `schematic_not_needed_reason` 写明理由否则阻断 | 阻断 |
 | 数据图可复现链 | `source_data → script → outputs` 指向的文件必须真实存在，source_data 须在结果/输入登记目录 | 阻断 |
 | 矢量输出 | 每张图 outputs 至少一个 `.pdf/.svg/.eps` | 阻断 |
+| 可编辑语义对象 | roadmap/schematic 若提供 `editable_artifact`，源文件须在工作区，格式须为 SVG/drawio/PPTX，对象 ID 唯一且连接端点可解析；新骨架默认提供，旧清单缺失只警告 | 条件阻断 |
 | 无障碍配色 | palette 必须在登记名单（okabe-ito / tol-* / viridis / cividis / magma / plasma / inferno）；`jet/rainbow/hsv/gist_rainbow` 直接阻断 | 阻断 |
 | 冗余通道 | 系列数 >1 时 `colors.redundant_encoding` 必须是 marker shape / line style / hatching / direct label 之一 | 阻断 |
 | 系列数上限 | n_series > 6 判为应拆图 | 阻断 |
@@ -384,6 +385,26 @@ python scripts/figures.py check <workspace>     # 校验全部图件，有阻断
 `output_sha256` 要在人实际打开最终导出文件、完成逐图检查后计算。重新渲染、后期加字、压缩、
 替换任一输出或改变目标排版宽度都会使旧签名失效；此时必须按新的最终尺寸重新审图并更新记录，
 不能把旧的 `reviewed_by/reviewed_at` 沿用到新图。
+
+**路线图/示意图的可编辑对象结构：**
+
+```json
+"editable_artifact": {
+  "source": "figures/schematic.svg",
+  "format": "svg",
+  "objects": [
+    {"object_id": "input", "kind": "node"},
+    {"object_id": "method", "kind": "node"},
+    {"object_id": "input-to-method", "kind": "connector",
+     "source_id": "input", "target_id": "method"}
+  ]
+}
+```
+
+对象 `kind` 只接受 `node/group/label/connector`；同图 `object_id` 唯一并跨修订保持稳定，
+连接端点引用已登记对象。局部改图只改目标对象和必要连线，未涉及对象沿用原 ID。检查器只验证
+源文件、格式、ID 与端点，不比较版本几何，也不判断布局、连线语义或科学内容。为了不破坏既有
+工作区，旧清单没有 `editable_artifact` 时只发警告；一旦提供该对象，字段错误即阻断。
 
 **脚本明确不判的事**：它不测量 PDF/SVG 的真实物理尺寸，也不判断图好不好看、缩放后是否真可读、坐标轴是否正确、误差条含义是否恰当、图上数字与正文是否一致、有没有截轴夸大、箭头关系通不通——这些必须由人按本模块的检查清单逐项看过。脚本通过只代表"文件链完整、审查记录绑定当前文件与声明的最终宽度"，不代表图在科学上正确。P5 阶段还会被 `scripts/progress.py gate <workspace> P6` 复核（所有图 visual_review=passed、roadmap/schematic 齐全）。
 

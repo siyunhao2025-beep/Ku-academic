@@ -67,6 +67,9 @@ class InitManifestTests(unittest.TestCase):
         for fig in manifest["figures"]:
             self.assertIn("target_width_mm", fig)
             self.assertIn("reviewed_width_mm", fig["visual_review"])
+        diagrams = [fig for fig in manifest["figures"]
+                    if fig["type"] in ("roadmap", "schematic")]
+        self.assertTrue(all("editable_artifact" in fig for fig in diagrams))
 
 
 class DataFigureRuleTests(unittest.TestCase):
@@ -164,6 +167,7 @@ class SchematicRuleTests(unittest.TestCase):
     def setUp(self):
         self.tmp, self.ws = make_workspace()
         (self.ws / "figures/sch.pdf").write_text("x", encoding="utf-8")
+        (self.ws / "figures/sch.svg").write_text("<svg/>", encoding="utf-8")
 
     def tearDown(self):
         self.tmp.cleanup()
@@ -186,6 +190,35 @@ class SchematicRuleTests(unittest.TestCase):
         errors, _ = figures.check_one(self.ws,
                                       self._sch(True, "概念示意 Conceptual illustration"))
         self.assertEqual(errors, [], errors)
+
+    def test_editable_schematic_with_stable_objects_passes(self):
+        fig = self._sch(True, "概念示意 Conceptual illustration")
+        fig["editable_artifact"] = {
+            "source": "figures/sch.svg", "format": "svg",
+            "objects": [
+                {"object_id": "a", "kind": "node"},
+                {"object_id": "b", "kind": "node"},
+                {"object_id": "a-to-b", "kind": "connector",
+                 "source_id": "a", "target_id": "b"},
+            ],
+        }
+        errors, _ = figures.check_one(self.ws, fig)
+        self.assertEqual(errors, [], errors)
+
+    def test_duplicate_or_dangling_semantic_objects_are_rejected(self):
+        fig = self._sch(True, "概念示意 Conceptual illustration")
+        fig["editable_artifact"] = {
+            "source": "figures/sch.svg", "format": "svg",
+            "objects": [
+                {"object_id": "a", "kind": "node"},
+                {"object_id": "a", "kind": "node"},
+                {"object_id": "edge", "kind": "connector",
+                 "source_id": "a", "target_id": "missing"},
+            ],
+        }
+        errors, _ = figures.check_one(self.ws, fig)
+        self.assertTrue(any("ID 重复" in item for item in errors))
+        self.assertTrue(any("target_id" in item and "未指向" in item for item in errors))
 
 
 class MissingFileTests(unittest.TestCase):

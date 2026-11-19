@@ -48,6 +48,8 @@ VECTOR_SUFFIX = {".pdf", ".svg", ".eps"}
 MAX_SERIES = 6
 FINAL_SIZE_TOLERANCE_MM = 0.1
 CONCEPT_WORDS = ("概念示意", "概念图", "示意", "conceptual", "schematic", "illustration")
+EDITABLE_FIGURE_FORMATS = {"svg", "drawio", "pptx"}
+SEMANTIC_OBJECT_KINDS = {"node", "group", "label", "connector"}
 
 
 def load(path):
@@ -90,6 +92,15 @@ def cmd_init(ws):
         "figures": [
             {"id": "fig-roadmap", "type": "roadmap", "title": "", "version": "planned",
              "source_data": [], "script": "", "axes": {}, "colors": {},
+             "editable_artifact": {
+                 "source": "figures/roadmap.svg", "format": "svg",
+                 "objects": [
+                     {"object_id": "input", "kind": "node"},
+                     {"object_id": "method", "kind": "node"},
+                     {"object_id": "input-to-method", "kind": "connector",
+                      "source_id": "input", "target_id": "method"},
+                 ],
+             },
              "caption": "", "conceptual": False, "target_width_mm": None, "outputs": [],
              "visual_review": {"status": "pending", "reviewed_by": None,
                                "reviewed_at": None, "reviewed_width_mm": None,
@@ -97,6 +108,15 @@ def cmd_init(ws):
                                "notes": None}, "notes": ""},
             {"id": "fig-schematic", "type": "schematic", "title": "",
              "source_data": [], "script": "", "axes": {}, "colors": {},
+             "editable_artifact": {
+                 "source": "figures/schematic.svg", "format": "svg",
+                 "objects": [
+                     {"object_id": "component-a", "kind": "node"},
+                     {"object_id": "component-b", "kind": "node"},
+                     {"object_id": "a-to-b", "kind": "connector",
+                      "source_id": "component-a", "target_id": "component-b"},
+                 ],
+             },
              "caption": "概念示意（Conceptual illustration），非观测结果。",
              "conceptual": True, "target_width_mm": None, "outputs": [],
              "visual_review": {"status": "pending", "reviewed_by": None,
@@ -163,6 +183,66 @@ def _is_sha256(value):
 def _is_positive_number(value):
     return (isinstance(value, (int, float)) and not isinstance(value, bool)
             and math.isfinite(float(value)) and value > 0)
+
+
+def _check_editable_artifact(ws, fig):
+    """校验路线图/示意图的可选可编辑源与稳定语义对象。"""
+    errors, warnings = [], []
+    fid = fig.get("id", "<无id>")
+    artifact = fig.get("editable_artifact")
+    if artifact is None:
+        warnings.append(f"[{fid}] 缺 editable_artifact，无法检查局部对象级修订")
+        return errors, warnings
+    if not isinstance(artifact, dict):
+        errors.append(f"[{fid}] editable_artifact 应为对象")
+        return errors, warnings
+
+    source = artifact.get("source")
+    fmt = artifact.get("format")
+    if fmt not in EDITABLE_FIGURE_FORMATS:
+        errors.append(
+            f"[{fid}] editable_artifact.format 必须是 "
+            f"{sorted(EDITABLE_FIGURE_FORMATS)} 之一"
+        )
+    source_path = _resolved_file(ws, source)
+    if source_path is None:
+        errors.append(f"[{fid}] 可编辑源文件不存在或越出工作区：{source!r}")
+    elif fmt in EDITABLE_FIGURE_FORMATS and source_path.suffix.lower() != f".{fmt}":
+        errors.append(f"[{fid}] 可编辑源扩展名与 format={fmt!r} 不一致")
+
+    objects = artifact.get("objects")
+    if not isinstance(objects, list) or not objects:
+        errors.append(f"[{fid}] editable_artifact.objects 必须是非空列表")
+        return errors, warnings
+    object_ids = []
+    for obj in objects:
+        if not isinstance(obj, dict):
+            errors.append(f"[{fid}] semantic object 条目必须是对象")
+            continue
+        object_id = obj.get("object_id")
+        kind = obj.get("kind")
+        if not isinstance(object_id, str) or not object_id.strip():
+            errors.append(f"[{fid}] semantic object 缺稳定 object_id")
+            continue
+        object_ids.append(object_id)
+        if kind not in SEMANTIC_OBJECT_KINDS:
+            errors.append(f"[{fid}] 对象 {object_id!r} 的 kind={kind!r} 不合法")
+    duplicates = sorted({item for item in object_ids if object_ids.count(item) > 1})
+    if duplicates:
+        errors.append(f"[{fid}] semantic object ID 重复：{duplicates}")
+    known_ids = set(object_ids)
+    for obj in objects:
+        if not isinstance(obj, dict) or obj.get("kind") != "connector":
+            continue
+        object_id = obj.get("object_id")
+        for endpoint in ("source_id", "target_id"):
+            target = obj.get(endpoint)
+            if target not in known_ids:
+                errors.append(
+                    f"[{fid}] 连接对象 {object_id!r} 的 {endpoint}={target!r} "
+                    "未指向已登记对象"
+                )
+    return errors, warnings
 
 
 def check_one(ws, fig):
@@ -236,6 +316,9 @@ def check_one(ws, fig):
             errors.append(f"[{fid}] 尚未完成人眼视觉审查（visual_review.status != passed）")
 
     if ftype == "roadmap":
+        editable_errors, editable_warnings = _check_editable_artifact(ws, fig)
+        errors += editable_errors
+        warnings += editable_warnings
         if fig.get("version") not in ("planned", "actual"):
             warnings.append(f"[{fid}] roadmap 建议标 version=planned/actual")
         # 主路径/替代路径属于人眼判断，脚本只要求有 source_data 或 script 之一说明可复现
@@ -243,6 +326,9 @@ def check_one(ws, fig):
             warnings.append(f"[{fid}] roadmap 建议记录数据来源或绘制脚本，便于计划版/实际版比对")
 
     if ftype == "schematic":
+        editable_errors, editable_warnings = _check_editable_artifact(ws, fig)
+        errors += editable_errors
+        warnings += editable_warnings
         text = f"{fig.get('caption','')} {fig.get('notes','')}".lower()
         if not fig.get("conceptual") or not any(w.lower() in text for w in CONCEPT_WORDS):
             errors.append(f"[{fid}] 示意图必须 conceptual=true 且图注/notes 标明“概念示意/Conceptual”，"
