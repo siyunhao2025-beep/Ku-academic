@@ -50,6 +50,7 @@ FINAL_SIZE_TOLERANCE_MM = 0.1
 CONCEPT_WORDS = ("概念示意", "概念图", "示意", "conceptual", "schematic", "illustration")
 EDITABLE_FIGURE_FORMATS = {"svg", "drawio", "pptx"}
 SEMANTIC_OBJECT_KINDS = {"node", "group", "label", "connector"}
+CONTENT_DISPOSITIONS = {"retained", "merged", "omitted"}
 
 
 def load(path):
@@ -100,6 +101,17 @@ def cmd_init(ws):
                      {"object_id": "input-to-method", "kind": "connector",
                       "source_id": "input", "target_id": "method"},
                  ],
+                 "content_ledger": {
+                     "source_object_ids": ["input", "method", "input-to-method"],
+                     "entries": [
+                         {"source_id": "input", "action": "retained",
+                          "target_id": "input"},
+                         {"source_id": "method", "action": "retained",
+                          "target_id": "method"},
+                         {"source_id": "input-to-method", "action": "retained",
+                          "target_id": "input-to-method"},
+                     ],
+                 },
              },
              "caption": "", "conceptual": False, "target_width_mm": None, "outputs": [],
              "visual_review": {"status": "pending", "reviewed_by": None,
@@ -116,6 +128,17 @@ def cmd_init(ws):
                      {"object_id": "a-to-b", "kind": "connector",
                       "source_id": "component-a", "target_id": "component-b"},
                  ],
+                 "content_ledger": {
+                     "source_object_ids": ["component-a", "component-b", "a-to-b"],
+                     "entries": [
+                         {"source_id": "component-a", "action": "retained",
+                          "target_id": "component-a"},
+                         {"source_id": "component-b", "action": "retained",
+                          "target_id": "component-b"},
+                         {"source_id": "a-to-b", "action": "retained",
+                          "target_id": "a-to-b"},
+                     ],
+                 },
              },
              "caption": "概念示意（Conceptual illustration），非观测结果。",
              "conceptual": True, "target_width_mm": None, "outputs": [],
@@ -242,6 +265,66 @@ def _check_editable_artifact(ws, fig):
                     f"[{fid}] 连接对象 {object_id!r} 的 {endpoint}={target!r} "
                     "未指向已登记对象"
                 )
+
+    ledger = artifact.get("content_ledger")
+    if ledger is None:
+        warnings.append(f"[{fid}] 缺 content_ledger，无法检查图件压缩是否静默丢失对象")
+        return errors, warnings
+    if not isinstance(ledger, dict):
+        errors.append(f"[{fid}] content_ledger 应为对象")
+        return errors, warnings
+
+    source_ids = ledger.get("source_object_ids")
+    entries = ledger.get("entries")
+    if (not isinstance(source_ids, list) or not source_ids
+            or any(not isinstance(item, str) or not item.strip() for item in source_ids)):
+        errors.append(f"[{fid}] content_ledger.source_object_ids 应为非空字符串列表")
+        return errors, warnings
+    duplicate_sources = sorted({item for item in source_ids if source_ids.count(item) > 1})
+    if duplicate_sources:
+        errors.append(f"[{fid}] content_ledger 源对象 ID 重复：{duplicate_sources}")
+    if not isinstance(entries, list):
+        errors.append(f"[{fid}] content_ledger.entries 应为列表")
+        return errors, warnings
+
+    source_set = set(source_ids)
+    accounted = []
+    for entry in entries:
+        if not isinstance(entry, dict):
+            errors.append(f"[{fid}] content_ledger 处置条目应为对象")
+            continue
+        source_id = entry.get("source_id")
+        action = entry.get("action")
+        if not isinstance(source_id, str) or not source_id.strip():
+            errors.append(f"[{fid}] content_ledger 处置条目缺 source_id")
+            continue
+        accounted.append(source_id)
+        if source_id not in source_set:
+            errors.append(f"[{fid}] content_ledger 引用了未登记源对象 {source_id!r}")
+        if action not in CONTENT_DISPOSITIONS:
+            errors.append(f"[{fid}] 源对象 {source_id!r} 的 action={action!r} 不合法")
+            continue
+        if action in ("retained", "merged"):
+            target_id = entry.get("target_id")
+            if target_id not in known_ids:
+                errors.append(f"[{fid}] 源对象 {source_id!r} 的 target_id={target_id!r} 未登记")
+            if action == "merged" and not str(entry.get("reason") or "").strip():
+                errors.append(f"[{fid}] 合并源对象 {source_id!r} 必须写 reason")
+        else:
+            if not str(entry.get("reason") or "").strip():
+                errors.append(f"[{fid}] 省略源对象 {source_id!r} 必须写 reason")
+            evidence_bearing = entry.get("evidence_bearing")
+            if not isinstance(evidence_bearing, bool):
+                errors.append(f"[{fid}] 省略源对象 {source_id!r} 必须声明布尔 evidence_bearing")
+            elif evidence_bearing and entry.get("author_approved") is not True:
+                errors.append(f"[{fid}] 省略承载证据的对象 {source_id!r} 必须 author_approved=true")
+
+    duplicate_entries = sorted({item for item in accounted if accounted.count(item) > 1})
+    if duplicate_entries:
+        errors.append(f"[{fid}] content_ledger 重复处置源对象：{duplicate_entries}")
+    missing = sorted(source_set - set(accounted))
+    if missing:
+        errors.append(f"[{fid}] content_ledger 未处置源对象：{missing}")
     return errors, warnings
 
 

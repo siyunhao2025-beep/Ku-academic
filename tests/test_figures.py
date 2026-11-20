@@ -70,6 +70,8 @@ class InitManifestTests(unittest.TestCase):
         diagrams = [fig for fig in manifest["figures"]
                     if fig["type"] in ("roadmap", "schematic")]
         self.assertTrue(all("editable_artifact" in fig for fig in diagrams))
+        self.assertTrue(all("content_ledger" in fig["editable_artifact"]
+                            for fig in diagrams))
 
 
 class DataFigureRuleTests(unittest.TestCase):
@@ -201,6 +203,17 @@ class SchematicRuleTests(unittest.TestCase):
                 {"object_id": "a-to-b", "kind": "connector",
                  "source_id": "a", "target_id": "b"},
             ],
+            "content_ledger": {
+                "source_object_ids": ["raw-a", "a", "b", "a-to-b"],
+                "entries": [
+                    {"source_id": "raw-a", "action": "merged", "target_id": "a",
+                     "reason": "原始输入与预处理在总览图中承担同一职责。"},
+                    {"source_id": "a", "action": "retained", "target_id": "a"},
+                    {"source_id": "b", "action": "retained", "target_id": "b"},
+                    {"source_id": "a-to-b", "action": "retained",
+                     "target_id": "a-to-b"},
+                ],
+            },
         }
         errors, _ = figures.check_one(self.ws, fig)
         self.assertEqual(errors, [], errors)
@@ -219,6 +232,34 @@ class SchematicRuleTests(unittest.TestCase):
         errors, _ = figures.check_one(self.ws, fig)
         self.assertTrue(any("ID 重复" in item for item in errors))
         self.assertTrue(any("target_id" in item and "未指向" in item for item in errors))
+
+    def test_silent_or_unapproved_content_omissions_are_rejected(self):
+        fig = self._sch(True, "概念示意 Conceptual illustration")
+        fig["editable_artifact"] = {
+            "source": "figures/sch.svg", "format": "svg",
+            "objects": [{"object_id": "a", "kind": "node"}],
+            "content_ledger": {
+                "source_object_ids": ["a", "evidence-panel", "unaccounted"],
+                "entries": [
+                    {"source_id": "a", "action": "retained", "target_id": "a"},
+                    {"source_id": "evidence-panel", "action": "omitted",
+                     "evidence_bearing": True, "reason": "总览图空间不足。"},
+                ],
+            },
+        }
+        errors, _ = figures.check_one(self.ws, fig)
+        self.assertTrue(any("author_approved=true" in item for item in errors))
+        self.assertTrue(any("unaccounted" in item for item in errors))
+
+    def test_legacy_editable_figure_without_ledger_keeps_compatibility_warning(self):
+        fig = self._sch(True, "概念示意 Conceptual illustration")
+        fig["editable_artifact"] = {
+            "source": "figures/sch.svg", "format": "svg",
+            "objects": [{"object_id": "a", "kind": "node"}],
+        }
+        errors, warnings = figures.check_one(self.ws, fig)
+        self.assertEqual(errors, [], errors)
+        self.assertTrue(any("content_ledger" in item for item in warnings))
 
 
 class MissingFileTests(unittest.TestCase):
