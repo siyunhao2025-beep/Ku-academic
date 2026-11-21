@@ -33,7 +33,9 @@ RELATION_MAP = {
 
 # 卡片里需要人填的关键字段（完整度判定）
 REQUIRED = ["research_question", "core_conclusion", "data_methods",
-            "key_results", "claim_strength", "relation", "doubts"]
+            "key_results", "key_result_locators", "access_level", "read_scope",
+            "claim_strength", "relation", "doubts"]
+GENERIC_LOCATORS = {"全文", "full text", "full_text", "精读卡片", "reading_card", "见精读卡片"}
 
 
 def load(path, default=None):
@@ -70,8 +72,10 @@ def cmd_card(ws, a):
         "id": None, "title": a.title or "", "first_author": a.author or "",
         "year": a.year, "journal": a.journal or "", "doi": a.doi or "",
         "pdf": a.file or "",
+        "access_level": "", "read_scope": "",
         "research_question": "", "hypothesis": "", "data_methods": "",
-        "key_results": [], "claim_strength": "", "relation": "",
+        "key_results": [], "key_result_locators": [],
+        "claim_strength": "", "relation": "",
         "doubts": "", "unclear_terms": [],
         "pass1_birdview": {"relevant": "", "decision": ""},
         "pass3_critique": {"assumptions": "", "confounds": "", "avoided": "", "my_take": ""},
@@ -92,13 +96,18 @@ def cmd_card(ws, a):
 - 处置（精读 / 泛读 / 跳过）：
 
 ## 第二遍 · 拆解（1-2 小时，逐节填）
+- **实际访问级别** ❗（核心精读只能填 `full_text`；只读摘要不能升级成核心精读）：
+- **实际阅读范围** ❗（正文/附录/补充材料分别写清，未获得的也写明）：
 - **研究问题** ❗（具体到"什么条件下、什么量、和什么的关系"）：
 - **核心假设**（作者预期什么）：
 - **数据与方法** ❗（仪器/样本量/时间范围/分析方法）：
-- **关键结果** ❗（最多3条，每条必须带具体数字）：
-  1.
-  2.
-  3.
+- **关键结果** ❗（最多3条，每条必须带具体数字，并给出原文页/节/图/表定位）：
+  1. 结果：
+     - 定位：
+  2. 结果：
+     - 定位：
+  3. 结果：
+     - 定位：
 - **结论强度** ❗（三选一，在前面 [ ] 里填 x，不许混）：
   - [ ] 观测事实（我们看到了X）
   - [ ] 统计关联（X和Y相关）
@@ -143,14 +152,24 @@ def parse_card(p: Path):
                              ("支持我的假设", "反对我的假设", "条件不同，不能直接比", "方法可以参考")):
             if mark[0].lower() == "x":
                 meta["relation"] = key
-    # 关键结果：数"1. 2. 3."后面非空的行
-    kr = re.search(r"关键结果.*?\n((?:\s*\d\.[^\n]*\n){1,3})", text, re.S)
-    if kr:
-        items = [re.sub(r"^\s*\d\.\s*", "", x).strip()
-                 for x in kr.group(1).splitlines()]
-        items = [x for x in items if x]
-        if items:
-            meta["key_results"] = items
+    # 新卡片把每条关键结果和原文定位成对记录；旧卡片仍能读出结果，但会因缺定位而被拦截。
+    pairs = re.findall(
+        r"^\s*\d+\.\s*结果[：:]\s*(.*?)\s*\r?\n\s*-\s*定位[：:]\s*(.*?)\s*$",
+        text,
+        re.M,
+    )
+    pairs = [(result.strip(), locator.strip()) for result, locator in pairs if result.strip()]
+    if pairs:
+        meta["key_results"] = [result for result, _ in pairs]
+        meta["key_result_locators"] = [locator for _, locator in pairs]
+    else:
+        kr = re.search(r"关键结果.*?\n((?:\s*\d\.[^\n]*\n){1,3})", text, re.S)
+        if kr:
+            items = [re.sub(r"^\s*\d\.\s*", "", x).strip()
+                     for x in kr.group(1).splitlines()]
+            items = [x for x in items if x]
+            if items:
+                meta["key_results"] = items
     # 自由文本字段：取同一行冒号后内容（[ \t] 不跨行，避免吃到下一行标签）
     def after(label):
         mm = re.search(re.escape(label) + r"[^：\n]*：[ \t]*([^\n]*)", text)
@@ -158,6 +177,8 @@ def parse_card(p: Path):
     meta["research_question"] = after("**研究问题**") or meta.get("research_question", "")
     meta["core_conclusion"] = after("一句话核心结论") or meta.get("core_conclusion", "")
     meta["data_methods"] = after("**数据与方法**") or meta.get("data_methods", "")
+    meta["access_level"] = after("**实际访问级别**") or meta.get("access_level", "")
+    meta["read_scope"] = after("**实际阅读范围**") or meta.get("read_scope", "")
     meta["doubts"] = after("**存疑的地方**") or meta.get("doubts", "")
     return meta
 
@@ -173,8 +194,20 @@ def completeness(meta):
     kr = meta.get("key_results") or []
     if not kr:
         missing.append("关键结果（至少1条且带数字）")
-    elif not any(re.search(r"\d", str(x)) for x in kr):
+    elif any(not re.search(r"\d", str(x)) for x in kr):
         missing.append("关键结果必须带具体数字")
+    locators = meta.get("key_result_locators") or []
+    if not locators:
+        missing.append("关键结果定位（每条对应页/节/图/表）")
+    elif (not isinstance(locators, list) or len(locators) != len(kr)
+          or any(not isinstance(x, str) or not x.strip() for x in locators)):
+        missing.append("每条关键结果必须有一一对应的页/节/图/表定位")
+    elif any(x.strip().lower() in GENERIC_LOCATORS for x in locators):
+        missing.append("关键结果定位不能只写“全文”或“精读卡片”")
+    if meta.get("access_level") != "full_text":
+        missing.append("核心精读必须明确记录 access_level=full_text")
+    if not meta.get("read_scope"):
+        missing.append("实际阅读范围（正文/附录/补充材料）")
     if meta.get("claim_strength") not in STRENGTH_MAP:
         missing.append("结论强度三选一")
     if meta.get("relation") not in RELATION_MAP:
@@ -263,8 +296,10 @@ def cmd_sync(ws):
             "source": m.get("doi") or m.get("pdf") or m.get("title"),
             "title": m.get("title"), "first_author": m.get("first_author"),
             "year": m.get("year"), "journal": m.get("journal"), "doi": m.get("doi"),
-            "locator": "精读卡片，见 reading_card",
-            "evidence_level": "full_text",
+            "locator": "; ".join(m["key_result_locators"]),
+            "evidence_level": m["access_level"],
+            "read_scope": m["read_scope"],
+            "result_locators": m["key_result_locators"],
             "is_core_reading": True,
             "reading_card": m["_file"],
             "claim": m.get("core_conclusion"),

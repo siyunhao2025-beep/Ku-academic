@@ -29,7 +29,7 @@
 |---|---|---|
 | 准备清单 `prep-checklist.md` | 全部勾选 | 工具/环境/数据访问/账号逐项落实，不是写了就算 |
 | 领域地图 `domain-map.md` | 实质内容（≥200 字） | 基于 3–5 篇综述梳理，不是空标题 |
-| 精读卡片 | ≥ 2 篇且字段完整 | 用 `reading.py check` 校验；没填卡片只算"下载过" |
+| 精读卡片 | ≥ 2 篇且字段完整 | `reading.py check` 要求实际全文、阅读范围及每条数字结果的页/节/图/表定位；摘要卡或无定位卡只算"下载过" |
 | 研究计划 `plan.md` | 含时间里程碑 | 3 个月计划，能说出第一个小结果什么时候出 |
 
 **Gate 0 不考知识量，只考"有没有带着地图和问题上路"。** 卡片可由 `reading.py card` 生成、`check` 校验、`sync` 同步进 evidence.json。
@@ -132,7 +132,7 @@
 - [ ] 高风险错配数量为 0
 - [ ] 定量/机制句访问级别达标（`scripts/access.py check` 无阻断，`audit/access-report.json` 留档）
 - [ ] 线路图与示意图已产出（或已在 `schematic_not_needed_reason` 说明为何不需要）
-- [ ] 数据图全部经人工视觉审查（`scripts/figures.py check` 无阻断，每张图 `visual_review.status=passed` 且有署名/时间）
+- [ ] 数据图全部经人工视觉审查（`scripts/figures.py check` 无阻断，每张图 `visual_review.status=passed` 且有署名/时间，审阅宽度与稿件最终排版宽度一致）
 - [ ] 若中途改过上一阶段产物，`scripts/impact.py analyze` 的受影响下游均已重做并重过闸门
 - [ ] 降 AI 自查第一层全过（见 `assets/deai-checklist.md`）
 - [ ] AI 辅助披露已按期刊要求处理
@@ -271,7 +271,7 @@
 
 `metadata_only` 只能支撑 `background`/`bibliographic` 层句子；用 `metadata_only`/`abstract_only` 写定量数字或机制因果属于不通过。达不到时只允许两条合法出路：获取合法全文（`scripts/access.py resolve` 走 Unpaywall 的出版社/机构库/作者自存档，禁用盗版），或把句子**显式降级并改写**。由 `scripts/access.py check` 逐条校验，报告写入 `audit/access-report.json`。
 
-**精读卡片联动**：三遍法精读的核心文献由 `scripts/reading.py sync` 写入，带 `is_core_reading: true`、`reading_card`（卡片路径）、`evidence_level: full_text`、`relation_to_my_work`（`SUPPORTS / CONTRADICTS_MY_HYPOTHESIS / CONDITION_MISMATCH / METHOD_REFERENCE`），`claim_level` 由卡片勾选的结论强度（观测事实/统计关联/机制假设）映射。**精读不等于核验**：同步后 `citation_verdict` 仍为 `UNRESOLVED`、`support_status` 为空，必须再跑身份与支持两道核验才能计入 Gate 2。
+**精读卡片联动**：三遍法精读的核心文献只有在显式记录 `access_level: full_text`、正文/附录/补充材料的实际 `read_scope`，并为每条关键数字提供页/节/图/表定位后，才由 `scripts/reading.py sync` 写入。条目带 `is_core_reading: true`、`reading_card`（卡片路径）、实际 `locator` / `result_locators`、`evidence_level: full_text`、`relation_to_my_work`（`SUPPORTS / CONTRADICTS_MY_HYPOTHESIS / CONDITION_MISMATCH / METHOD_REFERENCE`）；`claim_level` 由卡片勾选的结论强度映射。**精读不等于核验**：同步后 `citation_verdict` 仍为 `UNRESOLVED`、`support_status` 为空，必须再跑身份与支持两道核验才能计入 Gate 2。
 
 ### `design.json`（P3）
 
@@ -348,9 +348,13 @@
       "uncertainty": {"type": "SD", "sampling_unit": "per <independent unit>"},
       "caption": "...",
       "conceptual": false,
+      "target_width_mm": 85.0,
       "outputs": ["figures/fig1.pdf", "figures/fig1.png"],
       "visual_review": {"status": "passed", "reviewed_by": "署名",
-                        "reviewed_at": "ISO-8601", "notes": "..."},
+                        "reviewed_at": "ISO-8601", "reviewed_width_mm": 85.0,
+                        "output_sha256": {"figures/fig1.pdf": "<sha256>",
+                                          "figures/fig1.png": "<sha256>"},
+                        "notes": "..."},
       "notes": ""
     }
   ]
@@ -359,8 +363,14 @@
 
 - `type` ∈ `{roadmap, schematic, data}`；roadmap 与 data 必须有，schematic 缺失时 `schematic_not_needed_reason` 必须写明理由。
 - 数据图 `colors.palette` 必须在无障碍名单（okabe-ito / tol-* / viridis / cividis / magma / plasma / inferno），禁用 jet/rainbow；`n_series>1` 必须有 `redundant_encoding`，`n_series>6` 判拆图；schematic 必须 `conceptual=true` 且图注含"概念示意/Conceptual"。
-- `visual_review` 是对象而非字符串：`status=passed` 必须同时有 `reviewed_by` 与 `reviewed_at`。**人眼确认不能由文件存在推断**；脚本只校验审查证据是否齐全，不替代看图。
+- `visual_review` 是对象而非字符串：`status=passed` 必须同时有 `reviewed_by` 与 `reviewed_at`；正数 `reviewed_width_mm` 必须与图件正数 `target_width_mm` 在 0.1 mm 内一致，并用 `output_sha256` 绑定当前文件。**人眼确认不能由文件存在推断**；脚本不测量真实物理尺寸，也不替代最终尺寸下的逐图检查。
 - 上述机器可判项由 `python scripts/figures.py check <workspace>` 硬执行（规则全文见 `modules/figures.md` 第八节）。
+
+### `audit/availability.json`（P6）
+
+先用 `scripts/availability.py init` 建清单，填入真实的数据与代码路线，再用 `check` 生成审计。P6 只接受 `status=PASS` 且 `blockers=[]`。公开材料必须有具体定位、持久标识、访问条件和带执行者/时区的未登录检查；受限材料必须有原因、申请路径、条件和路径检查；文内材料必须有精确位置；不适用必须有具体理由。
+
+`claims_fully_reproducible=true` 还要求非作者独立复跑记录。脚本只校验所声明的记录，不联网证明入口、许可、文件内容或科学复现。详细契约见 `modules/submission-availability.md`。
 
 ---
 
