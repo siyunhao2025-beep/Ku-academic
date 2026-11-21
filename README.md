@@ -246,6 +246,9 @@ macOS / Linux：
 `budget / patience / min-new`，停止只表示达到工程控制条件，不表示已经穷尽文献；字段与判定
 语义见 [文献模块](modules/literature.md)。
 
+多来源检索可先用 `scripts/research.py source-coverage` 核对计划来源与实际结果，明确区分命中、
+成功零命中、部分成功、失败和有理由跳过；这项执行审计不等于证明检索完整或文献支持当前主张。
+
 已有已知关键研究时，可用 `scripts/research.py seed-coverage` 核验“种子是否找回”以及项目声明的
 向后/向前引文链是否完成。它把身份待核验、检索失败、零命中和未运行渠道分开，不把种子测试
 通过写成“文献已穷尽”；账本格式与五种判定同样见 [文献模块](modules/literature.md)。

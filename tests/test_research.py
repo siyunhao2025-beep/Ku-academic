@@ -123,6 +123,80 @@ class CoreTests(unittest.TestCase):
         self.assertEqual(domain['learned_capability_cards'], [])
 
 
+class SourceCoverageTests(unittest.TestCase):
+    def payload(self):
+        return {
+            'planned_sources': ['crossref', 'openalex'],
+            'sources': [
+                {
+                    'source': 'crossref',
+                    'status': 'SUCCEEDED',
+                    'queries': ['synthetic topic'],
+                    'retrieved_at': '2026-11-21T02:00:00+00:00',
+                    'result_count': 4,
+                    'truncated': False,
+                },
+                {
+                    'source': 'openalex',
+                    'status': 'ZERO_HITS',
+                    'queries': ['synthetic topic'],
+                    'retrieved_at': '2026-11-21T02:01:00+00:00',
+                    'result_count': 0,
+                    'truncated': False,
+                },
+            ],
+        }
+
+    def test_zero_hits_is_a_successful_query_not_a_failure(self):
+        out = r.assess_source_coverage(self.payload())
+        self.assertEqual(out['decision'], 'COMPLETE')
+        self.assertEqual(out['succeeded_sources'], ['crossref', 'openalex'])
+        self.assertEqual(out['zero_hit_sources'], ['openalex'])
+        self.assertEqual(out['failed_sources'], [])
+        self.assertFalse(out['exhaustiveness_claim_allowed'])
+
+    def test_failed_and_missing_sources_stay_visible(self):
+        payload = self.payload()
+        payload['sources'][1] = {
+            'source': 'openalex',
+            'status': 'FAILED',
+            'queries': ['synthetic topic'],
+            'retrieved_at': '2026-11-21T02:01:00+00:00',
+            'errors': ['HTTP 429'],
+        }
+        self.assertEqual(r.assess_source_coverage(payload)['decision'],
+                         'AUTHOR_ACTION_REQUIRED')
+
+        payload['sources'].pop()
+        out = r.assess_source_coverage(payload)
+        self.assertEqual(out['decision'], 'INCOMPLETE')
+        self.assertEqual(out['missing_sources'], ['openalex'])
+
+    def test_invalid_zero_hit_count_and_duplicate_source_are_rejected(self):
+        payload = self.payload()
+        payload['sources'][1]['result_count'] = 1
+        with self.assertRaises(ValueError):
+            r.assess_source_coverage(payload)
+
+        payload = self.payload()
+        payload['sources'].append(copy.deepcopy(payload['sources'][0]))
+        with self.assertRaises(ValueError):
+            r.assess_source_coverage(payload)
+
+    def test_cli_writes_a_new_source_coverage_audit(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            ledger = root / 'source-ledger.json'
+            output = root / 'source-coverage.json'
+            r.write(ledger, self.payload())
+            self.assertEqual(r.main(['source-coverage', '--ledger', str(ledger),
+                                     '--out', str(output)]), 0)
+            self.assertEqual(r.read(output)['decision'], 'COMPLETE')
+            with patch('sys.stderr', io.StringIO()):
+                self.assertEqual(r.main(['source-coverage', '--ledger', str(ledger),
+                                         '--out', str(output)]), 2)
+
+
 class SearchTests(unittest.TestCase):
     def test_paging_and_dedup(self):
         replies = iter([{'message': {'items': [{'DOI': '10.1/A'}, {'DOI': '10.1/B'}], 'next-cursor': 'opaque'}},

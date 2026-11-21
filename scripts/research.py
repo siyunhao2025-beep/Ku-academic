@@ -176,6 +176,113 @@ def search(query, since, until, output, pages=2, rows=50, mode="published", fetc
     return report
 
 
+def assess_source_coverage(payload):
+    """Audit declared literature-source outcomes without claiming completeness."""
+    if not isinstance(payload, dict):
+        raise ValueError("source coverage ledger must be an object")
+    planned = payload.get("planned_sources")
+    sources = payload.get("sources")
+    if not isinstance(planned, list) or not planned or not all(
+            isinstance(source, str) and source.strip() for source in planned):
+        raise ValueError("planned_sources must be a non-empty array of source names")
+    if len(set(planned)) != len(planned):
+        raise ValueError("planned_sources must be unique")
+    if not isinstance(sources, list):
+        raise ValueError("sources must be an array")
+
+    allowed = {"SUCCEEDED", "ZERO_HITS", "PARTIAL", "FAILED", "SKIPPED"}
+    by_source = {}
+    for index, record in enumerate(sources):
+        if not isinstance(record, dict):
+            raise ValueError(f"source record {index} must be an object")
+        source = record.get("source")
+        if source not in planned:
+            raise ValueError(f"source record {index} is not declared in planned_sources")
+        if source in by_source:
+            raise ValueError(f"duplicate source record: {source}")
+        status = record.get("status")
+        if status not in allowed:
+            raise ValueError(f"source {source} has an invalid status")
+        queries = record.get("queries")
+        if not isinstance(queries, list) or not queries or not all(
+                isinstance(query, str) and query.strip() for query in queries):
+            raise ValueError(f"source {source} needs non-empty queries")
+        _aware_datetime(record.get("retrieved_at"), f"source {source} retrieved_at")
+
+        if status in {"SUCCEEDED", "ZERO_HITS", "PARTIAL"}:
+            count = record.get("result_count")
+            if not isinstance(count, int) or isinstance(count, bool) or count < 0:
+                raise ValueError(f"source {source} needs a non-negative result_count")
+            if not isinstance(record.get("truncated"), bool):
+                raise ValueError(f"source {source} needs a boolean truncated flag")
+            if status == "SUCCEEDED" and count == 0:
+                raise ValueError(f"source {source} with zero results must use ZERO_HITS")
+            if status == "ZERO_HITS" and count != 0:
+                raise ValueError(f"source {source} ZERO_HITS must have result_count 0")
+        if status in {"PARTIAL", "FAILED"}:
+            errors = record.get("errors")
+            if not isinstance(errors, list) or not errors or not all(
+                    isinstance(error, str) and error.strip() for error in errors):
+                raise ValueError(f"source {source} {status} needs visible errors")
+        if status == "SKIPPED" and not (
+                isinstance(record.get("reason"), str) and record["reason"].strip()):
+            raise ValueError(f"source {source} SKIPPED needs a reason")
+        by_source[source] = record
+
+    missing = [source for source in planned if source not in by_source]
+    attempted = [source for source in planned if source in by_source
+                 and by_source[source]["status"] != "SKIPPED"]
+    succeeded = [source for source in planned if source in by_source
+                 and by_source[source]["status"] in {"SUCCEEDED", "ZERO_HITS"}]
+    zero_hits = [source for source in planned if source in by_source
+                 and by_source[source]["status"] == "ZERO_HITS"]
+    partial = [source for source in planned if source in by_source
+               and by_source[source]["status"] == "PARTIAL"]
+    failed = [source for source in planned if source in by_source
+              and by_source[source]["status"] == "FAILED"]
+    skipped = [source for source in planned if source in by_source
+               and by_source[source]["status"] == "SKIPPED"]
+
+    if missing:
+        decision = "INCOMPLETE"
+        reason = "one or more planned sources have no outcome record"
+    elif failed:
+        decision = "AUTHOR_ACTION_REQUIRED"
+        reason = "one or more planned sources failed"
+    elif partial or skipped:
+        decision = "LIMITS_RECORDED"
+        reason = "every planned source has an outcome, with explicit partial or skipped limits"
+    else:
+        decision = "COMPLETE"
+        reason = "every planned source has a successful or zero-hit outcome"
+    return {
+        "decision": decision,
+        "reason": reason,
+        "planned_sources": planned,
+        "attempted_sources": attempted,
+        "succeeded_sources": succeeded,
+        "zero_hit_sources": zero_hits,
+        "partial_sources": partial,
+        "failed_sources": failed,
+        "skipped_sources": skipped,
+        "missing_sources": missing,
+        "exhaustiveness_claim_allowed": False,
+        "important_limit": (
+            "This audit distinguishes actual source outcomes; it does not prove "
+            "search completeness, study eligibility, evidence quality, or citation support."
+        ),
+    }
+
+
+def source_coverage(ledger, output):
+    out = Path(output)
+    if out.exists():
+        raise FileExistsError("Use a new output path to preserve previous source-coverage decisions")
+    result = assess_source_coverage(read(ledger))
+    write(out, result)
+    return result
+
+
 def assess_search_progress(rounds, budget, patience, min_new):
     """Apply a bounded, evidence-matrix-aware stopping rule to search rounds.
 
@@ -990,6 +1097,9 @@ def main(argv=None):
     sp.add_argument("--budget", type=int, required=True)
     sp.add_argument("--patience", type=int, required=True)
     sp.add_argument("--min-new", type=int, required=True)
+    cv = sub.add_parser("source-coverage")
+    cv.add_argument("--ledger", required=True)
+    cv.add_argument("--out", required=True)
     sc = sub.add_parser("seed-coverage")
     sc.add_argument("--ledger", required=True)
     sc.add_argument("--out", required=True)
@@ -1022,6 +1132,8 @@ def main(argv=None):
             result = search(args.query, args.since, args.until, args.out, args.pages, args.rows, args.mode)
         elif args.command == "search-progress":
             result = search_progress(args.ledger, args.out, args.budget, args.patience, args.min_new)
+        elif args.command == "source-coverage":
+            result = source_coverage(args.ledger, args.out)
         elif args.command == "seed-coverage":
             result = seed_coverage(args.ledger, args.out)
         elif args.command == "screening-round":
@@ -1044,7 +1156,7 @@ def main(argv=None):
             result_state = result.get("decision")
         return 2 if result_state in {
             "fail", "stale", "error", "BLOCKED", "AUTHOR_ACTION_REQUIRED",
-            "IDENTITY_REVIEW_REQUIRED",
+            "IDENTITY_REVIEW_REQUIRED", "INCOMPLETE",
         } else 0
     except Exception as exc:
         print(json.dumps({"status": "error", "type": type(exc).__name__, "message": str(exc)}, ensure_ascii=False), file=sys.stderr)

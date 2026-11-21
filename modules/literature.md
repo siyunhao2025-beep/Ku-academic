@@ -12,6 +12,21 @@
 
 输出：候选列表、纳入/排除理由、证据矩阵、与现稿的关系。只有确有贡献的论文进入 supplementation；其余写“无需修改正文”即可。检索失败与零命中分开报告。
 
+## 多来源执行账本
+
+在多库检索前先列出 `planned_sources`；完成后为每个来源保留唯一结果记录，状态只能是
+`SUCCEEDED / ZERO_HITS / PARTIAL / FAILED / SKIPPED`。记录实际查询、带时区的检索时间；成功、
+零命中和部分成功还要记录结果数与是否截断，部分成功/失败必须保留错误，跳过必须说明原因。
+
+```bash
+python scripts/research.py source-coverage --ledger audit/source-ledger.json \
+  --out audit/source-coverage.json
+```
+
+`COMPLETE` 表示每个计划来源都有成功或零命中记录；`LIMITS_RECORDED` 表示部分成功或有理由跳过；
+`INCOMPLETE` 表示计划来源缺少结果；`AUTHOR_ACTION_REQUIRED` 表示至少一个来源失败。它只审计执行
+口径，不联网补查，不判断纳入资格、证据质量或引用支持，也不允许据此声称检索穷尽。
+
 ## 种子文献覆盖与引文链审计
 
 当团队已经知道 3–5 篇应被检索策略找回的关键研究时，先核验其 DOI、PMID 或题名身份，再把
