@@ -39,6 +39,18 @@ PASS_THRESHOLD = 28
 DISAGREEMENT_SPREAD = 7
 MIN_SCIENCE_FINDINGS = 3
 
+REVIEW_INPUTS = [
+    ("manuscript", "当前完整稿件"),
+    ("journal_scope", "目标期刊范围与文章类型"),
+    ("citation_audit", "引用身份与句子支持审计"),
+    ("claim_evidence", "主张—证据审计"),
+    ("figure_table", "图表审计"),
+    ("methods_reporting_compliance", "方法、报告与合规审计"),
+    ("reproducibility", "数据、代码与复现材料"),
+]
+REQUIRED_REVIEW_INPUTS = tuple(item_id for item_id, _ in REVIEW_INPUTS)
+REVIEW_COVERAGE_STATUSES = ("REVIEWED", "PARTIAL", "MISSING", "SKIPPED")
+
 SEVERITIES = ("blocker", "major", "minor", "positive")
 FINDING_KINDS = ("science", "format")
 STATUSES = ("open", "resolved", "author_decision")
@@ -71,6 +83,15 @@ PERSONAS = {
     },
 }
 DEFAULT_PANEL = ["handling-editor", "domain-expert", "methods-reviewer", "skeptical-reviewer"]
+
+
+def _default_review_coverage():
+    return [{
+        "input_id": input_id,
+        "status": "MISSING",
+        "evidence_locator": "",
+        "reason": "not yet reviewed",
+    } for input_id in REQUIRED_REVIEW_INPUTS]
 
 
 def build_panel(manuscript, reviewers=None, context=""):
@@ -108,6 +129,7 @@ def build_panel(manuscript, reviewers=None, context=""):
             "verdict": "not_scored",
             "findings": [],
         } for rid in ids],
+        "review_coverage": _default_review_coverage(),
         "panel_verdict": "INCOMPLETE",
         "verdict_reason": "no reviewer has been scored yet",
     }
@@ -175,6 +197,95 @@ def resolve_finding(panel, rid, finding_id, status, note=""):
     raise ValueError("unknown finding id: " + finding_id)
 
 
+def record_coverage(panel, input_id, status, evidence_locator="", reason=""):
+    """Record whether one required upstream input was actually reviewed."""
+    if input_id not in REQUIRED_REVIEW_INPUTS:
+        raise ValueError("unknown review input: " + str(input_id))
+    status = str(status).upper()
+    if status not in REVIEW_COVERAGE_STATUSES:
+        raise ValueError("coverage status must be one of: " + ", ".join(REVIEW_COVERAGE_STATUSES))
+    evidence_locator = str(evidence_locator).strip()
+    reason = str(reason).strip()
+    if status == "REVIEWED" and not evidence_locator:
+        raise ValueError("REVIEWED coverage requires an evidence locator")
+    if status != "REVIEWED" and not reason:
+        raise ValueError("%s coverage requires a reason" % status)
+
+    coverage = panel.get("review_coverage")
+    if coverage is None:
+        coverage = _default_review_coverage()
+        panel["review_coverage"] = coverage
+    if not isinstance(coverage, list):
+        raise ValueError("review_coverage must be a list")
+    matches = [item for item in coverage
+               if isinstance(item, dict) and item.get("input_id") == input_id]
+    if len(matches) > 1:
+        raise ValueError("duplicate review coverage input: " + input_id)
+    if matches:
+        entry = matches[0]
+    else:
+        entry = {"input_id": input_id}
+        coverage.append(entry)
+    entry.update({
+        "status": status,
+        "evidence_locator": evidence_locator,
+        "reason": reason,
+    })
+    return entry
+
+
+def review_coverage_state(panel):
+    """Return normalized entries and explicit gaps without trusting file existence."""
+    coverage = panel.get("review_coverage")
+    if coverage is None:
+        coverage = []
+    if not isinstance(coverage, list):
+        raise ValueError("review_coverage must be a list")
+
+    indexed = {}
+    for index, item in enumerate(coverage):
+        if not isinstance(item, dict):
+            raise ValueError("review_coverage entry %d must be an object" % index)
+        input_id = item.get("input_id")
+        if input_id not in REQUIRED_REVIEW_INPUTS:
+            raise ValueError("unknown review input: " + str(input_id))
+        if input_id in indexed:
+            raise ValueError("duplicate review coverage input: " + input_id)
+        status = item.get("status")
+        if status not in REVIEW_COVERAGE_STATUSES:
+            raise ValueError("invalid coverage status for %s: %s" % (input_id, status))
+        locator = str(item.get("evidence_locator", "")).strip()
+        reason = str(item.get("reason", "")).strip()
+        if status == "REVIEWED" and not locator:
+            raise ValueError("REVIEWED coverage requires an evidence locator: " + input_id)
+        if status != "REVIEWED" and not reason:
+            raise ValueError("%s coverage requires a reason: %s" % (status, input_id))
+        indexed[input_id] = {
+            "input_id": input_id,
+            "status": status,
+            "evidence_locator": locator,
+            "reason": reason,
+        }
+
+    entries = []
+    gaps = []
+    for input_id in REQUIRED_REVIEW_INPUTS:
+        entry = indexed.get(input_id, {
+            "input_id": input_id,
+            "status": "MISSING",
+            "evidence_locator": "",
+            "reason": "coverage was not recorded",
+        })
+        entries.append(entry)
+        if entry["status"] != "REVIEWED":
+            gaps.append({
+                "input_id": input_id,
+                "status": entry["status"],
+                "reason": entry["reason"],
+            })
+    return entries, gaps
+
+
 def compute_verdict(panel):
     reviewers = panel["reviewers"]
     scored = [r for r in reviewers if r["total"] is not None]
@@ -183,6 +294,8 @@ def compute_verdict(panel):
     open_findings = [f for f in findings if f["status"] == "open"]
     science = [f for f in findings if f["kind"] == "science"]
     blockers = [f for f in open_findings if f["severity"] == "blocker"]
+    coverage, coverage_gaps = review_coverage_state(panel)
+    panel["review_coverage"] = coverage
 
     if len(scored) < len(reviewers):
         verdict, reason = "INCOMPLETE", (
@@ -201,6 +314,12 @@ def compute_verdict(panel):
             "spread of %d points (max %d, min %d) exceeds %d; do not average this away, "
             "the author decides" % (max(totals) - min(totals), max(totals), min(totals),
                                     DISAGREEMENT_SPREAD))
+    elif coverage_gaps:
+        verdict, reason = "REVIEW_COVERAGE_INCOMPLETE", (
+            "%d required review input(s) were not fully reviewed: %s"
+            % (len(coverage_gaps), ", ".join(
+                "%s=%s" % (item["input_id"], item["status"])
+                for item in coverage_gaps)))
     elif min(totals) >= PASS_THRESHOLD:
         verdict, reason = "READY_FOR_HUMAN_SUBMISSION_CHECK", (
             "all %d reviewers scored >= %d/%d" % (len(scored), PASS_THRESHOLD, PANEL_TOTAL))
@@ -223,6 +342,9 @@ def compute_verdict(panel):
         "science_findings": len(science),
         "format_findings": len(findings) - len(science),
         "blockers": len(blockers),
+        "review_inputs": len(coverage),
+        "reviewed_inputs": len(coverage) - len(coverage_gaps),
+        "coverage_gaps": coverage_gaps,
         "acceptance_probability": "not_estimated",
     }
     return panel
@@ -246,6 +368,20 @@ def render_report(panel):
             s["spread"], ", ".join("%s=%s" % (k, v) for k, v in s["totals"].items())))
         lines.append("")
     lines.append("> 本结论**不是**录用概率，也不保证录用。它只说明稿件在模拟评审下处于什么状态。")
+    lines.append("")
+    lines.append("## 审稿输入覆盖")
+    lines.append("")
+    lines.append("| 输入 | 状态 | 证据定位 | 未完整审阅原因 |")
+    lines.append("|---|---|---|---|")
+    labels = dict(REVIEW_INPUTS)
+    coverage, _ = review_coverage_state(panel)
+    for item in coverage:
+        lines.append("| %s（`%s`） | %s | %s | %s |" % (
+            labels[item["input_id"]], item["input_id"], item["status"],
+            item["evidence_locator"].replace("|", "/") or "—",
+            item["reason"].replace("|", "/") or "—"))
+    lines.append("")
+    lines.append("> 文件存在不等于已经审阅。任何 PARTIAL、MISSING 或 SKIPPED 项都会阻止就绪结论。")
     lines.append("")
     lines.append("## 各审稿人")
     lines.append("")
@@ -328,6 +464,13 @@ def main(argv=None) -> int:
     f.add_argument("--comment", required=True)
     f.add_argument("--requires-author-data", action="store_true")
 
+    c = sub.add_parser("coverage", help="record whether one required upstream input was reviewed")
+    c.add_argument("panel")
+    c.add_argument("input_id", choices=REQUIRED_REVIEW_INPUTS)
+    c.add_argument("--status", required=True, choices=REVIEW_COVERAGE_STATUSES)
+    c.add_argument("--evidence-locator", default="")
+    c.add_argument("--reason", default="")
+
     v = sub.add_parser("verdict", help="compute the panel verdict")
     v.add_argument("panel")
     v.add_argument("--report", default="")
@@ -364,6 +507,16 @@ def main(argv=None) -> int:
                                   args.comment, args.kind, args.requires_author_data)
             write_json(args.panel, panel)
             print("recorded %s (%s)" % (finding["id"], finding["severity"]))
+            return 0
+
+        if args.command == "coverage":
+            panel = read_json(args.panel)
+            entry = record_coverage(panel, args.input_id, args.status,
+                                    args.evidence_locator, args.reason)
+            panel = compute_verdict(panel)
+            write_json(args.panel, panel)
+            print("coverage %s=%s" % (entry["input_id"], entry["status"]))
+            print("panel verdict: %s" % panel["panel_verdict"])
             return 0
 
         panel = read_json(args.panel)

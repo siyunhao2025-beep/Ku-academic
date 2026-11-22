@@ -70,17 +70,27 @@ python scripts/review.py panel manuscript/draft.md \
   --reviewers handling-editor,domain-expert,methods-reviewer,skeptical-reviewer,reproducibility-reviewer \
   --out review/panel5.json
 
-# 2) 每位审稿人独立打分（七个数按维度顺序）
+# 2) 逐项登记本轮实际审阅过的上游材料；其余输入继续保留 MISSING/PARTIAL/SKIPPED 及原因
+python scripts/review.py coverage review/panel.json manuscript \
+  --status REVIEWED --evidence-locator manuscript/draft.md
+python scripts/review.py coverage review/panel.json citation_audit \
+  --status PARTIAL --evidence-locator audit/citations.json \
+  --reason "两条定量主张尚未完成全文支持核验"
+
+# 对 journal_scope、claim_evidence、figure_table、methods_reporting_compliance、
+# reproducibility 逐项执行同一命令。文件存在不等于已经审阅。
+
+# 3) 每位审稿人独立打分（七个数按维度顺序）
 python scripts/review.py score review/panel.json handling-editor \
   --scores 4,4,5,3,4,4,4 --note "范围合适，但贡献表述偏保守"
 
-# 3) 记一条意见
+# 4) 记一条意见
 python scripts/review.py finding review/panel.json methods-reviewer \
   --severity blocker --kind science --location "Methods, paragraph 3" \
   --comment "基线定义未说明窗口长度，改变窗口可能翻转结论方向" \
   --requires-author-data
 
-# 4) 出结论 + 报告
+# 5) 出结论 + 报告
 python scripts/review.py verdict review/panel.json --report review/review.md
 ```
 
@@ -100,8 +110,9 @@ python scripts/review.py verdict review/panel.json --report review/review.md
 | 2 | 存在未解决的 `blocker` | `BLOCKED` |
 | 3 | 科学类意见少于 3 条 | `INSUFFICIENT_SCIENTIFIC_COVERAGE` |
 | 4 | 最高分与最低分之差 > 7 | `PANEL_DISAGREEMENT` |
-| 5 | 所有人都 ≥ 28 | `READY_FOR_HUMAN_SUBMISSION_CHECK` |
-| 6 | 其他 | `REVISION_REQUIRED` |
+| 5 | 稿件、期刊范围、引用、主张—证据、图表、方法合规或复现输入未完整审阅 | `REVIEW_COVERAGE_INCOMPLETE` |
+| 6 | 输入覆盖完整且所有人都 ≥ 28 | `READY_FOR_HUMAN_SUBMISSION_CHECK` |
+| 7 | 其他 | `REVISION_REQUIRED` |
 
 **第 3 条的用意：** 审稿人提不出科学问题，不能被当成"没毛病"。一组只挑错别字和排版的意见，说明这次评审没有真正触及科学内容，所以判为**覆盖不足**，需要重做或补充审稿人。
 
@@ -117,6 +128,7 @@ python scripts/review.py verdict review/panel.json --report review/review.md
 | `BLOCKED` | 有未解决的阻断问题 | 先解决 blocker，再重跑 |
 | `INSUFFICIENT_SCIENTIFIC_COVERAGE` | 意见多为格式类 | 请审稿人针对科学内容再评，或换更懂行的视角 |
 | `PANEL_DISAGREEMENT` | 分歧过大 | **作者决定**：接受某一方的判断，或补证据让分歧消解 |
+| `REVIEW_COVERAGE_INCOMPLETE` | 至少一个必需上游输入为 `PARTIAL / MISSING / SKIPPED` | 先补审阅，或把具体缺口与原因交作者决定；不能把薄审稿包装为完整 |
 | `READY_FOR_HUMAN_SUBMISSION_CHECK` | 全体达标 | **仍不是录用保证**，只是可以进入人工投稿复核 |
 | `REVISION_REQUIRED` | 有人低于 28 | 按低于标准的那几项返工 |
 
@@ -128,8 +140,8 @@ python scripts/review.py verdict review/panel.json --report review/review.md
 
 | 文件 | 内容 |
 |---|---|
-| `review/panel.json` | 审稿人、七维分数、逐条意见、结论与统计摘要 |
-| `review/review.md` | 人读版：结论、各审稿人视角与打分、逐条意见表、禁止事项 |
+| `review/panel.json` | 审稿输入覆盖、审稿人、七维分数、逐条意见、结论与统计摘要 |
+| `review/review.md` | 人读版：结论、输入缺口、各审稿人视角与打分、逐条意见表、禁止事项 |
 
 `panel.json` 的 `summary` 里有 `acceptance_probability: "not_estimated"` 这个字段。**它是有意留着的**——时刻提醒读者，这份表里没有、也不会有录用概率。
 
@@ -145,6 +157,7 @@ python scripts/review.py verdict review/panel.json --report review/review.md
 ## 九、检查清单
 
 - [ ] 审稿人数量在 3–5 之间，且各有明确角色，不是同一视角的复制。
+- [ ] 七项上游输入均逐项登记；`REVIEWED` 有证据定位，其他状态有具体原因。
 - [ ] 每位审稿人七项都打了分，没有留在 `not_scored`。
 - [ ] 科学类意见不少于 3 条。
 - [ ] 存在阻断问题的情况下，**没有**跳过它去谈加分项。
