@@ -376,7 +376,7 @@ blocked。检查通过不等于适投或会录用，具体边界见 [目标期�
 | [Token 统计口径](docs/TOKEN_ACCOUNTING.md) | 能测什么、公式与偏差、两种累计口径、展示形式 |
 | [目标期刊选择](modules/journal-matching.md) | 从稿件、相似论文、官网事实与作者约束形成证据分层短名单，不预测录用 |
 | [目标期刊范文获取](modules/journal-sourcing.md) | 自动获取的目标/输入/输出、人工下载兜底清单、状态回填 |
-| [审稿人评审](modules/reviewer-panel.md) | 上游输入覆盖账本、3–5 位独立审稿人的七维评分、意见登记、不平均的分歧结论 |
+| [审稿人评审](modules/reviewer-panel.md) | 上游输入覆盖账本、3–5 位独立审稿人的七维评分、稳定意见 ID 与逐条回应覆盖、不平均的分歧结论 |
 | [数据、代码与复现声明](modules/submission-availability.md) | 公开/受限获取路线、未登录检查、版本定位与独立复跑主张上限 |
 | [讲解版 Word](modules/explainer-docx.md) | 七节固定结构、无依赖生成真实 .docx、数字一致性纪律 |
 | [海报制作](modules/poster.md) | 三个必答问题、尺寸表、版式引擎、色板逻辑与已知边界 |

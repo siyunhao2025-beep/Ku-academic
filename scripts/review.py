@@ -9,6 +9,8 @@ and a flattering one:
   informative thing a panel produces.
 * A panel that finds no scientific objections fails the panel check rather than
   passing it. Silence about the science is not a clean review.
+* Every non-positive finding needs one structured response before a high-scoring
+  panel can move to human submission review. Coverage is not adequacy.
 * There is no acceptance probability and no acceptance guarantee anywhere in this
   module. The strongest label it can emit is a readiness-for-human-check label.
 
@@ -54,6 +56,11 @@ REVIEW_COVERAGE_STATUSES = ("REVIEWED", "PARTIAL", "MISSING", "SKIPPED")
 SEVERITIES = ("blocker", "major", "minor", "positive")
 FINDING_KINDS = ("science", "format")
 STATUSES = ("open", "resolved", "author_decision")
+RESPONSE_DISPOSITIONS = (
+    "REVISED",
+    "EVIDENCE_BASED_REBUTTAL",
+    "AUTHOR_ACCEPTED_LIMITATION",
+)
 
 PERSONAS = {
     "handling-editor": {
@@ -116,6 +123,7 @@ def build_panel(manuscript, reviewers=None, context=""):
             "Reviewers are scored independently and are never averaged into one number.",
             "Disagreement between reviewers is a first-class outcome, not noise.",
             "At least %d findings must concern scientific content, not formatting." % MIN_SCIENCE_FINDINGS,
+            "Every non-positive finding needs one traceable point-by-point response before readiness.",
             "Do not invent new results, sample sizes or analyses to satisfy a reviewer.",
             "Never state an acceptance probability. The strongest label is readiness for human check.",
         ],
@@ -195,6 +203,108 @@ def resolve_finding(panel, rid, finding_id, status, note=""):
                 f["note"] = note
             return f
     raise ValueError("unknown finding id: " + finding_id)
+
+
+def _finding_by_id(panel, finding_id):
+    findings = [finding for reviewer in panel.get("reviewers", [])
+                for finding in reviewer.get("findings", [])]
+    if any(not isinstance(finding, dict) for finding in findings):
+        raise ValueError("every finding must be an object")
+    matches = [finding for finding in findings if finding.get("id") == finding_id]
+    if not matches:
+        raise ValueError("unknown finding id: " + finding_id)
+    if len(matches) > 1:
+        raise ValueError("duplicate finding id: " + finding_id)
+    return matches[0]
+
+
+def record_response(panel, finding_id, disposition, response, change_locator="",
+                    evidence_locator="", reason="", author_approved=False):
+    """Attach one structured point-by-point response to an actionable finding."""
+    finding = _finding_by_id(panel, finding_id)
+    if finding.get("severity") == "positive":
+        raise ValueError("positive findings do not require a response: " + finding_id)
+    if "response" in finding:
+        raise ValueError("finding already has a response: " + finding_id)
+    disposition = str(disposition).upper()
+    response = str(response).strip()
+    change_locator = str(change_locator).strip()
+    evidence_locator = str(evidence_locator).strip()
+    reason = str(reason).strip()
+    if disposition not in RESPONSE_DISPOSITIONS:
+        raise ValueError("disposition must be one of: " + ", ".join(RESPONSE_DISPOSITIONS))
+    if not response:
+        raise ValueError("response text is required")
+    if disposition == "REVISED" and not change_locator:
+        raise ValueError("REVISED response requires a change locator")
+    if disposition == "EVIDENCE_BASED_REBUTTAL" and not evidence_locator:
+        raise ValueError("EVIDENCE_BASED_REBUTTAL requires an evidence locator")
+    if disposition == "AUTHOR_ACCEPTED_LIMITATION":
+        if not reason:
+            raise ValueError("AUTHOR_ACCEPTED_LIMITATION requires a reason")
+        if author_approved is not True:
+            raise ValueError("AUTHOR_ACCEPTED_LIMITATION requires author_approved=true")
+    finding["response"] = {
+        "disposition": disposition,
+        "response": response,
+        "change_locator": change_locator,
+        "evidence_locator": evidence_locator,
+        "reason": reason,
+        "author_approved": (
+            disposition == "AUTHOR_ACCEPTED_LIMITATION" and author_approved is True
+        ),
+    }
+    return finding["response"]
+
+
+def response_coverage_state(panel):
+    """Return exact-ID response coverage without scoring response adequacy."""
+    seen = set()
+    actionable = []
+    covered = []
+    gaps = []
+    for reviewer in panel.get("reviewers", []):
+        for finding in reviewer.get("findings", []):
+            if not isinstance(finding, dict):
+                raise ValueError("every finding must be an object")
+            finding_id = finding.get("id")
+            if not isinstance(finding_id, str) or not finding_id.strip():
+                raise ValueError("every finding needs a non-empty id")
+            if finding_id in seen:
+                raise ValueError("duplicate finding id: " + finding_id)
+            seen.add(finding_id)
+            if finding.get("severity") == "positive":
+                if "response" in finding:
+                    raise ValueError("positive findings do not require a response: " + finding_id)
+                continue
+            actionable.append(finding_id)
+            response = finding.get("response")
+            if response is None:
+                gaps.append({"finding_id": finding_id, "status": "MISSING"})
+                continue
+            if not isinstance(response, dict):
+                raise ValueError("response must be an object: " + finding_id)
+            disposition = response.get("disposition")
+            if disposition not in RESPONSE_DISPOSITIONS:
+                raise ValueError("invalid response disposition for %s: %s"
+                                 % (finding_id, disposition))
+            if not str(response.get("response", "")).strip():
+                raise ValueError("response text is required: " + finding_id)
+            if disposition == "REVISED" and not str(response.get("change_locator", "")).strip():
+                raise ValueError("REVISED response requires a change locator: " + finding_id)
+            if (disposition == "EVIDENCE_BASED_REBUTTAL"
+                    and not str(response.get("evidence_locator", "")).strip()):
+                raise ValueError(
+                    "EVIDENCE_BASED_REBUTTAL requires an evidence locator: " + finding_id)
+            if disposition == "AUTHOR_ACCEPTED_LIMITATION":
+                if not str(response.get("reason", "")).strip():
+                    raise ValueError(
+                        "AUTHOR_ACCEPTED_LIMITATION requires a reason: " + finding_id)
+                if response.get("author_approved") is not True:
+                    raise ValueError(
+                        "AUTHOR_ACCEPTED_LIMITATION requires author_approved=true: " + finding_id)
+            covered.append(finding_id)
+    return actionable, covered, gaps
 
 
 def record_coverage(panel, input_id, status, evidence_locator="", reason=""):
@@ -295,6 +405,7 @@ def compute_verdict(panel):
     science = [f for f in findings if f["kind"] == "science"]
     blockers = [f for f in open_findings if f["severity"] == "blocker"]
     coverage, coverage_gaps = review_coverage_state(panel)
+    actionable_responses, covered_responses, response_gaps = response_coverage_state(panel)
     panel["review_coverage"] = coverage
 
     if len(scored) < len(reviewers):
@@ -320,6 +431,10 @@ def compute_verdict(panel):
             % (len(coverage_gaps), ", ".join(
                 "%s=%s" % (item["input_id"], item["status"])
                 for item in coverage_gaps)))
+    elif min(totals) >= PASS_THRESHOLD and response_gaps:
+        verdict, reason = "RESPONSE_COVERAGE_INCOMPLETE", (
+            "%d actionable reviewer finding(s) have no point-by-point response: %s"
+            % (len(response_gaps), ", ".join(item["finding_id"] for item in response_gaps)))
     elif min(totals) >= PASS_THRESHOLD:
         verdict, reason = "READY_FOR_HUMAN_SUBMISSION_CHECK", (
             "all %d reviewers scored >= %d/%d" % (len(scored), PASS_THRESHOLD, PANEL_TOTAL))
@@ -345,6 +460,9 @@ def compute_verdict(panel):
         "review_inputs": len(coverage),
         "reviewed_inputs": len(coverage) - len(coverage_gaps),
         "coverage_gaps": coverage_gaps,
+        "actionable_responses": len(actionable_responses),
+        "covered_responses": len(covered_responses),
+        "response_gaps": response_gaps,
         "acceptance_probability": "not_estimated",
     }
     return panel
@@ -382,6 +500,33 @@ def render_report(panel):
             item["reason"].replace("|", "/") or "—"))
     lines.append("")
     lines.append("> 文件存在不等于已经审阅。任何 PARTIAL、MISSING 或 SKIPPED 项都会阻止就绪结论。")
+    lines.append("")
+    lines.append("## 逐条回应覆盖")
+    lines.append("")
+    lines.append("| 意见 ID | 处置 | 回应 | 变更、证据定位或保留理由 |")
+    lines.append("|---|---|---|---|")
+    actionable, _, response_gaps = response_coverage_state(panel)
+    if not actionable:
+        lines.append("| — | — | 当前没有需要回应的非正向意见 | — |")
+    else:
+        for finding_id in actionable:
+            finding = _finding_by_id(panel, finding_id)
+            response = finding.get("response") or {}
+            locator = (response.get("change_locator") or response.get("evidence_locator")
+                       or response.get("reason") or "—")
+            text = response.get("response") or "**MISSING**"
+            lines.append("| %s | %s | %s | %s |" % (
+                finding_id,
+                str(response.get("disposition", "—")).replace("|", "/"),
+                str(text).replace("|", "/"),
+                str(locator).replace("|", "/"),
+            ))
+    lines.append("")
+    if response_gaps:
+        lines.append("> 未覆盖意见：%s。逐条覆盖只检查结构与定位，不判断回应是否充分。" %
+                     ", ".join(item["finding_id"] for item in response_gaps))
+    else:
+        lines.append("> 逐条覆盖完整；这不表示回应充分，也不证明改稿或反驳在科学上成立。")
     lines.append("")
     lines.append("## 各审稿人")
     lines.append("")
@@ -471,6 +616,16 @@ def main(argv=None) -> int:
     c.add_argument("--evidence-locator", default="")
     c.add_argument("--reason", default="")
 
+    a = sub.add_parser("response", help="record one point-by-point response to a finding")
+    a.add_argument("panel")
+    a.add_argument("finding_id")
+    a.add_argument("--disposition", required=True, choices=RESPONSE_DISPOSITIONS)
+    a.add_argument("--response", dest="response_text", required=True)
+    a.add_argument("--change-locator", default="")
+    a.add_argument("--evidence-locator", default="")
+    a.add_argument("--reason", default="")
+    a.add_argument("--author-approved", action="store_true")
+
     v = sub.add_parser("verdict", help="compute the panel verdict")
     v.add_argument("panel")
     v.add_argument("--report", default="")
@@ -516,6 +671,19 @@ def main(argv=None) -> int:
             panel = compute_verdict(panel)
             write_json(args.panel, panel)
             print("coverage %s=%s" % (entry["input_id"], entry["status"]))
+            print("panel verdict: %s" % panel["panel_verdict"])
+            return 0
+
+        if args.command == "response":
+            panel = read_json(args.panel)
+            response = record_response(
+                panel, args.finding_id, args.disposition, args.response_text,
+                args.change_locator, args.evidence_locator, args.reason,
+                args.author_approved,
+            )
+            panel = compute_verdict(panel)
+            write_json(args.panel, panel)
+            print("response %s=%s" % (args.finding_id, response["disposition"]))
             print("panel verdict: %s" % panel["panel_verdict"])
             return 0
 

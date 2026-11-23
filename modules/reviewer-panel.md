@@ -90,13 +90,31 @@ python scripts/review.py finding review/panel.json methods-reviewer \
   --comment "基线定义未说明窗口长度，改变窗口可能翻转结论方向" \
   --requires-author-data
 
-# 5) 出结论 + 报告
+# 5) 给每条非正向意见登记一次逐条回应。修改稿必须给改动定位：
+python scripts/review.py response review/panel.json methods-reviewer.1 \
+  --disposition REVISED \
+  --response "已补充窗口定义，并加入预先登记的敏感性分析。" \
+  --change-locator "Methods, paragraph 3"
+
+# 若不同意审稿前提，用 EVIDENCE_BASED_REBUTTAL 并给 evidence-locator；
+# 若保留局限，用 AUTHOR_ACCEPTED_LIMITATION，并给 reason 与 --author-approved。
+
+# 6) 出结论 + 报告
 python scripts/review.py verdict review/panel.json --report review/review.md
 ```
 
 严重度：`blocker` / `major` / `minor` / `positive`。
 类型：`science`（科学内容，计入覆盖率）或 `format`（格式，不计入）。
 状态：`open` / `resolved` / `author_decision`。
+
+逐条回应处置：
+
+- `REVISED`：必须填写回应正文和精确 `change_locator`；
+- `EVIDENCE_BASED_REBUTTAL`：必须填写回应正文和 `evidence_locator`；
+- `AUTHOR_ACCEPTED_LIMITATION`：必须填写回应、具体理由，并由作者显式确认。
+
+意见 ID 是唯一匹配键。每条非正向意见恰好回应一次；重复登记、未知 ID、缺失回应都会失败。
+这个检查只证明覆盖与定位存在，不判断回应有无说服力，也不证明改动或反驳科学上成立。
 
 ---
 
@@ -111,8 +129,9 @@ python scripts/review.py verdict review/panel.json --report review/review.md
 | 3 | 科学类意见少于 3 条 | `INSUFFICIENT_SCIENTIFIC_COVERAGE` |
 | 4 | 最高分与最低分之差 > 7 | `PANEL_DISAGREEMENT` |
 | 5 | 稿件、期刊范围、引用、主张—证据、图表、方法合规或复现输入未完整审阅 | `REVIEW_COVERAGE_INCOMPLETE` |
-| 6 | 输入覆盖完整且所有人都 ≥ 28 | `READY_FOR_HUMAN_SUBMISSION_CHECK` |
-| 7 | 其他 | `REVISION_REQUIRED` |
+| 6 | 全体均达标，但至少一条非正向意见没有逐条回应 | `RESPONSE_COVERAGE_INCOMPLETE` |
+| 7 | 输入与回应覆盖完整，且所有人都 ≥ 28 | `READY_FOR_HUMAN_SUBMISSION_CHECK` |
+| 8 | 其他 | `REVISION_REQUIRED` |
 
 **第 3 条的用意：** 审稿人提不出科学问题，不能被当成"没毛病"。一组只挑错别字和排版的意见，说明这次评审没有真正触及科学内容，所以判为**覆盖不足**，需要重做或补充审稿人。
 
@@ -129,6 +148,7 @@ python scripts/review.py verdict review/panel.json --report review/review.md
 | `INSUFFICIENT_SCIENTIFIC_COVERAGE` | 意见多为格式类 | 请审稿人针对科学内容再评，或换更懂行的视角 |
 | `PANEL_DISAGREEMENT` | 分歧过大 | **作者决定**：接受某一方的判断，或补证据让分歧消解 |
 | `REVIEW_COVERAGE_INCOMPLETE` | 至少一个必需上游输入为 `PARTIAL / MISSING / SKIPPED` | 先补审阅，或把具体缺口与原因交作者决定；不能把薄审稿包装为完整 |
+| `RESPONSE_COVERAGE_INCOMPLETE` | 评分已达标，但至少一条非正向意见没有逐条回应 | 按稳定意见 ID 补齐回应与改动/证据定位，再进入人工投稿复核 |
 | `READY_FOR_HUMAN_SUBMISSION_CHECK` | 全体达标 | **仍不是录用保证**，只是可以进入人工投稿复核 |
 | `REVISION_REQUIRED` | 有人低于 28 | 按低于标准的那几项返工 |
 
@@ -140,8 +160,8 @@ python scripts/review.py verdict review/panel.json --report review/review.md
 
 | 文件 | 内容 |
 |---|---|
-| `review/panel.json` | 审稿输入覆盖、审稿人、七维分数、逐条意见、结论与统计摘要 |
-| `review/review.md` | 人读版：结论、输入缺口、各审稿人视角与打分、逐条意见表、禁止事项 |
+| `review/panel.json` | 审稿输入覆盖、审稿人、七维分数、逐条意见、逐条回应、结论与统计摘要 |
+| `review/review.md` | 人读版：结论、输入缺口、回应缺口、各审稿人视角与打分、逐条意见表、禁止事项 |
 
 `panel.json` 的 `summary` 里有 `acceptance_probability: "not_estimated"` 这个字段。**它是有意留着的**——时刻提醒读者，这份表里没有、也不会有录用概率。
 
@@ -162,5 +182,6 @@ python scripts/review.py verdict review/panel.json --report review/review.md
 - [ ] 科学类意见不少于 3 条。
 - [ ] 存在阻断问题的情况下，**没有**跳过它去谈加分项。
 - [ ] 分数分散时，输出的是分歧说明而不是平均值。
+- [ ] 每条非正向意见恰好有一条结构化回应；修改、反驳或保留局限都有相应定位/理由。
 - [ ] 需要作者补数据的意见已标 `requires_author_data`，且**没有**被编造的数据"解决"。
 - [ ] 报告里没有录用概率，也没有把模拟意见说成真实审稿意见。

@@ -146,6 +146,7 @@ References must genuinely exist and be traceable: title, authors, year, journal/
 `python scripts/sourcing.py record <plan.json> <id> --status fetched|manual_download_required|not_accessible|failed` records the real outcome per paper.
 `python scripts/sourcing.py list <plan.json>` shows what still needs a human.
 `python scripts/review.py panel <manuscript> --out <panel.json> [--reviewers a,b,c]` builds a 3-5 reviewer panel worksheet.
+`python scripts/review.py response <panel.json> <finding-id> --disposition REVISED|EVIDENCE_BASED_REBUTTAL|AUTHOR_ACCEPTED_LIMITATION --response "..." [...]` records one traceable point-by-point response.
 `python scripts/review.py verdict <panel.json> --report <out.md>` computes the panel verdict; reviewers are never averaged together.
 `python scripts/ooxml.py docx <spec.json> <out.docx>` writes a Word explainer using stdlib only.
 `python scripts/poster.py choices` prints the three mandatory poster questions (size, language, output form).
