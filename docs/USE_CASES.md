@@ -481,6 +481,9 @@ quantitative/causal），跑 python scripts/access.py check <workspace>。
 只使用 Unpaywall 返回的出版社/机构库/作者自存档合法版本，
 注意 green 版本可能是 accepted manuscript，引用以正式版页码为准。
 
+如果我提供了工作区内的合法全文，用 reading.py card 的 --file 和 --pin-source
+固定读到的版本。全文更新后，请列出受影响的证据 ID，复读并确认定位，再重新做引用双检。
+
 找不到合法全文时，明确把该句标 待确认：要么我通过图书馆获取，
 要么把句子显式降级改写，不要硬写、不要静默降级，也不要使用盗版来源；
 无网络时如实报错，不要伪造可访问性。

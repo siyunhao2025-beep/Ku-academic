@@ -2,6 +2,7 @@
 reading cards. No network. Synthetic fixtures in temp dirs only."""
 import json
 import hashlib
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -247,6 +248,13 @@ class ReadingCardTests(unittest.TestCase):
     def tearDown(self):
         self.tmp.cleanup()
 
+    def _run_reading(self, *args):
+        repo = Path(__file__).resolve().parents[1]
+        return subprocess.run(
+            [sys.executable, str(repo / "scripts" / "reading.py"), *args],
+            cwd=repo, capture_output=True, text=True,
+        )
+
     def _full_meta(self):
         return {
             "research_question": "磁暴期间密度响应随地方时如何变化",
@@ -319,11 +327,7 @@ class ReadingCardTests(unittest.TestCase):
                          "CONTRADICTS_MY_HYPOTHESIS")
 
     def test_card_then_check_then_sync_end_to_end(self):
-        import subprocess
-        repo = Path(__file__).resolve().parents[1]
-        def run(*args):
-            return subprocess.run([sys.executable, str(repo / "scripts" / "reading.py"),
-                                   *args], cwd=repo, capture_output=True, text=True)
+        run = self._run_reading
         r = run("card", str(self.ws), "--title", "Test paper", "--author", "Lei",
                 "--year", "2024", "--doi", "10.1/x")
         self.assertEqual(r.returncode, 0, r.stderr)
@@ -355,6 +359,88 @@ class ReadingCardTests(unittest.TestCase):
         self.assertIsNone(rec["support_status"])
         # Path stored with forward slashes even on Windows.
         self.assertNotIn("\\", rec["reading_card"])
+
+    def test_bound_source_drift_blocks_gate2_after_successful_sync(self):
+        write(self.ws, "sources/paper.txt", "Version A")
+        source = self.ws / "sources/paper.txt"
+        snapshot = {"path": "sources/paper.txt",
+                    "sha256": hashlib.sha256(source.read_bytes()).hexdigest()}
+        write(self.ws, "evidence.json", {"evidence": [{
+            "id": "E1", "citation_verdict": "VERIFIED", "support_status": "SUPPORTS",
+            "is_core_reading": True, "reading_card": "reading-cards/paper.md",
+            "source_snapshot": snapshot,
+        }]})
+        write(self.ws, "gaps.json", [{"evidence_ids": ["E1"]}])
+        thresholds = dict(progress.DEFAULT_THRESHOLDS, gate2_min_references=1,
+                          gate2_min_gaps=1, gate2_evidence_per_gap=1)
+
+        self.assertTrue(all(ok for ok, _, _ in progress.check_p2(self.ws, thresholds)))
+        write(self.ws, "sources/paper.txt", "Version B")
+        failures = [detail for ok, _, detail in progress.check_p2(self.ws, thresholds) if not ok]
+        self.assertTrue(any("E1" in detail and "SHA-256" in detail for detail in failures), failures)
+        source.unlink()
+        failures = [detail for ok, _, detail in progress.check_p2(self.ws, thresholds) if not ok]
+        self.assertTrue(any("E1" in detail and "无法读取" in detail for detail in failures), failures)
+
+    def test_stale_or_unbound_card_cannot_replace_bound_evidence(self):
+        write(self.ws, "sources/paper.txt", "Version A")
+        source_path = self.ws / "sources/paper.txt"
+        snapshot = {"path": "sources/paper.txt",
+                    "sha256": hashlib.sha256(source_path.read_bytes()).hexdigest()}
+        write(self.ws, "evidence.json", {"evidence": [{
+            "id": "E1", "doi": "10.1/fixture", "citation_verdict": "VERIFIED",
+            "support_status": "SUPPORTS", "source_snapshot": snapshot,
+        }]})
+        before = (self.ws / "evidence.json").read_bytes()
+        card_rel = "reading-cards/paper.md"
+        for bindings in ({"source_snapshot": snapshot}, {}):
+            with self.subTest(bound=bool(bindings)):
+                write(self.ws, "sources/paper.txt", "Version B")
+                meta = dict(self._full_meta(), title="Test paper", doi="10.1/fixture",
+                            synced=False, **bindings)
+                write(self.ws, card_rel, "<!-- META\n" + json.dumps(meta) + "\n-->\n")
+                with self.assertRaises(SystemExit) as exc:
+                    reading.cmd_sync(self.ws)
+                self.assertEqual(exc.exception.code, 1)
+                self.assertEqual((self.ws / "evidence.json").read_bytes(), before)
+                self.assertFalse(reading.parse_card(self.ws / card_rel)["synced"])
+
+    def test_pinned_card_cli_keeps_the_digest_and_resets_both_citation_checks(self):
+        write(self.ws, "sources/paper.txt", "Local evidence")
+        result = self._run_reading(
+            "card", str(self.ws), "--title", "Test paper", "--doi", "10.1/fixture",
+            "--file", "sources/paper.txt", "--pin-source",
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        card = next((self.ws / "reading-cards").glob("*.md"))
+        meta = reading.parse_card(card)
+        expected = hashlib.sha256((self.ws / "sources/paper.txt").read_bytes()).hexdigest()
+        self.assertEqual(meta["source_snapshot"], {"path": "sources/paper.txt", "sha256": expected})
+        meta.update(self._full_meta())
+        card.write_text("<!-- META\n" + json.dumps(meta) + "\n-->\n", encoding="utf-8")
+        write(self.ws, "evidence.json", {"evidence": [{
+            "id": "E9", "doi": "10.1/fixture", "citation_verdict": "VERIFIED",
+            "support_status": "SUPPORTS",
+        }]})
+
+        self.assertEqual(self._run_reading("check", str(self.ws)).returncode, 0)
+        result = self._run_reading("sync", str(self.ws))
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        record, = reading.load(self.ws / "evidence.json")["evidence"]
+        self.assertEqual(record["id"], "E9")
+        self.assertEqual(record["source_snapshot"], meta["source_snapshot"])
+        self.assertEqual(record["citation_verdict"], "UNRESOLVED")
+        self.assertIsNone(record["support_status"])
+
+    def test_pin_source_rejects_invalid_path_and_missing_file(self):
+        for name in ("../outside.txt", "missing.txt"):
+            with self.subTest(name=name):
+                result = self._run_reading(
+                    "card", str(self.ws), "--title", "Test paper",
+                    "--file", name, "--pin-source",
+                )
+                self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+                self.assertFalse(list((self.ws / "reading-cards").glob("*.md")))
 
 
 class FieldDistillationContractTests(unittest.TestCase):

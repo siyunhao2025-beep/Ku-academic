@@ -99,6 +99,10 @@ python scripts/research.py search-progress --ledger audit/search-rounds.json --b
 只要仍有项目范围内的必需缺口，工具会要求继续或转人工，不会宣称检索已经穷尽。账本结构与
 五种判定见 [文献模块](../modules/literature.md)。
 
+复查一份已合法取得的本地全文时，可在精读前用 `reading.py card` 的 `--file` 和
+`--pin-source` 登记版本。用相对于研究工作区的文件路径，填完卡片后执行 `check` 和 `sync`。
+具体命令和换版处置见 [精读卡片指南](../modules/paper-reading-guide.md#固定本地全文版本)。
+
 如果团队有已知应被检索找回的关键研究，先在 `audit/seed-ledger.json` 登记经过 DOI、PMID 或
 题名核验的种子，以及本项目要求的向后/向前引文链结果，再运行：
 

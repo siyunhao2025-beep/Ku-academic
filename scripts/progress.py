@@ -19,6 +19,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import figures  # noqa: E402  图件护栏（单一事实源，规则见 modules/figures.md）
 import access   # noqa: E402  引用句子强度 × 访问级别护栏
+import reading  # noqa: E402  登记的本地全文版本
 
 # ---------- 阈值（工程下限，可被 domain.json 覆盖） ----------
 DEFAULT_THRESHOLDS = {
@@ -170,6 +171,16 @@ def check_p2(ws: Path, thr):
     r.append((len(core) == 0 or len(with_card) == len(core),
               "核心文献都有精读卡片",
               f"{len(with_card)}/{len(core)}"))
+
+    bound = [e for e in records if isinstance(e, dict) and "source_snapshot" in e]
+    if bound:
+        failures = []
+        for record in bound:
+            issue = reading.source_snapshot_issue(ws, record)
+            if issue:
+                failures.append(f"{record.get('id') or '未编号条目'}：{issue}")
+        r.append((not failures, "登记的本地全文版本可复核",
+                  "；".join(failures) if failures else f"{len(bound)} 条"))
 
     gaps = load_json(ws / "gaps.json")
     gap_list = gaps.get("gaps", gaps) if isinstance(gaps, dict) else gaps

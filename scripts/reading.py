@@ -5,6 +5,7 @@
 用法：
   python scripts/reading.py card <workspace> --title "标题" [--author 第一作者]
                                   [--year 2024] [--journal ...] [--doi 10.xxx] [--file paper.pdf]
+                                  [--pin-source]
         生成 reading-cards/<作者><年份>.md 卡片骨架（三遍法字段）
   python scripts/reading.py list  <workspace>      列出全部卡片与完成度
   python scripts/reading.py check <workspace>      校验卡片，不完整逐条列出（退出码1）
@@ -21,6 +22,8 @@ import json
 import re
 import sys
 from pathlib import Path
+
+from research import safe_path, sha, write
 
 CARD_DIR = "reading-cards"
 STRENGTH_MAP = {"观测事实": "observation", "统计关联": "association", "机制假设": "inference"}
@@ -45,8 +48,30 @@ def load(path, default=None):
         return default
 
 
-def save(path, obj):
-    path.write_text(json.dumps(obj, ensure_ascii=False, indent=2), encoding="utf-8")
+def _local_source(ws, path):
+    if not isinstance(path, str) or not path.strip() or Path(path).anchor:
+        raise ValueError("请使用工作区内的相对路径")
+    source = safe_path(ws, path)
+    if not source.is_file():
+        raise FileNotFoundError(path)
+    return source
+
+
+def source_snapshot_issue(ws, record):
+    """Return a blocking reason for a declared local full-text snapshot."""
+    if "source_snapshot" not in record:
+        return None
+    snapshot = record["source_snapshot"]
+    digest = snapshot.get("sha256") if isinstance(snapshot, dict) else None
+    if not isinstance(digest, str) or not re.fullmatch("[0-9a-f]{64}", digest):
+        return "固定全文的 SHA-256 登记无效"
+    try:
+        current = sha(_local_source(ws, snapshot.get("path")))
+    except (OSError, RuntimeError, ValueError) as exc:
+        return f"固定全文无法读取（{exc}）"
+    if current != digest:
+        return "固定全文的 SHA-256 已变，需复读当前版本"
+    return None
 
 
 def slug(author, year, title):
@@ -66,8 +91,15 @@ def cmd_card(ws, a):
     name = slug(a.author, a.year, a.title)
     p = card_path(ws, name)
     if p.exists():
-        print(f"卡片已存在：{p}（要重做请先删除）")
+        print(f"卡片已存在：{p}（如需重做，请先归档旧卡）")
         return
+    pin = None
+    if a.pin_source:
+        try:
+            source = _local_source(ws, Path(a.file).as_posix() if a.file else None)
+            pin = {"path": source.relative_to(ws.resolve()).as_posix(), "sha256": sha(source)}
+        except (OSError, RuntimeError, ValueError) as exc:
+            sys.exit(f"无法固定本地全文：{exc}")
     meta = {
         "id": None, "title": a.title or "", "first_author": a.author or "",
         "year": a.year, "journal": a.journal or "", "doi": a.doi or "",
@@ -81,6 +113,8 @@ def cmd_card(ws, a):
         "pass3_critique": {"assumptions": "", "confounds": "", "avoided": "", "my_take": ""},
         "synced": False,
     }
+    if pin:
+        meta["source_snapshot"] = pin
     body = f"""# 精读卡片：{a.title or '（填标题）'}
 
 <!-- META（脚本读取此 JSON 块，请勿删除这两行注释）
@@ -183,7 +217,7 @@ def parse_card(p: Path):
     return meta
 
 
-def completeness(meta):
+def completeness(meta, ws=None):
     missing = []
     if not meta.get("research_question"):
         missing.append("研究问题")
@@ -214,6 +248,10 @@ def completeness(meta):
         missing.append("和我研究的关系四选一")
     if not meta.get("doubts"):
         missing.append("存疑的地方")
+    if ws is not None:
+        issue = source_snapshot_issue(ws, meta)
+        if issue:
+            missing.append(issue)
     return missing
 
 
@@ -243,7 +281,7 @@ def cmd_list(ws):
         if m.get("_parse_error"):
             print(f"  ⚠️ {m['_file']} META 块损坏，无法解析")
             continue
-        miss = completeness(m)
+        miss = completeness(m, ws)
         tag = "✅完整" if not miss else f"🔄缺{len(miss)}项"
         title = m.get("title") or m.get("_file")
         synced = "已同步" if m.get("synced") else "未同步"
@@ -254,7 +292,7 @@ def cmd_list(ws):
 
 def cmd_check(ws):
     cards = collect(ws)
-    bad = [(m, completeness(m)) for m in cards if not m.get("_parse_error")]
+    bad = [(m, completeness(m, ws)) for m in cards if not m.get("_parse_error")]
     bad = [(m, x) for m, x in bad if x]
     corrupted = [m for m in cards if m.get("_parse_error")]
     if not cards:
@@ -288,9 +326,17 @@ def cmd_sync(ws):
     # 复用现有最大编号
     existing_doi = {r.get("doi") or r.get("source"): r for r in records if isinstance(r, dict)}
     n_new = n_upd = 0
+    rejected = []
+    synced_cards = []
     for m in complete:
         key = m.get("doi") or m.get("pdf") or m.get("title")
         old = existing_doi.get(key)
+        issue = source_snapshot_issue(ws, m)
+        if old and "source_snapshot" in old and "source_snapshot" not in m:
+            issue = "已有固定全文，更新卡片也需要登记实际读过的本地版本"
+        if issue:
+            rejected.append(f"{m['_file']}：{issue}")
+            continue
         claim_level = STRENGTH_MAP[m["claim_strength"]]
         entry = {
             "source": m.get("doi") or m.get("pdf") or m.get("title"),
@@ -310,24 +356,31 @@ def cmd_sync(ws):
             "citation_verdict": "UNRESOLVED",
             "support_status": None,
         }
+        if "source_snapshot" in m:
+            entry["source_snapshot"] = m["source_snapshot"]
         if old:
             old.update({k: v for k, v in entry.items() if v})
+            old["support_status"] = None
             n_upd += 1
         else:
             entry["id"] = f"E{len(records) + 1}"
             records.append(entry)
             existing_doi[key] = entry
             n_new += 1
-        # 标记卡片已同步
-        cp = ws / m["_file"]
-        txt = cp.read_text(encoding="utf-8")
-        txt = re.sub(r'("synced":\s*)false', r'\g<1>true', txt)
-        cp.write_text(txt, encoding="utf-8")
+        synced_cards.append(ws / m["_file"])
 
-    save(ev_path, ev)
-    print(f"✅ 同步完成：新增 {n_new} 条，更新 {n_upd} 条 → {ev_path}")
-    print("⚠️ 这些条目 citation_verdict=UNRESOLVED、support_status 为空；")
-    print("   精读不等于核验，接下来必须跑引用身份+支持两道核验才能计入 Gate 2。")
+    if synced_cards:
+        write(ev_path, ev)
+        for cp in synced_cards:
+            txt = cp.read_text(encoding="utf-8")
+            txt = re.sub(r'("synced":\s*)false', r'\g<1>true', txt)
+            cp.write_text(txt, encoding="utf-8")
+        print(f"✅ 同步完成：新增 {n_new} 条，更新 {n_upd} 条 → {ev_path}")
+        print("⚠️ 同步条目需要重新核验引用身份和支持。")
+    if rejected:
+        for issue in rejected:
+            print(f"⛔ 未同步：{issue}", file=sys.stderr)
+        sys.exit(1)
 
 
 def main():
@@ -338,6 +391,8 @@ def main():
     pc.add_argument("--title"); pc.add_argument("--author")
     pc.add_argument("--year"); pc.add_argument("--journal")
     pc.add_argument("--doi"); pc.add_argument("--file")
+    pc.add_argument("--pin-source", action="store_true",
+                    help="固定 --file 指定的工作区内全文版本")
     for name in ("list", "check", "sync"):
         p = sub.add_parser(name); p.add_argument("workspace")
     a = ap.parse_args()
