@@ -14,11 +14,13 @@
 """
 import json
 import sys
+from collections import Counter
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import figures  # noqa: E402  图件护栏（单一事实源，规则见 modules/figures.md）
 import access   # noqa: E402  引用句子强度 × 访问级别护栏
+import reading  # noqa: E402  登记的本地全文版本
 
 # ---------- 阈值（工程下限，可被 domain.json 覆盖） ----------
 DEFAULT_THRESHOLDS = {
@@ -171,14 +173,50 @@ def check_p2(ws: Path, thr):
               "核心文献都有精读卡片",
               f"{len(with_card)}/{len(core)}"))
 
+    bound = [e for e in records if isinstance(e, dict) and "source_snapshot" in e]
+    if bound:
+        failures = []
+        for record in bound:
+            issue = reading.source_snapshot_issue(ws, record)
+            if issue:
+                failures.append(f"{record.get('id') or '未编号条目'}：{issue}")
+        r.append((not failures, "登记的本地全文版本可复核",
+                  "；".join(failures) if failures else f"{len(bound)} 条"))
+
     gaps = load_json(ws / "gaps.json")
     gap_list = gaps.get("gaps", gaps) if isinstance(gaps, dict) else gaps
     gap_list = gap_list if isinstance(gap_list, list) else []
-    enough_ev = all(len(g.get("evidence_ids", [])) >= thr["gate2_evidence_per_gap"]
-                    for g in gap_list if isinstance(g, dict))
-    r.append((len(gap_list) >= thr["gate2_min_gaps"] and enough_ev,
+    record_ids = Counter(e["id"] for e in records
+                         if isinstance(e, dict) and isinstance(e.get("id"), str))
+    verified_ids = {e["id"] for e in verified if isinstance(e.get("id"), str)}
+    per_gap = thr["gate2_evidence_per_gap"]
+    gap_errors = []
+    for index, gap in enumerate(gap_list, 1):
+        if not isinstance(gap, dict):
+            gap_errors.append(f"缺口 #{index} 不是对象")
+            continue
+        label = gap.get("id") or f"#{index}"
+        refs = gap.get("evidence_ids", [])
+        if not isinstance(refs, list) or any(not isinstance(ref, str) or not ref.strip() for ref in refs):
+            gap_errors.append(f"缺口 {label}：evidence_ids 须为字符串列表且元素不得为空")
+            continue
+        counted = 0
+        for ref, times in Counter(refs).items():
+            if times > 1:
+                gap_errors.append(f"缺口 {label}：{ref} 重复引用")
+            if record_ids[ref] == 0:
+                gap_errors.append(f"缺口 {label}：{ref} 不存在")
+            elif record_ids[ref] > 1:
+                gap_errors.append(f"缺口 {label}：{ref} 在证据矩阵重复")
+            elif ref not in verified_ids:
+                gap_errors.append(f"缺口 {label}：{ref} 身份未通过核验")
+            else:
+                counted += 1
+        if counted < per_gap:
+            gap_errors.append(f"缺口 {label}：可计入证据 {counted}/{per_gap} 条")
+    r.append((len(gap_list) >= thr["gate2_min_gaps"] and not gap_errors,
               f"≥{thr['gate2_min_gaps']}个缺口，每个≥{thr['gate2_evidence_per_gap']}条证据",
-              f"{len(gap_list)} 个缺口"))
+              "；".join([f"{len(gap_list)} 个缺口", *gap_errors])))
     return r
 
 
@@ -320,6 +358,16 @@ def check_p6(ws: Path, thr):
     sub = read_text(ws / "submission-checklist.md")
     d, t = count_checkboxes(sub)
     r.append((t > 0 and d == t, "投稿自查清单全部勾选", f"{d}/{t}" if t else "缺失"))
+
+    availability = load_json(ws / "audit" / "availability.json")
+    if isinstance(availability, dict):
+        blockers = availability.get("blockers", [])
+        passed = availability.get("status") == "PASS" and isinstance(blockers, list) and not blockers
+        detail = "PASS" if passed else f"{len(blockers) if isinstance(blockers, list) else '?'} 个阻断"
+    else:
+        passed = False
+        detail = "availability.json 缺失"
+    r.append((passed, "数据/代码可用性审计通过", detail))
     return r
 
 

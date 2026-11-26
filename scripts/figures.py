@@ -12,14 +12,16 @@
   - 数据图只用无障碍色板，禁止 jet/rainbow；多系列必须有颜色之外的冗余通道
   - 系列数 >6 判为应拆图；示意图必须标 conceptual + “概念示意/Conceptual”
   - source_data / script / outputs 文件真实存在，且至少一个矢量输出
-  - visual_review 必须给出 reviewed_by + reviewed_at；脚本不替代人眼，只校验审查证据
+  - visual_review 必须给出 reviewed_by + reviewed_at，绑定最终排版宽度和当前输出 SHA-256
   - 数据图必须形成 source_data(结果目录) -> script -> outputs 的可复现链
 
 它不检查什么（明确边界）：
   - 不能判断图好不好看、坐标轴标得对不对、数字与正文是否一致——这些必须人眼过。
 """
 import argparse
+import hashlib
 import json
+import math
 import sys
 from pathlib import Path
 
@@ -44,7 +46,11 @@ REDUNDANT_CHANNELS = {"marker shape", "line style", "hatching", "direct label",
                       "marker", "linestyle", "shape"}
 VECTOR_SUFFIX = {".pdf", ".svg", ".eps"}
 MAX_SERIES = 6
+FINAL_SIZE_TOLERANCE_MM = 0.1
 CONCEPT_WORDS = ("概念示意", "概念图", "示意", "conceptual", "schematic", "illustration")
+EDITABLE_FIGURE_FORMATS = {"svg", "drawio", "pptx"}
+SEMANTIC_OBJECT_KINDS = {"node", "group", "label", "connector"}
+CONTENT_DISPOSITIONS = {"retained", "merged", "omitted"}
 
 
 def load(path):
@@ -80,20 +86,66 @@ def cmd_init(ws):
         return
     skeleton = {
         "_说明": "每张图一条；type∈roadmap/schematic/data；outputs 至少一个矢量(pdf/svg/eps)；"
-                "visual_review 必须人看后填 reviewed_by/reviewed_at，脚本只查证据不替你看。",
+                "先填稿件最终排版 target_width_mm，再按该宽度人看并填 reviewed_width_mm、"
+                "reviewed_by/reviewed_at 与每个输出的 SHA-256；脚本只查声明和当前文件绑定，"
+                "不替你看图。",
         "schematic_not_needed_reason": None,
         "figures": [
             {"id": "fig-roadmap", "type": "roadmap", "title": "", "version": "planned",
              "source_data": [], "script": "", "axes": {}, "colors": {},
-             "caption": "", "conceptual": False, "outputs": [],
+             "editable_artifact": {
+                 "source": "figures/roadmap.svg", "format": "svg",
+                 "objects": [
+                     {"object_id": "input", "kind": "node"},
+                     {"object_id": "method", "kind": "node"},
+                     {"object_id": "input-to-method", "kind": "connector",
+                      "source_id": "input", "target_id": "method"},
+                 ],
+                 "content_ledger": {
+                     "source_object_ids": ["input", "method", "input-to-method"],
+                     "entries": [
+                         {"source_id": "input", "action": "retained",
+                          "target_id": "input"},
+                         {"source_id": "method", "action": "retained",
+                          "target_id": "method"},
+                         {"source_id": "input-to-method", "action": "retained",
+                          "target_id": "input-to-method"},
+                     ],
+                 },
+             },
+             "caption": "", "conceptual": False, "target_width_mm": None, "outputs": [],
              "visual_review": {"status": "pending", "reviewed_by": None,
-                               "reviewed_at": None, "notes": None}, "notes": ""},
+                               "reviewed_at": None, "reviewed_width_mm": None,
+                               "output_sha256": {},
+                               "notes": None}, "notes": ""},
             {"id": "fig-schematic", "type": "schematic", "title": "",
              "source_data": [], "script": "", "axes": {}, "colors": {},
+             "editable_artifact": {
+                 "source": "figures/schematic.svg", "format": "svg",
+                 "objects": [
+                     {"object_id": "component-a", "kind": "node"},
+                     {"object_id": "component-b", "kind": "node"},
+                     {"object_id": "a-to-b", "kind": "connector",
+                      "source_id": "component-a", "target_id": "component-b"},
+                 ],
+                 "content_ledger": {
+                     "source_object_ids": ["component-a", "component-b", "a-to-b"],
+                     "entries": [
+                         {"source_id": "component-a", "action": "retained",
+                          "target_id": "component-a"},
+                         {"source_id": "component-b", "action": "retained",
+                          "target_id": "component-b"},
+                         {"source_id": "a-to-b", "action": "retained",
+                          "target_id": "a-to-b"},
+                     ],
+                 },
+             },
              "caption": "概念示意（Conceptual illustration），非观测结果。",
-             "conceptual": True, "outputs": [],
+             "conceptual": True, "target_width_mm": None, "outputs": [],
              "visual_review": {"status": "pending", "reviewed_by": None,
-                               "reviewed_at": None, "notes": None}, "notes": ""},
+                               "reviewed_at": None, "reviewed_width_mm": None,
+                               "output_sha256": {},
+                               "notes": None}, "notes": ""},
             {"id": "fig1", "type": "data", "title": "",
              "source_data": ["analysis/results/<your-result>.csv"],
              "script": "figures/plot_fig1.py",
@@ -102,10 +154,12 @@ def cmd_init(ws):
              "colors": {"palette": "okabe-ito", "n_series": 2,
                         "redundant_encoding": "marker shape"},
              "uncertainty": {"type": "SD|SE|CI|none", "sampling_unit": "<per event/orbit/...>"},
-             "caption": "", "conceptual": False,
+             "caption": "", "conceptual": False, "target_width_mm": None,
              "outputs": ["figures/fig1.pdf", "figures/fig1.png"],
              "visual_review": {"status": "pending", "reviewed_by": None,
-                               "reviewed_at": None, "notes": None}, "notes": ""},
+                               "reviewed_at": None, "reviewed_width_mm": None,
+                               "output_sha256": {},
+                               "notes": None}, "notes": ""},
         ],
     }
     save(target, skeleton)
@@ -119,8 +173,159 @@ def _exists(ws, rel):
     try:
         p = (ws / rel).resolve()
         return p.is_relative_to(ws.resolve()) and p.exists()
-    except (ValueError, OSError):
+    except (TypeError, ValueError, OSError):
         return False
+
+
+def _resolved_file(ws, rel):
+    if not rel:
+        return None
+    try:
+        path = (ws / rel).resolve()
+        if path.is_relative_to(ws.resolve()) and path.is_file():
+            return path
+    except (TypeError, ValueError, OSError):
+        pass
+    return None
+
+
+def _sha256(path):
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _is_sha256(value):
+    return (isinstance(value, str) and len(value) == 64
+            and value == value.lower()
+            and all(char in "0123456789abcdef" for char in value))
+
+
+def _is_positive_number(value):
+    return (isinstance(value, (int, float)) and not isinstance(value, bool)
+            and math.isfinite(float(value)) and value > 0)
+
+
+def _check_editable_artifact(ws, fig):
+    """校验路线图/示意图的可选可编辑源与稳定语义对象。"""
+    errors, warnings = [], []
+    fid = fig.get("id", "<无id>")
+    artifact = fig.get("editable_artifact")
+    if artifact is None:
+        warnings.append(f"[{fid}] 缺 editable_artifact，无法检查局部对象级修订")
+        return errors, warnings
+    if not isinstance(artifact, dict):
+        errors.append(f"[{fid}] editable_artifact 应为对象")
+        return errors, warnings
+
+    source = artifact.get("source")
+    fmt = artifact.get("format")
+    if fmt not in EDITABLE_FIGURE_FORMATS:
+        errors.append(
+            f"[{fid}] editable_artifact.format 必须是 "
+            f"{sorted(EDITABLE_FIGURE_FORMATS)} 之一"
+        )
+    source_path = _resolved_file(ws, source)
+    if source_path is None:
+        errors.append(f"[{fid}] 可编辑源文件不存在或越出工作区：{source!r}")
+    elif fmt in EDITABLE_FIGURE_FORMATS and source_path.suffix.lower() != f".{fmt}":
+        errors.append(f"[{fid}] 可编辑源扩展名与 format={fmt!r} 不一致")
+
+    objects = artifact.get("objects")
+    if not isinstance(objects, list) or not objects:
+        errors.append(f"[{fid}] editable_artifact.objects 必须是非空列表")
+        return errors, warnings
+    object_ids = []
+    for obj in objects:
+        if not isinstance(obj, dict):
+            errors.append(f"[{fid}] semantic object 条目必须是对象")
+            continue
+        object_id = obj.get("object_id")
+        kind = obj.get("kind")
+        if not isinstance(object_id, str) or not object_id.strip():
+            errors.append(f"[{fid}] semantic object 缺稳定 object_id")
+            continue
+        object_ids.append(object_id)
+        if kind not in SEMANTIC_OBJECT_KINDS:
+            errors.append(f"[{fid}] 对象 {object_id!r} 的 kind={kind!r} 不合法")
+    duplicates = sorted({item for item in object_ids if object_ids.count(item) > 1})
+    if duplicates:
+        errors.append(f"[{fid}] semantic object ID 重复：{duplicates}")
+    known_ids = set(object_ids)
+    for obj in objects:
+        if not isinstance(obj, dict) or obj.get("kind") != "connector":
+            continue
+        object_id = obj.get("object_id")
+        for endpoint in ("source_id", "target_id"):
+            target = obj.get(endpoint)
+            if target not in known_ids:
+                errors.append(
+                    f"[{fid}] 连接对象 {object_id!r} 的 {endpoint}={target!r} "
+                    "未指向已登记对象"
+                )
+
+    ledger = artifact.get("content_ledger")
+    if ledger is None:
+        warnings.append(f"[{fid}] 缺 content_ledger，无法检查图件压缩是否静默丢失对象")
+        return errors, warnings
+    if not isinstance(ledger, dict):
+        errors.append(f"[{fid}] content_ledger 应为对象")
+        return errors, warnings
+
+    source_ids = ledger.get("source_object_ids")
+    entries = ledger.get("entries")
+    if (not isinstance(source_ids, list) or not source_ids
+            or any(not isinstance(item, str) or not item.strip() for item in source_ids)):
+        errors.append(f"[{fid}] content_ledger.source_object_ids 应为非空字符串列表")
+        return errors, warnings
+    duplicate_sources = sorted({item for item in source_ids if source_ids.count(item) > 1})
+    if duplicate_sources:
+        errors.append(f"[{fid}] content_ledger 源对象 ID 重复：{duplicate_sources}")
+    if not isinstance(entries, list):
+        errors.append(f"[{fid}] content_ledger.entries 应为列表")
+        return errors, warnings
+
+    source_set = set(source_ids)
+    accounted = []
+    for entry in entries:
+        if not isinstance(entry, dict):
+            errors.append(f"[{fid}] content_ledger 处置条目应为对象")
+            continue
+        source_id = entry.get("source_id")
+        action = entry.get("action")
+        if not isinstance(source_id, str) or not source_id.strip():
+            errors.append(f"[{fid}] content_ledger 处置条目缺 source_id")
+            continue
+        accounted.append(source_id)
+        if source_id not in source_set:
+            errors.append(f"[{fid}] content_ledger 引用了未登记源对象 {source_id!r}")
+        if action not in CONTENT_DISPOSITIONS:
+            errors.append(f"[{fid}] 源对象 {source_id!r} 的 action={action!r} 不合法")
+            continue
+        if action in ("retained", "merged"):
+            target_id = entry.get("target_id")
+            if target_id not in known_ids:
+                errors.append(f"[{fid}] 源对象 {source_id!r} 的 target_id={target_id!r} 未登记")
+            if action == "merged" and not str(entry.get("reason") or "").strip():
+                errors.append(f"[{fid}] 合并源对象 {source_id!r} 必须写 reason")
+        else:
+            if not str(entry.get("reason") or "").strip():
+                errors.append(f"[{fid}] 省略源对象 {source_id!r} 必须写 reason")
+            evidence_bearing = entry.get("evidence_bearing")
+            if not isinstance(evidence_bearing, bool):
+                errors.append(f"[{fid}] 省略源对象 {source_id!r} 必须声明布尔 evidence_bearing")
+            elif evidence_bearing and entry.get("author_approved") is not True:
+                errors.append(f"[{fid}] 省略承载证据的对象 {source_id!r} 必须 author_approved=true")
+
+    duplicate_entries = sorted({item for item in accounted if accounted.count(item) > 1})
+    if duplicate_entries:
+        errors.append(f"[{fid}] content_ledger 重复处置源对象：{duplicate_entries}")
+    missing = sorted(source_set - set(accounted))
+    if missing:
+        errors.append(f"[{fid}] content_ledger 未处置源对象：{missing}")
+    return errors, warnings
 
 
 def check_one(ws, fig):
@@ -154,12 +359,49 @@ def check_one(ws, fig):
             if not vr.get("reviewed_by") or not vr.get("reviewed_at"):
                 errors.append(f"[{fid}] visual_review=passed 但缺 reviewed_by/reviewed_at"
                               "（不许凭文件存在填 passed）")
+            target_width = fig.get("target_width_mm")
+            reviewed_width = vr.get("reviewed_width_mm")
+            if not _is_positive_number(target_width):
+                errors.append(f"[{fid}] 缺正数 target_width_mm（稿件中的最终排版宽度，单位 mm）")
+            if not _is_positive_number(reviewed_width):
+                errors.append(f"[{fid}] visual_review=passed 但缺正数 reviewed_width_mm")
+            elif (_is_positive_number(target_width)
+                  and abs(float(reviewed_width) - float(target_width))
+                  > FINAL_SIZE_TOLERANCE_MM):
+                errors.append(
+                    f"[{fid}] reviewed_width_mm={reviewed_width} 与 "
+                    f"target_width_mm={target_width} 不一致（容差 "
+                    f"{FINAL_SIZE_TOLERANCE_MM} mm）；请按最终排版尺寸重新审查"
+                )
+            output_hashes = vr.get("output_sha256")
+            if not isinstance(output_hashes, dict):
+                errors.append(f"[{fid}] visual_review=passed 但缺 output_sha256 对象"
+                              "（审查必须绑定当前输出文件）")
+                output_hashes = {}
+            declared_outputs = {o for o in outputs if isinstance(o, str) and o}
+            for output in outputs:
+                if not isinstance(output, str) or not output:
+                    continue
+                path = _resolved_file(ws, output)
+                if path is None:
+                    continue
+                expected = output_hashes.get(output)
+                if not _is_sha256(expected):
+                    errors.append(f"[{fid}] {output} 缺人眼审查时记录的 lowercase SHA-256")
+                elif expected != _sha256(path):
+                    errors.append(f"[{fid}] {output} 在人眼审查后已变化，必须重新审查并更新哈希")
+            extras = sorted(str(key) for key in output_hashes if key not in declared_outputs)
+            if extras:
+                warnings.append(f"[{fid}] visual_review 含未声明输出的哈希：{extras}")
         elif status != "pending":
             warnings.append(f"[{fid}] visual_review.status 建议为 pending/passed，当前 {status!r}")
         if status != "passed":
             errors.append(f"[{fid}] 尚未完成人眼视觉审查（visual_review.status != passed）")
 
     if ftype == "roadmap":
+        editable_errors, editable_warnings = _check_editable_artifact(ws, fig)
+        errors += editable_errors
+        warnings += editable_warnings
         if fig.get("version") not in ("planned", "actual"):
             warnings.append(f"[{fid}] roadmap 建议标 version=planned/actual")
         # 主路径/替代路径属于人眼判断，脚本只要求有 source_data 或 script 之一说明可复现
@@ -167,6 +409,9 @@ def check_one(ws, fig):
             warnings.append(f"[{fid}] roadmap 建议记录数据来源或绘制脚本，便于计划版/实际版比对")
 
     if ftype == "schematic":
+        editable_errors, editable_warnings = _check_editable_artifact(ws, fig)
+        errors += editable_errors
+        warnings += editable_warnings
         text = f"{fig.get('caption','')} {fig.get('notes','')}".lower()
         if not fig.get("conceptual") or not any(w.lower() in text for w in CONCEPT_WORDS):
             errors.append(f"[{fid}] 示意图必须 conceptual=true 且图注/notes 标明“概念示意/Conceptual”，"

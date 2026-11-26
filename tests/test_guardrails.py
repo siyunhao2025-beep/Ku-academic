@@ -1,6 +1,8 @@
 """Tests for the hard-guardrail scripts: progress gates, topic scoring,
 reading cards. No network. Synthetic fixtures in temp dirs only."""
 import json
+import hashlib
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -65,6 +67,39 @@ class ProgressGateTests(unittest.TestCase):
         names = {n: ok for ok, n, _ in results}
         self.assertFalse(names["证据矩阵有条目"])
 
+    def test_gate2_rejects_gap_evidence_that_cannot_be_counted(self):
+        thresholds = dict(self.thr, gate2_min_references=2, gate2_min_gaps=1,
+                          gate2_evidence_per_gap=2)
+        e1 = {"id": "E1", "citation_verdict": "VERIFIED"}
+        e2 = {"id": "E2", "citation_verdict": "VERIFIED"}
+        for sources, refs, reason in (
+            ([e1, e2], ["E1", "E99"], "E99 不存在"),
+            ([e1, e2], ["E1", "E1"], "E1 重复引用"),
+            ([e1, e2, e2], ["E1", "E2"], "E2 在证据矩阵重复"),
+            ([e1, dict(e2, citation_verdict="RETRACTED")], ["E1", "E2"], "E2 身份未通过"),
+            ([e1, e2], "E1E2", "evidence_ids"),
+            ([e1, e2], ["E1", {}], "evidence_ids"),
+        ):
+            with self.subTest(reason=reason):
+                write(self.ws, "evidence.json", {"evidence": sources})
+                write(self.ws, "gaps.json", [{"id": "G1", "evidence_ids": refs}])
+                failures = [detail for ok, _, detail in progress.check_p2(self.ws, thresholds) if not ok]
+                self.assertTrue(any("G1" in detail and reason in detail for detail in failures), failures)
+
+    def test_gate2_accepts_distinct_verified_ids_and_allows_reuse_between_gaps(self):
+        thresholds = dict(self.thr, gate2_min_references=2, gate2_min_gaps=2,
+                          gate2_evidence_per_gap=2)
+        write(self.ws, "evidence.json", [
+            {"id": "E1", "citation_verdict": "VERIFIED"},
+            {"id": "E2", "citation_verdict": "VERIFIED"},
+        ])
+        write(self.ws, "gaps.json", {"gaps": [
+            {"id": "G1", "evidence_ids": ["E1", "E2"]},
+            {"id": "G2", "evidence_ids": ["E2", "E1"]},
+        ]})
+        failures = [detail for ok, _, detail in progress.check_p2(self.ws, thresholds) if not ok]
+        self.assertEqual([], failures)
+
 
 class ProgressP5GuardTests(unittest.TestCase):
     """P5 闸门复用 figures.py / access.py：图件护栏与引用访问分级。"""
@@ -77,33 +112,41 @@ class ProgressP5GuardTests(unittest.TestCase):
     def tearDown(self):
         self.tmp.cleanup()
 
-    def _reviewed(self):
+    def _reviewed(self, *outputs):
         return {"status": "passed", "reviewed_by": "导师A",
-                "reviewed_at": "2026-09-18T10:00:00Z", "notes": "已逐张核对"}
+                "reviewed_at": "2026-09-18T10:00:00Z",
+                "reviewed_width_mm": 85.0,
+                "output_sha256": {
+                    output: hashlib.sha256(b"x").hexdigest() for output in outputs
+                },
+                "notes": "已逐张核对"}
 
     def _legal_figures(self, include_schematic=True):
         figs = [
             {"id": "fig-roadmap", "type": "roadmap", "title": "线路图",
              "version": "actual", "caption": "从数据到结论的科研线路图",
              "source_data": [], "script": "", "outputs": ["figures/roadmap.pdf"],
-             "visual_review": self._reviewed()},
+             "target_width_mm": 85.0,
+             "visual_review": self._reviewed("figures/roadmap.pdf")},
         ]
         if include_schematic:
             figs.append(
                 {"id": "fig-schematic", "type": "schematic", "title": "机制示意",
                  "caption": "概念示意（Conceptual illustration），非观测结果。",
                  "conceptual": True, "outputs": ["figures/schematic.pdf"],
-                 "visual_review": self._reviewed()})
+                 "target_width_mm": 85.0,
+                 "visual_review": self._reviewed("figures/schematic.pdf")})
         figs.append(
             {"id": "fig1", "type": "data", "title": "主结果",
              "caption": "响应幅度随地方时变化",
              "source_data": ["analysis/results/r.csv"],
              "script": "figures/plot_fig1.py",
              "outputs": ["figures/fig1.pdf", "figures/fig1.png"],
+             "target_width_mm": 85.0,
              "colors": {"palette": "okabe-ito", "n_series": 2,
                         "redundant_encoding": "marker shape"},
              "uncertainty": {"type": "SD", "sampling_unit": "per storm event"},
-             "visual_review": self._reviewed()})
+             "visual_review": self._reviewed("figures/fig1.pdf", "figures/fig1.png")})
         return figs
 
     def _materialise(self, figs, manifest_extra=None):
@@ -238,12 +281,22 @@ class ReadingCardTests(unittest.TestCase):
     def tearDown(self):
         self.tmp.cleanup()
 
+    def _run_reading(self, *args):
+        repo = Path(__file__).resolve().parents[1]
+        return subprocess.run(
+            [sys.executable, str(repo / "scripts" / "reading.py"), *args],
+            cwd=repo, capture_output=True, text=True,
+        )
+
     def _full_meta(self):
         return {
             "research_question": "磁暴期间密度响应随地方时如何变化",
             "core_conclusion": "夜侧增幅达1.8倍",
             "data_methods": "SABER，120次磁暴，叠加纪元",
             "key_results": ["夜侧增幅1.8倍", "日侧1.2倍"],
+            "key_result_locators": ["p.5, Table 2", "p.8, Fig.4"],
+            "access_level": "full_text",
+            "read_scope": "正文与附录；未提供补充材料",
             "claim_strength": "观测事实",
             "relation": "支持我的假设",
             "doubts": "未区分磁暴强度",
@@ -251,7 +304,7 @@ class ReadingCardTests(unittest.TestCase):
 
     def test_empty_meta_misses_every_required_field(self):
         miss = reading.completeness({})
-        self.assertEqual(len(miss), 7)
+        self.assertEqual(len(miss), 10)
 
     def test_full_meta_is_complete(self):
         self.assertEqual(reading.completeness(self._full_meta()), [])
@@ -260,6 +313,43 @@ class ReadingCardTests(unittest.TestCase):
         m = self._full_meta()
         m["key_results"] = ["结果不错"]
         self.assertIn("关键结果必须带具体数字", reading.completeness(m))
+
+        m = self._full_meta()
+        m["key_results"] = ["夜侧增幅1.8倍", "日侧明显增加"]
+        self.assertIn("关键结果必须带具体数字", reading.completeness(m))
+
+    def test_each_key_result_needs_its_own_source_locator(self):
+        m = self._full_meta()
+        m["key_result_locators"] = ["p.5, Table 2"]
+        self.assertIn("每条关键结果必须有一一对应的页/节/图/表定位",
+                      reading.completeness(m))
+
+        m["key_result_locators"] = ["全文", "精读卡片"]
+        self.assertIn("关键结果定位不能只写“全文”或“精读卡片”",
+                      reading.completeness(m))
+
+    def test_abstract_only_reading_cannot_be_promoted_to_core_full_text(self):
+        m = self._full_meta()
+        m["access_level"] = "abstract_only"
+        self.assertIn("核心精读必须明确记录 access_level=full_text",
+                      reading.completeness(m))
+
+    def test_visible_result_locator_pairs_are_parsed_together(self):
+        card = self.ws / "paired.md"
+        meta = self._full_meta()
+        meta["key_results"] = []
+        meta["key_result_locators"] = []
+        body = ("# 精读卡片\n<!-- META\n" + json.dumps(meta, ensure_ascii=False)
+                + "\n-->\n- **关键结果**：\n"
+                  "  1. 结果：密度增幅2.1倍\n"
+                  "     - 定位：p.9, Fig.3\n")
+        card.write_text(body, encoding="utf-8")
+
+        parsed = reading.parse_card(card)
+
+        self.assertEqual(parsed["key_results"], ["密度增幅2.1倍"])
+        self.assertEqual(parsed["key_result_locators"], ["p.9, Fig.3"])
+        self.assertEqual(reading.completeness(parsed), [])
 
     def test_strength_and_relation_mapping(self):
         self.assertEqual(reading.STRENGTH_MAP["观测事实"], "observation")
@@ -270,11 +360,7 @@ class ReadingCardTests(unittest.TestCase):
                          "CONTRADICTS_MY_HYPOTHESIS")
 
     def test_card_then_check_then_sync_end_to_end(self):
-        import subprocess
-        repo = Path(__file__).resolve().parents[1]
-        def run(*args):
-            return subprocess.run([sys.executable, str(repo / "scripts" / "reading.py"),
-                                   *args], cwd=repo, capture_output=True, text=True)
+        run = self._run_reading
         r = run("card", str(self.ws), "--title", "Test paper", "--author", "Lei",
                 "--year", "2024", "--doi", "10.1/x")
         self.assertEqual(r.returncode, 0, r.stderr)
@@ -296,6 +382,9 @@ class ReadingCardTests(unittest.TestCase):
         ev = json.loads((self.ws / "evidence.json").read_text(encoding="utf-8"))
         rec = ev["evidence"][0]
         self.assertEqual(rec["evidence_level"], "full_text")
+        self.assertEqual(rec["locator"], "p.5, Table 2; p.8, Fig.4")
+        self.assertEqual(rec["result_locators"], ["p.5, Table 2", "p.8, Fig.4"])
+        self.assertEqual(rec["read_scope"], "正文与附录；未提供补充材料")
         self.assertTrue(rec["is_core_reading"])
         self.assertEqual(rec["claim_level"], "observation")
         # Close reading must NOT be treated as citation verification.
@@ -303,6 +392,102 @@ class ReadingCardTests(unittest.TestCase):
         self.assertIsNone(rec["support_status"])
         # Path stored with forward slashes even on Windows.
         self.assertNotIn("\\", rec["reading_card"])
+
+    def test_bound_source_drift_blocks_gate2_after_successful_sync(self):
+        write(self.ws, "sources/paper.txt", "Version A")
+        source = self.ws / "sources/paper.txt"
+        snapshot = {"path": "sources/paper.txt",
+                    "sha256": hashlib.sha256(source.read_bytes()).hexdigest()}
+        write(self.ws, "evidence.json", {"evidence": [{
+            "id": "E1", "citation_verdict": "VERIFIED", "support_status": "SUPPORTS",
+            "is_core_reading": True, "reading_card": "reading-cards/paper.md",
+            "source_snapshot": snapshot,
+        }]})
+        write(self.ws, "gaps.json", [{"evidence_ids": ["E1"]}])
+        thresholds = dict(progress.DEFAULT_THRESHOLDS, gate2_min_references=1,
+                          gate2_min_gaps=1, gate2_evidence_per_gap=1)
+
+        self.assertTrue(all(ok for ok, _, _ in progress.check_p2(self.ws, thresholds)))
+        write(self.ws, "sources/paper.txt", "Version B")
+        failures = [detail for ok, _, detail in progress.check_p2(self.ws, thresholds) if not ok]
+        self.assertTrue(any("E1" in detail and "SHA-256" in detail for detail in failures), failures)
+        source.unlink()
+        failures = [detail for ok, _, detail in progress.check_p2(self.ws, thresholds) if not ok]
+        self.assertTrue(any("E1" in detail and "无法读取" in detail for detail in failures), failures)
+
+    def test_stale_or_unbound_card_cannot_replace_bound_evidence(self):
+        write(self.ws, "sources/paper.txt", "Version A")
+        source_path = self.ws / "sources/paper.txt"
+        snapshot = {"path": "sources/paper.txt",
+                    "sha256": hashlib.sha256(source_path.read_bytes()).hexdigest()}
+        write(self.ws, "evidence.json", {"evidence": [{
+            "id": "E1", "doi": "10.1/fixture", "citation_verdict": "VERIFIED",
+            "support_status": "SUPPORTS", "source_snapshot": snapshot,
+        }]})
+        before = (self.ws / "evidence.json").read_bytes()
+        card_rel = "reading-cards/paper.md"
+        for bindings in ({"source_snapshot": snapshot}, {}):
+            with self.subTest(bound=bool(bindings)):
+                write(self.ws, "sources/paper.txt", "Version B")
+                meta = dict(self._full_meta(), title="Test paper", doi="10.1/fixture",
+                            synced=False, **bindings)
+                write(self.ws, card_rel, "<!-- META\n" + json.dumps(meta) + "\n-->\n")
+                with self.assertRaises(SystemExit) as exc:
+                    reading.cmd_sync(self.ws)
+                self.assertEqual(exc.exception.code, 1)
+                self.assertEqual((self.ws / "evidence.json").read_bytes(), before)
+                self.assertFalse(reading.parse_card(self.ws / card_rel)["synced"])
+
+    def test_pinned_card_cli_keeps_the_digest_and_resets_both_citation_checks(self):
+        write(self.ws, "sources/paper.txt", "Local evidence")
+        result = self._run_reading(
+            "card", str(self.ws), "--title", "Test paper", "--doi", "10.1/fixture",
+            "--file", "sources/paper.txt", "--pin-source",
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        card = next((self.ws / "reading-cards").glob("*.md"))
+        meta = reading.parse_card(card)
+        expected = hashlib.sha256((self.ws / "sources/paper.txt").read_bytes()).hexdigest()
+        self.assertEqual(meta["source_snapshot"], {"path": "sources/paper.txt", "sha256": expected})
+        meta.update(self._full_meta())
+        card.write_text("<!-- META\n" + json.dumps(meta) + "\n-->\n", encoding="utf-8")
+        write(self.ws, "evidence.json", {"evidence": [{
+            "id": "E9", "doi": "10.1/fixture", "citation_verdict": "VERIFIED",
+            "support_status": "SUPPORTS",
+        }]})
+
+        self.assertEqual(self._run_reading("check", str(self.ws)).returncode, 0)
+        result = self._run_reading("sync", str(self.ws))
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        record, = reading.load(self.ws / "evidence.json")["evidence"]
+        self.assertEqual(record["id"], "E9")
+        self.assertEqual(record["source_snapshot"], meta["source_snapshot"])
+        self.assertEqual(record["citation_verdict"], "UNRESOLVED")
+        self.assertIsNone(record["support_status"])
+
+    def test_pin_source_rejects_invalid_path_and_missing_file(self):
+        for name in ("../outside.txt", "missing.txt"):
+            with self.subTest(name=name):
+                result = self._run_reading(
+                    "card", str(self.ws), "--title", "Test paper",
+                    "--file", name, "--pin-source",
+                )
+                self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+                self.assertFalse(list((self.ws / "reading-cards").glob("*.md")))
+
+
+class FieldDistillationContractTests(unittest.TestCase):
+    def test_method_lineage_keeps_mechanism_and_evidence_guards(self):
+        root = Path(__file__).resolve().parents[1]
+        module = (root / "modules" / "field-distillation.md").read_text(encoding="utf-8")
+        for term in ("假设变化", "实现机制", "新增代价", "适用条件", "失效条件"):
+            self.assertIn(term, module)
+        for channel in ("引用链", "局限反推", "问题框架"):
+            self.assertIn(channel, module)
+        self.assertIn("claimed / demonstrated / inferred", module)
+        self.assertIn("检索失败不等于零命中", module)
+        self.assertIn("引用身份/支持双检", module)
+        self.assertIn("full_text", module)
 
 
 if __name__ == "__main__":

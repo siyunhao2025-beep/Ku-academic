@@ -22,6 +22,13 @@ def full_panel(manuscript="manuscript/draft.md", ids=None):
     return review.build_panel(manuscript, ids)
 
 
+def complete_review_coverage(panel):
+    for input_id in review.REQUIRED_REVIEW_INPUTS:
+        review.record_coverage(panel, input_id, "REVIEWED",
+                               evidence_locator="audit/%s.json" % input_id)
+    return panel
+
+
 class PanelTests(unittest.TestCase):
     def test_default_panel_is_four_distinct_reviewers(self):
         panel = full_panel()
@@ -116,21 +123,73 @@ class FindingTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             review.resolve_finding(panel, "handling-editor", "nope.9", "resolved")
 
+    def test_response_disposition_requires_the_matching_locator(self):
+        panel = full_panel()
+        finding = review.add_finding(panel, "handling-editor", "major", "p1", "one")
+        with self.assertRaises(ValueError):
+            review.record_response(panel, finding["id"], "REVISED", "We changed the text.")
+        with self.assertRaises(ValueError):
+            review.record_response(panel, finding["id"], "EVIDENCE_BASED_REBUTTAL",
+                                   "The evidence already addresses this point.")
+        with self.assertRaises(ValueError):
+            review.record_response(panel, finding["id"], "AUTHOR_ACCEPTED_LIMITATION",
+                                   "The limitation is explicitly retained.", reason="scope")
+
+    def test_response_is_recorded_exactly_once(self):
+        panel = full_panel()
+        finding = review.add_finding(panel, "handling-editor", "major", "p1", "one")
+        response = review.record_response(
+            panel, finding["id"], "REVISED", "We changed the methods paragraph.",
+            change_locator="Methods, paragraph 3",
+        )
+        self.assertEqual(response["disposition"], "REVISED")
+        with self.assertRaises(ValueError):
+            review.record_response(
+                panel, finding["id"], "REVISED", "A duplicate response.",
+                change_locator="Methods, paragraph 3",
+            )
+
 
 class VerdictTests(unittest.TestCase):
     def _scored(self, values, findings=3):
-        panel = full_panel()
+        panel = complete_review_coverage(full_panel())
         for rid, value in zip([r["id"] for r in panel["reviewers"]], values):
             review.score_reviewer(panel, rid, scores(value))
         for i in range(findings):
-            review.add_finding(panel, "handling-editor", "minor", "p%d" % i, "sci %d" % i,
-                               kind="science")
+            finding = review.add_finding(
+                panel, "handling-editor", "minor", "p%d" % i, "sci %d" % i,
+                kind="science",
+            )
+            review.record_response(
+                panel, finding["id"], "EVIDENCE_BASED_REBUTTAL",
+                "The existing evidence addresses this simulated concern.",
+                evidence_locator="audit/claim-evidence.json#%s" % finding["id"],
+            )
         return review.compute_verdict(panel)
 
     def test_incomplete_until_every_reviewer_is_scored(self):
         panel = full_panel()
         review.score_reviewer(panel, "handling-editor", scores(5))
         self.assertEqual(review.compute_verdict(panel)["panel_verdict"], "INCOMPLETE")
+
+    def test_thin_review_is_not_ready_without_upstream_coverage(self):
+        panel = full_panel()
+        for rid in [r["id"] for r in panel["reviewers"]]:
+            review.score_reviewer(panel, rid, scores(5))
+        for i in range(3):
+            review.add_finding(panel, "handling-editor", "minor", "p%d" % i,
+                               "science %d" % i)
+
+        result = review.compute_verdict(panel)
+
+        self.assertEqual(result["panel_verdict"], "REVIEW_COVERAGE_INCOMPLETE")
+        self.assertEqual(len(result["summary"]["coverage_gaps"]),
+                         len(review.REQUIRED_REVIEW_INPUTS))
+
+    def test_reviewed_coverage_needs_an_evidence_locator(self):
+        panel = full_panel()
+        with self.assertRaises(ValueError):
+            review.record_coverage(panel, review.REQUIRED_REVIEW_INPUTS[0], "REVIEWED")
 
     def test_all_high_is_ready_for_human_check(self):
         panel = self._scored([5, 5, 5, 5])
@@ -180,6 +239,19 @@ class VerdictTests(unittest.TestCase):
         self.assertEqual(panel["summary"]["science_findings"], 2)
         self.assertEqual(panel["summary"]["format_findings"], 1)
 
+    def test_ready_requires_response_for_every_actionable_finding(self):
+        panel = complete_review_coverage(full_panel())
+        for rid in [r["id"] for r in panel["reviewers"]]:
+            review.score_reviewer(panel, rid, scores(5))
+        for i in range(3):
+            review.add_finding(panel, "handling-editor", "minor", "p%d" % i,
+                               "science %d" % i)
+
+        result = review.compute_verdict(panel)
+
+        self.assertEqual(result["panel_verdict"], "RESPONSE_COVERAGE_INCOMPLETE")
+        self.assertEqual(len(result["summary"]["response_gaps"]), 3)
+
 
 class CliTests(unittest.TestCase):
     def setUp(self):
@@ -216,6 +288,34 @@ class CliTests(unittest.TestCase):
         self.assertEqual(data["reviewers"][0]["total"], 35)
         self.assertEqual(data["reviewers"][0]["findings"][0]["kind"], "science")
         self.assertEqual(review.main(["verdict", str(self.panel)]), 0)
+
+    def test_coverage_command_records_evidence_locator(self):
+        review.main(["panel", "m.md", "--out", str(self.panel)])
+        input_id = review.REQUIRED_REVIEW_INPUTS[0]
+        self.assertEqual(review.main([
+            "coverage", str(self.panel), input_id,
+            "--status", "REVIEWED", "--evidence-locator", "manuscript/draft.md",
+        ]), 0)
+        data = json.loads(self.panel.read_text(encoding="utf-8"))
+        entry = next(item for item in data["review_coverage"]
+                     if item["input_id"] == input_id)
+        self.assertEqual(entry["status"], "REVIEWED")
+        self.assertEqual(entry["evidence_locator"], "manuscript/draft.md")
+
+    def test_response_command_records_point_by_point_entry(self):
+        review.main(["panel", "m.md", "--out", str(self.panel)])
+        review.main(["finding", str(self.panel), "handling-editor",
+                     "--severity", "major", "--location", "p1",
+                     "--comment", "science point"])
+        self.assertEqual(review.main([
+            "response", str(self.panel), "handling-editor.1",
+            "--disposition", "REVISED",
+            "--response", "We revised the methods paragraph.",
+            "--change-locator", "Methods, paragraph 3",
+        ]), 0)
+        data = json.loads(self.panel.read_text(encoding="utf-8"))
+        finding = data["reviewers"][0]["findings"][0]
+        self.assertEqual(finding["response"]["disposition"], "REVISED")
 
     def test_bad_scores_argument_returns_2(self):
         review.main(["panel", "m.md", "--out", str(self.panel)])

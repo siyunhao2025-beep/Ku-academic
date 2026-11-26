@@ -5,6 +5,7 @@
 用法：
   python scripts/reading.py card <workspace> --title "标题" [--author 第一作者]
                                   [--year 2024] [--journal ...] [--doi 10.xxx] [--file paper.pdf]
+                                  [--pin-source]
         生成 reading-cards/<作者><年份>.md 卡片骨架（三遍法字段）
   python scripts/reading.py list  <workspace>      列出全部卡片与完成度
   python scripts/reading.py check <workspace>      校验卡片，不完整逐条列出（退出码1）
@@ -22,6 +23,8 @@ import re
 import sys
 from pathlib import Path
 
+from research import safe_path, sha, write
+
 CARD_DIR = "reading-cards"
 STRENGTH_MAP = {"观测事实": "observation", "统计关联": "association", "机制假设": "inference"}
 RELATION_MAP = {
@@ -33,7 +36,9 @@ RELATION_MAP = {
 
 # 卡片里需要人填的关键字段（完整度判定）
 REQUIRED = ["research_question", "core_conclusion", "data_methods",
-            "key_results", "claim_strength", "relation", "doubts"]
+            "key_results", "key_result_locators", "access_level", "read_scope",
+            "claim_strength", "relation", "doubts"]
+GENERIC_LOCATORS = {"全文", "full text", "full_text", "精读卡片", "reading_card", "见精读卡片"}
 
 
 def load(path, default=None):
@@ -43,8 +48,30 @@ def load(path, default=None):
         return default
 
 
-def save(path, obj):
-    path.write_text(json.dumps(obj, ensure_ascii=False, indent=2), encoding="utf-8")
+def _local_source(ws, path):
+    if not isinstance(path, str) or not path.strip() or Path(path).anchor:
+        raise ValueError("请使用工作区内的相对路径")
+    source = safe_path(ws, path)
+    if not source.is_file():
+        raise FileNotFoundError(path)
+    return source
+
+
+def source_snapshot_issue(ws, record):
+    """Return a blocking reason for a declared local full-text snapshot."""
+    if "source_snapshot" not in record:
+        return None
+    snapshot = record["source_snapshot"]
+    digest = snapshot.get("sha256") if isinstance(snapshot, dict) else None
+    if not isinstance(digest, str) or not re.fullmatch("[0-9a-f]{64}", digest):
+        return "固定全文的 SHA-256 登记无效"
+    try:
+        current = sha(_local_source(ws, snapshot.get("path")))
+    except (OSError, RuntimeError, ValueError) as exc:
+        return f"固定全文无法读取（{exc}）"
+    if current != digest:
+        return "固定全文的 SHA-256 已变，需复读当前版本"
+    return None
 
 
 def slug(author, year, title):
@@ -64,19 +91,30 @@ def cmd_card(ws, a):
     name = slug(a.author, a.year, a.title)
     p = card_path(ws, name)
     if p.exists():
-        print(f"卡片已存在：{p}（要重做请先删除）")
+        print(f"卡片已存在：{p}（如需重做，请先归档旧卡）")
         return
+    pin = None
+    if a.pin_source:
+        try:
+            source = _local_source(ws, Path(a.file).as_posix() if a.file else None)
+            pin = {"path": source.relative_to(ws.resolve()).as_posix(), "sha256": sha(source)}
+        except (OSError, RuntimeError, ValueError) as exc:
+            sys.exit(f"无法固定本地全文：{exc}")
     meta = {
         "id": None, "title": a.title or "", "first_author": a.author or "",
         "year": a.year, "journal": a.journal or "", "doi": a.doi or "",
         "pdf": a.file or "",
+        "access_level": "", "read_scope": "",
         "research_question": "", "hypothesis": "", "data_methods": "",
-        "key_results": [], "claim_strength": "", "relation": "",
+        "key_results": [], "key_result_locators": [],
+        "claim_strength": "", "relation": "",
         "doubts": "", "unclear_terms": [],
         "pass1_birdview": {"relevant": "", "decision": ""},
         "pass3_critique": {"assumptions": "", "confounds": "", "avoided": "", "my_take": ""},
         "synced": False,
     }
+    if pin:
+        meta["source_snapshot"] = pin
     body = f"""# 精读卡片：{a.title or '（填标题）'}
 
 <!-- META（脚本读取此 JSON 块，请勿删除这两行注释）
@@ -92,13 +130,18 @@ def cmd_card(ws, a):
 - 处置（精读 / 泛读 / 跳过）：
 
 ## 第二遍 · 拆解（1-2 小时，逐节填）
+- **实际访问级别** ❗（核心精读只能填 `full_text`；只读摘要不能升级成核心精读）：
+- **实际阅读范围** ❗（正文/附录/补充材料分别写清，未获得的也写明）：
 - **研究问题** ❗（具体到"什么条件下、什么量、和什么的关系"）：
 - **核心假设**（作者预期什么）：
 - **数据与方法** ❗（仪器/样本量/时间范围/分析方法）：
-- **关键结果** ❗（最多3条，每条必须带具体数字）：
-  1.
-  2.
-  3.
+- **关键结果** ❗（最多3条，每条必须带具体数字，并给出原文页/节/图/表定位）：
+  1. 结果：
+     - 定位：
+  2. 结果：
+     - 定位：
+  3. 结果：
+     - 定位：
 - **结论强度** ❗（三选一，在前面 [ ] 里填 x，不许混）：
   - [ ] 观测事实（我们看到了X）
   - [ ] 统计关联（X和Y相关）
@@ -143,14 +186,24 @@ def parse_card(p: Path):
                              ("支持我的假设", "反对我的假设", "条件不同，不能直接比", "方法可以参考")):
             if mark[0].lower() == "x":
                 meta["relation"] = key
-    # 关键结果：数"1. 2. 3."后面非空的行
-    kr = re.search(r"关键结果.*?\n((?:\s*\d\.[^\n]*\n){1,3})", text, re.S)
-    if kr:
-        items = [re.sub(r"^\s*\d\.\s*", "", x).strip()
-                 for x in kr.group(1).splitlines()]
-        items = [x for x in items if x]
-        if items:
-            meta["key_results"] = items
+    # 新卡片把每条关键结果和原文定位成对记录；旧卡片仍能读出结果，但会因缺定位而被拦截。
+    pairs = re.findall(
+        r"^\s*\d+\.\s*结果[：:]\s*(.*?)\s*\r?\n\s*-\s*定位[：:]\s*(.*?)\s*$",
+        text,
+        re.M,
+    )
+    pairs = [(result.strip(), locator.strip()) for result, locator in pairs if result.strip()]
+    if pairs:
+        meta["key_results"] = [result for result, _ in pairs]
+        meta["key_result_locators"] = [locator for _, locator in pairs]
+    else:
+        kr = re.search(r"关键结果.*?\n((?:\s*\d\.[^\n]*\n){1,3})", text, re.S)
+        if kr:
+            items = [re.sub(r"^\s*\d\.\s*", "", x).strip()
+                     for x in kr.group(1).splitlines()]
+            items = [x for x in items if x]
+            if items:
+                meta["key_results"] = items
     # 自由文本字段：取同一行冒号后内容（[ \t] 不跨行，避免吃到下一行标签）
     def after(label):
         mm = re.search(re.escape(label) + r"[^：\n]*：[ \t]*([^\n]*)", text)
@@ -158,11 +211,13 @@ def parse_card(p: Path):
     meta["research_question"] = after("**研究问题**") or meta.get("research_question", "")
     meta["core_conclusion"] = after("一句话核心结论") or meta.get("core_conclusion", "")
     meta["data_methods"] = after("**数据与方法**") or meta.get("data_methods", "")
+    meta["access_level"] = after("**实际访问级别**") or meta.get("access_level", "")
+    meta["read_scope"] = after("**实际阅读范围**") or meta.get("read_scope", "")
     meta["doubts"] = after("**存疑的地方**") or meta.get("doubts", "")
     return meta
 
 
-def completeness(meta):
+def completeness(meta, ws=None):
     missing = []
     if not meta.get("research_question"):
         missing.append("研究问题")
@@ -173,14 +228,30 @@ def completeness(meta):
     kr = meta.get("key_results") or []
     if not kr:
         missing.append("关键结果（至少1条且带数字）")
-    elif not any(re.search(r"\d", str(x)) for x in kr):
+    elif any(not re.search(r"\d", str(x)) for x in kr):
         missing.append("关键结果必须带具体数字")
+    locators = meta.get("key_result_locators") or []
+    if not locators:
+        missing.append("关键结果定位（每条对应页/节/图/表）")
+    elif (not isinstance(locators, list) or len(locators) != len(kr)
+          or any(not isinstance(x, str) or not x.strip() for x in locators)):
+        missing.append("每条关键结果必须有一一对应的页/节/图/表定位")
+    elif any(x.strip().lower() in GENERIC_LOCATORS for x in locators):
+        missing.append("关键结果定位不能只写“全文”或“精读卡片”")
+    if meta.get("access_level") != "full_text":
+        missing.append("核心精读必须明确记录 access_level=full_text")
+    if not meta.get("read_scope"):
+        missing.append("实际阅读范围（正文/附录/补充材料）")
     if meta.get("claim_strength") not in STRENGTH_MAP:
         missing.append("结论强度三选一")
     if meta.get("relation") not in RELATION_MAP:
         missing.append("和我研究的关系四选一")
     if not meta.get("doubts"):
         missing.append("存疑的地方")
+    if ws is not None:
+        issue = source_snapshot_issue(ws, meta)
+        if issue:
+            missing.append(issue)
     return missing
 
 
@@ -210,7 +281,7 @@ def cmd_list(ws):
         if m.get("_parse_error"):
             print(f"  ⚠️ {m['_file']} META 块损坏，无法解析")
             continue
-        miss = completeness(m)
+        miss = completeness(m, ws)
         tag = "✅完整" if not miss else f"🔄缺{len(miss)}项"
         title = m.get("title") or m.get("_file")
         synced = "已同步" if m.get("synced") else "未同步"
@@ -221,7 +292,7 @@ def cmd_list(ws):
 
 def cmd_check(ws):
     cards = collect(ws)
-    bad = [(m, completeness(m)) for m in cards if not m.get("_parse_error")]
+    bad = [(m, completeness(m, ws)) for m in cards if not m.get("_parse_error")]
     bad = [(m, x) for m, x in bad if x]
     corrupted = [m for m in cards if m.get("_parse_error")]
     if not cards:
@@ -255,16 +326,26 @@ def cmd_sync(ws):
     # 复用现有最大编号
     existing_doi = {r.get("doi") or r.get("source"): r for r in records if isinstance(r, dict)}
     n_new = n_upd = 0
+    rejected = []
+    synced_cards = []
     for m in complete:
         key = m.get("doi") or m.get("pdf") or m.get("title")
         old = existing_doi.get(key)
+        issue = source_snapshot_issue(ws, m)
+        if old and "source_snapshot" in old and "source_snapshot" not in m:
+            issue = "已有固定全文，更新卡片也需要登记实际读过的本地版本"
+        if issue:
+            rejected.append(f"{m['_file']}：{issue}")
+            continue
         claim_level = STRENGTH_MAP[m["claim_strength"]]
         entry = {
             "source": m.get("doi") or m.get("pdf") or m.get("title"),
             "title": m.get("title"), "first_author": m.get("first_author"),
             "year": m.get("year"), "journal": m.get("journal"), "doi": m.get("doi"),
-            "locator": "精读卡片，见 reading_card",
-            "evidence_level": "full_text",
+            "locator": "; ".join(m["key_result_locators"]),
+            "evidence_level": m["access_level"],
+            "read_scope": m["read_scope"],
+            "result_locators": m["key_result_locators"],
             "is_core_reading": True,
             "reading_card": m["_file"],
             "claim": m.get("core_conclusion"),
@@ -275,24 +356,31 @@ def cmd_sync(ws):
             "citation_verdict": "UNRESOLVED",
             "support_status": None,
         }
+        if "source_snapshot" in m:
+            entry["source_snapshot"] = m["source_snapshot"]
         if old:
             old.update({k: v for k, v in entry.items() if v})
+            old["support_status"] = None
             n_upd += 1
         else:
             entry["id"] = f"E{len(records) + 1}"
             records.append(entry)
             existing_doi[key] = entry
             n_new += 1
-        # 标记卡片已同步
-        cp = ws / m["_file"]
-        txt = cp.read_text(encoding="utf-8")
-        txt = re.sub(r'("synced":\s*)false', r'\g<1>true', txt)
-        cp.write_text(txt, encoding="utf-8")
+        synced_cards.append(ws / m["_file"])
 
-    save(ev_path, ev)
-    print(f"✅ 同步完成：新增 {n_new} 条，更新 {n_upd} 条 → {ev_path}")
-    print("⚠️ 这些条目 citation_verdict=UNRESOLVED、support_status 为空；")
-    print("   精读不等于核验，接下来必须跑引用身份+支持两道核验才能计入 Gate 2。")
+    if synced_cards:
+        write(ev_path, ev)
+        for cp in synced_cards:
+            txt = cp.read_text(encoding="utf-8")
+            txt = re.sub(r'("synced":\s*)false', r'\g<1>true', txt)
+            cp.write_text(txt, encoding="utf-8")
+        print(f"✅ 同步完成：新增 {n_new} 条，更新 {n_upd} 条 → {ev_path}")
+        print("⚠️ 同步条目需要重新核验引用身份和支持。")
+    if rejected:
+        for issue in rejected:
+            print(f"⛔ 未同步：{issue}", file=sys.stderr)
+        sys.exit(1)
 
 
 def main():
@@ -303,6 +391,8 @@ def main():
     pc.add_argument("--title"); pc.add_argument("--author")
     pc.add_argument("--year"); pc.add_argument("--journal")
     pc.add_argument("--doi"); pc.add_argument("--file")
+    pc.add_argument("--pin-source", action="store_true",
+                    help="固定 --file 指定的工作区内全文版本")
     for name in ("list", "check", "sync"):
         p = sub.add_parser(name); p.add_argument("workspace")
     a = ap.parse_args()
