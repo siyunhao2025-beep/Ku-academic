@@ -67,6 +67,39 @@ class ProgressGateTests(unittest.TestCase):
         names = {n: ok for ok, n, _ in results}
         self.assertFalse(names["证据矩阵有条目"])
 
+    def test_gate2_rejects_gap_evidence_that_cannot_be_counted(self):
+        thresholds = dict(self.thr, gate2_min_references=2, gate2_min_gaps=1,
+                          gate2_evidence_per_gap=2)
+        e1 = {"id": "E1", "citation_verdict": "VERIFIED"}
+        e2 = {"id": "E2", "citation_verdict": "VERIFIED"}
+        for sources, refs, reason in (
+            ([e1, e2], ["E1", "E99"], "E99 不存在"),
+            ([e1, e2], ["E1", "E1"], "E1 重复引用"),
+            ([e1, e2, e2], ["E1", "E2"], "E2 在证据矩阵重复"),
+            ([e1, dict(e2, citation_verdict="RETRACTED")], ["E1", "E2"], "E2 身份未通过"),
+            ([e1, e2], "E1E2", "evidence_ids"),
+            ([e1, e2], ["E1", {}], "evidence_ids"),
+        ):
+            with self.subTest(reason=reason):
+                write(self.ws, "evidence.json", {"evidence": sources})
+                write(self.ws, "gaps.json", [{"id": "G1", "evidence_ids": refs}])
+                failures = [detail for ok, _, detail in progress.check_p2(self.ws, thresholds) if not ok]
+                self.assertTrue(any("G1" in detail and reason in detail for detail in failures), failures)
+
+    def test_gate2_accepts_distinct_verified_ids_and_allows_reuse_between_gaps(self):
+        thresholds = dict(self.thr, gate2_min_references=2, gate2_min_gaps=2,
+                          gate2_evidence_per_gap=2)
+        write(self.ws, "evidence.json", [
+            {"id": "E1", "citation_verdict": "VERIFIED"},
+            {"id": "E2", "citation_verdict": "VERIFIED"},
+        ])
+        write(self.ws, "gaps.json", {"gaps": [
+            {"id": "G1", "evidence_ids": ["E1", "E2"]},
+            {"id": "G2", "evidence_ids": ["E2", "E1"]},
+        ]})
+        failures = [detail for ok, _, detail in progress.check_p2(self.ws, thresholds) if not ok]
+        self.assertEqual([], failures)
+
 
 class ProgressP5GuardTests(unittest.TestCase):
     """P5 闸门复用 figures.py / access.py：图件护栏与引用访问分级。"""
